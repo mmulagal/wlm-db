@@ -221,7 +221,12 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
             pairs.map(({ credentialsId, region }) =>
                 throat(3, async () => {
                     const relationship = await buildEc2FsxRelationship(accountId, credentialsId, region);
-                    const storageAssessments = await collectOntapAssessmentData(accountId, relationship, scanTaskId);
+                    const storageAssessments = await collectOntapAssessmentData(
+                        accountId,
+                        credentialsId,
+                        relationship,
+                        scanTaskId
+                    );
                     const ontapUuidToFsxVolumeId = new Map(
                         relationship.ec2s.flatMap(({ fsxs }) =>
                             fsxs.flatMap(({ volumes }) =>

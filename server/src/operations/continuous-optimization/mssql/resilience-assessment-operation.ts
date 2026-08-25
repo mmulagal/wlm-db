@@ -110,9 +110,15 @@ function toSnapmirrorRelationshipRow(relationship: OntapSnapmirrorRelationshipRe
 
 async function fetchDirectOntapCrrData(
     accountId: string,
+    credentialsId: string,
     instanceRecord: WorkloadInstance
 ): Promise<DirectOntapCrrData> {
-    const base = buildOntapProxyBase(accountId, instanceRecord.fsxFileSystem, instanceRecord.region);
+    const base = await buildOntapProxyBase(
+        accountId,
+        credentialsId,
+        instanceRecord.fsxFileSystem,
+        instanceRecord.region
+    );
     const svmUuid = Array.isArray(instanceRecord.svmOntapUuid)
         ? instanceRecord.svmOntapUuid[0]
         : instanceRecord.svmOntapUuid;
@@ -209,6 +215,7 @@ function extractInitiatorNames(initiators: unknown): string[] {
 
 async function fetchLunIgroupMappings(
     accountId: string,
+    credentialsId: string,
     fsxFileSystem: string,
     region: string,
     lunUuids: string[]
@@ -217,7 +224,7 @@ async function fetchLunIgroupMappings(
         return { lunMappings: [] };
     }
 
-    const base = buildOntapProxyBase(accountId, fsxFileSystem, region);
+    const base = await buildOntapProxyBase(accountId, credentialsId, fsxFileSystem, region);
     const lunUuidSet = new Set(lunUuids);
 
     logger.info('Fetching ONTAP LUN/igroup mappings via proxy-forwarder', {
@@ -287,6 +294,7 @@ function getVolumesWithoutSnapshotPolicy(volumes: Array<{ Key?: string; Value?: 
 
 async function collectVolumeSnapshotCopiesData(
     accountId: string,
+    credentialsId: string,
     instanceRecord: WorkloadInstance,
     volumeAssessmentData: Array<{ Key?: string; Value?: string }>,
     violations: string[]
@@ -299,7 +307,13 @@ async function collectVolumeSnapshotCopiesData(
             .filter((vol: Record<string, string>) => violations?.includes(vol?.name))
             .map((vol: Record<string, string>) => vol?.uuid);
 
-        const { response, errors } = await fetchOntapVolumeSnapshotDetails(accountId, fsxId, region, volumesToCheck);
+        const { response, errors } = await fetchOntapVolumeSnapshotDetails(
+            accountId,
+            credentialsId,
+            fsxId,
+            region,
+            volumesToCheck
+        );
         if (!isEmpty(errors)) {
             logger.warn('Some volumes failed while fetching snapshot copy details', { errors });
         }
@@ -519,7 +533,7 @@ async function initiateCrossRegionResiliencyAssessment(
         instanceRecord.mappedVolumesUuids = Array.from(dataLogVolumeMap.keys());
         instanceRecord.mappedVolumeNames = Array.from(dataLogVolumeMap.values());
 
-        const ontapCrrData = await fetchDirectOntapCrrData(accountId, instanceRecord);
+        const ontapCrrData = await fetchDirectOntapCrrData(accountId, credentialsId, instanceRecord);
         const command = [CROSS_REGION_REPLICATION_SCRIPT(instanceRecord, ontapCrrData)];
         const ssmComment = 'Get Cross Region Replication Assessment';
 
@@ -697,6 +711,7 @@ async function getSharedStorageAssessment(
 
         const { lunMappings, error: lunMappingsError } = await fetchLunIgroupMappings(
             accountId,
+            credentialsId,
             fsxFileSystem,
             region,
             mappedLunUuids || []

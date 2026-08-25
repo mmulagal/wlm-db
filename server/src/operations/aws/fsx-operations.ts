@@ -1275,12 +1275,13 @@ function extractField(records: Record<string, unknown>[], field: string): unknow
 
 async function fetchOntapVolumeSnapshotDetails(
     accountId: string,
+    credentialsId: string,
     fsxId: string,
     region: string,
     volumeUuids: string[],
     fields: OntapRestRequestParams = DEFAULT_LATEST_SNAPSHOT_FIELDS
 ): Promise<VolumeSnapshotDetails> {
-    const base = buildOntapProxyBase(accountId, fsxId, region);
+    const base = await buildOntapProxyBase(accountId, credentialsId, fsxId, region);
     const fieldNames = (fields.queryFields ?? '')
         .split(',')
         .map(field => field.trim())
@@ -1361,6 +1362,7 @@ async function isInstanceAppConsistentBackupEnabled(
         };
         const { response, errors } = await fetchOntapVolumeSnapshotDetails(
             accountId,
+            credentialsId,
             fsxId,
             region,
             volumesToCheck,

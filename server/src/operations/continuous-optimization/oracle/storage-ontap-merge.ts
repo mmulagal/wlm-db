@@ -174,9 +174,15 @@ function toNfsRootonlyRow(record: OntapNfsRootonlyRecord) {
  */
 async function fetchDirectOntapAssessmentData(
     accountId: string,
+    credentialsId: string,
     instanceRecord: WorkloadInstance
 ): Promise<DirectOntapStorageAssessmentData> {
-    const base = buildOntapProxyBase(accountId, instanceRecord.fsxFileSystem, instanceRecord.region);
+    const base = await buildOntapProxyBase(
+        accountId,
+        credentialsId,
+        instanceRecord.fsxFileSystem,
+        instanceRecord.region
+    );
     const volumeUuids = instanceRecord.mappedVolumesUuids ?? [];
     const volumeNames = instanceRecord.mappedVolumeNames ?? [];
     const isIscsi = instanceRecord.storageProtocol === STORAGE_PROTOCOLS.ISCSI;
@@ -359,6 +365,7 @@ async function resolveExportPolicies(
 
 async function resolveBinaryVolumesNfsInfo(
     accountId: string,
+    credentialsId: string,
     instanceRecord: WorkloadInstance,
     rawBinaryVolumes: RawBinaryVolumeRecord[]
 ): Promise<EnrichedBinaryVolumeRecord[]> {
@@ -367,7 +374,12 @@ async function resolveBinaryVolumesNfsInfo(
         return rawBinaryVolumes;
     }
 
-    const base = buildOntapProxyBase(accountId, instanceRecord.fsxFileSystem, instanceRecord.region);
+    const base = await buildOntapProxyBase(
+        accountId,
+        credentialsId,
+        instanceRecord.fsxFileSystem,
+        instanceRecord.region
+    );
     const volumeNames = uniq(compact(nfsVolumes.map(volume => volume.volumeName)));
 
     let volumeRecords: OntapVolumeByNameRecord[] = [];

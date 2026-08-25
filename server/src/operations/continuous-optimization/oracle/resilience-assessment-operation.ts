@@ -85,9 +85,15 @@ function toSnapmirrorRelationshipRow(relationship: OntapSnapmirrorRelationshipRe
 
 async function fetchDirectOntapCrrData(
     accountId: string,
+    credentialsId: string,
     instanceRecord: WorkloadInstance
 ): Promise<DirectOntapCrrData> {
-    const base = buildOntapProxyBase(accountId, instanceRecord.fsxFileSystem, instanceRecord.region);
+    const base = await buildOntapProxyBase(
+        accountId,
+        credentialsId,
+        instanceRecord.fsxFileSystem,
+        instanceRecord.region
+    );
     const svmNames = [
         ...new Set(
             (Array.isArray(instanceRecord.svmOntapName)
@@ -198,7 +204,7 @@ async function initiateCrossRegionResiliencyAssessment(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessageText);
         }
 
-        const ontapCrrData = await fetchDirectOntapCrrData(accountId, instanceRecord);
+        const ontapCrrData = await fetchDirectOntapCrrData(accountId, credentialsId, instanceRecord);
         const command = [ORACLE_CRR_ASSESSMENT_SCRIPT(instanceRecord, ontapCrrData)];
         const ssmComment = 'Get Cross Region Replication Assessment for Oracle';
 

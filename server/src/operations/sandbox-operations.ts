@@ -465,7 +465,7 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
                             ? 'netapp_wf_test_account_test_cred'
                             : getClonedByTagValue(accountId, credentialsId);
 
-                        const base = buildOntapProxyBase(accountId, targetFsxId, targetRegion);
+                        const base = await buildOntapProxyBase(accountId, credentialsId, targetFsxId, targetRegion);
                         const volumes = await collectAllOntapRecords<OntapCloneVolumeRecord>(
                             base,
                             'api/storage/volumes',
@@ -1264,7 +1264,7 @@ async function createVolumeClone(
             );
         }
 
-        const ontapBase = buildOntapProxyBase(accountId, fsxId, fsxRegion);
+        const ontapBase = await buildOntapProxyBase(accountId, credentialsId, fsxId, fsxRegion);
         const igroup = await findIgroupForInitiators(ontapBase, targetSvm, nodeIqn);
 
         const epoch = Math.floor(Date.now() / 1000);
@@ -1943,7 +1943,7 @@ async function startCleanup(
 
         const fsxId = IS_DEMO_FLOW ? 'test-fsx' : destDetails.fsxId;
         const fsxRegion = IS_DEMO_FLOW ? 'us-east-1' : region;
-        const ontapBase = buildOntapProxyBase(accountId, fsxId, fsxRegion);
+        const ontapBase = await buildOntapProxyBase(accountId, credentialsId, fsxId, fsxRegion);
         await Promise.all(volumeIds.map(volumeId => deleteOntapVolumeByUuid(ontapBase, volumeId)));
 
         const dropResp = await retryWithDelay(
@@ -3302,7 +3302,7 @@ async function splitVolumes(
     const logPrefix = `Sandbox:${resourceDetail.database}:`;
 
     try {
-        const ontapBase = buildOntapProxyBase(accountId, resourceDetail.fsxId, region);
+        const ontapBase = await buildOntapProxyBase(accountId, credentialsId, resourceDetail.fsxId, region);
         const uniqueVolumes = uniqBy(volumes, 'volumeId');
         let lastError: string | undefined;
 
@@ -3588,7 +3588,7 @@ async function getSandboxSnapshots(
     }
 
     const dataVolumeUuid = mappingData[0].parentVolumeUuid as string;
-    const base = buildOntapProxyBase(accountId, srcDetails.fsxId, region);
+    const base = await buildOntapProxyBase(accountId, credentialsId, srcDetails.fsxId, region);
 
     const volumeSnapshots = await Promise.all(
         mappingData.map(async vol => ({

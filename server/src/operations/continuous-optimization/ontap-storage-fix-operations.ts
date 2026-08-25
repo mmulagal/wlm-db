@@ -250,7 +250,7 @@ async function applyOntapStorageFix(params: OntapStorageFixParams): Promise<FixR
                 let compliantResults: FixResourceResult[] = [];
                 let targetIds = ids;
                 if (EFFICIENCY_RETRY_CONFIG_KEYS.has(configKey) && configValue === 'none' && ids.length > 0) {
-                    const efficiencyBase = buildOntapProxyBase(accountId, normalizedFsxId, region);
+                    const efficiencyBase = await buildOntapProxyBase(accountId, credentialsId, normalizedFsxId, region);
                     const filterQuery: Record<string, string> = useRest
                         ? { uuid: ids.join('|'), fields: 'efficiency' }
                         : { svm: svmName, name: ids.join('|'), fields: 'efficiency' };
@@ -329,7 +329,7 @@ async function applyOntapStorageFix(params: OntapStorageFixParams): Promise<FixR
                             fsxId: normalizedFsxId,
                             ids: targetIds
                         });
-                        const base = buildOntapProxyBase(accountId, normalizedFsxId, region);
+                        const base = await buildOntapProxyBase(accountId, credentialsId, normalizedFsxId, region);
                         let promotedAll = true;
                         // Sequential: stop at the first promote/verify failure instead of continuing to
                         // promote further volumes that the subsequent retried PATCH wouldn't reach anyway.

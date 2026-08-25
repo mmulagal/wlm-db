@@ -171,14 +171,14 @@ async function resolveOracleMappedOntapVolumes(
     target: OntapGatewayTarget,
     mountPointDataBySid: Record<string, OracleInstanceMountpointResponse>
 ): Promise<OracleMappedOntapVolumesResponse> {
-    const { accountId, fsxId, region } = target;
+    const { accountId, credentialsId, fsxId, region } = target;
     logger.info('Resolving Oracle mapped ONTAP volumes', {
         accountId,
         fsxId,
         sidCount: Object.keys(mountPointDataBySid).length
     });
 
-    const base = buildOntapProxyBase(accountId, fsxId, region);
+    const base = await buildOntapProxyBase(accountId, credentialsId, fsxId, region);
     const sidEntries = buildSidEntries(mountPointDataBySid);
     const allMounts = sidEntries.flatMap(entry =>
         entry.groups.flatMap(group => group.fileTypeMounts.map(({ mount }) => mount))

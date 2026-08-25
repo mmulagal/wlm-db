@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { DescribeFileSystemsCommandOutput } from '@aws-sdk/client-fsx';
 import * as fsxLib from '../../../src/lib/aws/fsx';
+import * as proxyForwarder from '../../../src/lib/cloud-manager/proxy-forwarder';
 import {
     callOntapApi,
     getClusterInfo,
@@ -16,6 +17,8 @@ import {
     deleteOntapVolumeByUuid,
     patchOntapVolumeTags
 } from '../../../src/lib/ontap/ontap-gateway';
+import { AWS_FSX_TYPE } from '../../../src/utils/consts';
+import { resetCache } from '../../../src/utils/cache';
 import {
     registerProxyGetResponse,
     registerProxyGetResponseSequence,
@@ -69,6 +72,7 @@ describe('ONTAP gateway', () => {
     afterEach(() => {
         vi.restoreAllMocks();
         resetProxyOverrides();
+        resetCache(AWS_FSX_TYPE);
     });
 
     describe('callOntapApi', () => {
@@ -86,6 +90,15 @@ describe('ONTAP gateway', () => {
             });
 
             expect(response).toEqual({ records: [{ name: 'vol1' }], num_records: 1 });
+        });
+
+        it('should prefer the management IP over DNS when both are available', async () => {
+            mockManagementEndpoint({ dnsName: MANAGEMENT_DNS_NAME, ipAddresses: ['172.31.255.204'] });
+            const spy = vi.spyOn(proxyForwarder, 'callProxyForwarder').mockResolvedValue({ name: 'cluster1' });
+
+            await callOntapApi<{ name: string }>({ ...GATEWAY_TARGET, path: 'api/cluster' });
+
+            expect(spy).toHaveBeenCalledWith(expect.objectContaining({ endpoint: '172.31.255.204' }));
         });
 
         it('should fall back to the management IP address when no DNS name is available', async () => {

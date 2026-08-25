@@ -80,7 +80,7 @@ describe('collectOntapAssessmentData', () => {
             }
         ]);
 
-        const results = await collectOntapAssessmentData('acct-1', relationship);
+        const results = await collectOntapAssessmentData('acct-1', 'cred-1', relationship);
 
         expect(results).toHaveLength(1);
         const [{ instanceId, fileSystemId, workloadType, storageAssessment }] = results;
@@ -174,7 +174,7 @@ describe('collectOntapAssessmentData', () => {
             }
         ]);
 
-        const results = await collectOntapAssessmentData('acct-1', relationship);
+        const results = await collectOntapAssessmentData('acct-1', 'cred-1', relationship);
 
         expect(results).toHaveLength(1);
         const assessment = results[0].storageAssessment as OracleStorageAssessment;
@@ -237,7 +237,7 @@ describe('collectOntapAssessmentData', () => {
             }
         ]);
 
-        const results = await collectOntapAssessmentData('acct-1', relationship);
+        const results = await collectOntapAssessmentData('acct-1', 'cred-1', relationship);
 
         expect(results).toHaveLength(2);
         const resultA = results.find(r => r.instanceId === 'i-a')!;
@@ -282,7 +282,7 @@ describe('collectOntapAssessmentData', () => {
             }
         ]);
 
-        const results = await collectOntapAssessmentData('acct-1', relationship);
+        const results = await collectOntapAssessmentData('acct-1', 'cred-1', relationship);
 
         expect(results).toHaveLength(2);
         expect(results.map(r => r.workloadType).sort()).toEqual(['mssql', 'oracle']);
@@ -320,7 +320,7 @@ describe('collectOntapAssessmentData', () => {
             }
         ]);
 
-        const results = await collectOntapAssessmentData('acct-1', relationship);
+        const results = await collectOntapAssessmentData('acct-1', 'cred-1', relationship);
 
         expect(results).toHaveLength(1);
         const assessment = results[0].storageAssessment as MssqlStorageAssessment;

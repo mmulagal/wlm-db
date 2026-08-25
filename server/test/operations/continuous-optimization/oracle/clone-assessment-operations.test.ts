@@ -300,7 +300,7 @@ describe('fetchOracleFlexCloneVolumes', () => {
             ])
         });
 
-        const records = await fetchOracleFlexCloneVolumes('acct-1', 'fs-1', 'us-east-1');
+        const records = await fetchOracleFlexCloneVolumes('acct-1', 'cred-1', 'fs-1', 'us-east-1');
 
         expect(records).toEqual([
             {
@@ -320,7 +320,7 @@ describe('fetchOracleFlexCloneVolumes', () => {
             body: ontapPage([])
         });
 
-        const records = await fetchOracleFlexCloneVolumes('acct-1', 'fs-1', 'us-east-1');
+        const records = await fetchOracleFlexCloneVolumes('acct-1', 'cred-1', 'fs-1', 'us-east-1');
 
         expect(records).toEqual([]);
     });

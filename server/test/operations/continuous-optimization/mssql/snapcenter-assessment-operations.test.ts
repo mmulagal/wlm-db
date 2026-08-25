@@ -406,7 +406,7 @@ describe('fetchSnapCenterVolumeOntapData', () => {
             body: ontapPage([])
         });
 
-        const result = await fetchSnapCenterVolumeOntapData('acct-1', 'fs-1', 'us-east-1', [
+        const result = await fetchSnapCenterVolumeOntapData('acct-1', 'cred-1', 'fs-1', 'us-east-1', [
             'vol-uuid-1',
             'vol-uuid-2'
         ]);
@@ -420,14 +420,16 @@ describe('fetchSnapCenterVolumeOntapData', () => {
 
     it('records a per-volume error without failing the others', async () => {
         // The 'error-target' fsxId makes the scope's fallback reply with a 500 for every path.
-        const result = await fetchSnapCenterVolumeOntapData('acct-1', 'error-target', 'us-east-1', ['vol-uuid-1']);
+        const result = await fetchSnapCenterVolumeOntapData('acct-1', 'cred-1', 'error-target', 'us-east-1', [
+            'vol-uuid-1'
+        ]);
 
         expect(result.response).toEqual({});
         expect(result.errors['vol-uuid-1']).toBeDefined();
     });
 
     it('returns an empty result without calling the proxy when there are no volume UUIDs', async () => {
-        const result = await fetchSnapCenterVolumeOntapData('acct-1', 'fs-1', 'us-east-1', []);
+        const result = await fetchSnapCenterVolumeOntapData('acct-1', 'cred-1', 'fs-1', 'us-east-1', []);
 
         expect(result.response).toEqual({});
         expect(result.errors).toEqual({});

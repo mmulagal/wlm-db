@@ -184,7 +184,8 @@ async function createAndMapLunsForDiskGroups(
     lunUuids: string[],
     initiatorIqn: string
 ): Promise<Record<string, DiskGroupProvisionResult>> {
-    const base = buildOntapProxyBase(target.accountId, target.fsxId, target.region);
+    const { accountId, credentialsId, fsxId, region } = target;
+    const base = await buildOntapProxyBase(accountId, credentialsId, fsxId, region);
 
     let lunSize: number;
     try {

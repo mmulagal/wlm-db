@@ -3,7 +3,7 @@ import type { DescribeFileSystemsCommandOutput } from '@aws-sdk/client-fsx';
 import * as fsxLib from '../../../src/lib/aws/fsx';
 import { applyOntapStorageFix } from '../../../src/operations/continuous-optimization/ontap-storage-fix-operations';
 import { OptimizeStorageConfigs } from '../../../src/utils/continous-optimization-consts';
-import { RESOURCESTYPE } from '../../../src/utils/consts';
+import { RESOURCESTYPE, AWS_FSX_TYPE } from '../../../src/utils/consts';
 import * as utilsLib from '../../../src/utils/utils';
 import {
     getCapturedProxyGetUris,
@@ -15,6 +15,7 @@ import {
     resetProxyOverrides
 } from '../../simulator/scopes/cloud-manager/proxy-forwarder-scope';
 import { ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
+import { resetCache } from '../../../src/utils/cache';
 
 const FIRST_FSX_ID = 'fs-aaaa1111bbbb2222';
 const SECOND_FSX_ID = 'fs-cccc3333dddd4444';
@@ -29,7 +30,7 @@ function mockManagementEndpoint(fsxId = FIRST_FSX_ID): void {
                 Lifecycle: 'AVAILABLE',
                 OntapConfiguration: {
                     Endpoints: {
-                        Management: { DNSName: MANAGEMENT_DNS_NAME }
+                        Management: { DNSName: MANAGEMENT_DNS_NAME, IpAddresses: ['172.31.0.100'] }
                     }
                 }
             }
@@ -42,6 +43,7 @@ describe('applyOntapStorageFix', () => {
     afterEach(() => {
         vi.restoreAllMocks();
         resetProxyOverrides();
+        resetCache(AWS_FSX_TYPE);
     });
 
     it('should use the first FSx id and poll when PATCH returns a job uuid', async () => {

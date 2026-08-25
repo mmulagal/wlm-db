@@ -41,8 +41,17 @@ function toFsxInterfaceRow(port: OntapEthernetPortRecord): FsxInterfaceRecord | 
 }
 
 /** Replaces the previous host-side `Invoke-ONTAPRequest` call in `FETCH_FSX_MTU_DETAILS`. */
-async function fetchFsxMtuData(accountId: string, instanceRecord: WorkloadInstance): Promise<FsxMtuData> {
-    const base = buildOntapProxyBase(accountId, instanceRecord.fsxFileSystem, instanceRecord.region);
+async function fetchFsxMtuData(
+    accountId: string,
+    credentialsId: string,
+    instanceRecord: WorkloadInstance
+): Promise<FsxMtuData> {
+    const base = await buildOntapProxyBase(
+        accountId,
+        credentialsId,
+        instanceRecord.fsxFileSystem,
+        instanceRecord.region
+    );
     logger.info('Fetching FSx ethernet port MTU details via proxy-forwarder', { accountId, targetId: base.targetId });
 
     try {
@@ -131,7 +140,7 @@ async function mtuAssessment(
                 accountId,
                 shouldReadFromCloudWatchLogs: true
             }),
-            fetchFsxMtuData(accountId, instanceRecord)
+            fetchFsxMtuData(accountId, credentialsId, instanceRecord)
         ]);
 
         const parsedMssqlResponse = typeof mssqlResponse === 'string' ? JSON.parse(mssqlResponse) : mssqlResponse;

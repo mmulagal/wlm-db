@@ -82,6 +82,7 @@ interface SqlInstance {
 
 interface ProvisionOntapStorageParams {
     accountId: string;
+    credentialsId: string;
     fsxId: string;
     region: string;
     svmName: string;
@@ -95,6 +96,7 @@ interface ProvisionOntapStorageParams {
 
 interface CleanupOntapStorageParams {
     accountId: string;
+    credentialsId: string;
     fsxId: string;
     region: string;
     svmName: string;
@@ -163,6 +165,7 @@ async function applySqlLunBestPractices(base: ProxyOperationBaseOpts, svmName: s
 async function provisionOntapStorage(params: ProvisionOntapStorageParams) {
     const {
         accountId,
+        credentialsId,
         fsxId,
         region,
         svmName,
@@ -183,7 +186,7 @@ async function provisionOntapStorage(params: ProvisionOntapStorageParams) {
         );
     }
 
-    const base = buildOntapProxyBase(accountId, fsxId, region);
+    const base = await buildOntapProxyBase(accountId, credentialsId, fsxId, region);
     const iGroup = await findIgroupForInitiators(base, svmName, nodeIqn, standbyIqn);
 
     const epoch = Math.floor(Date.now() / 1000);
@@ -239,7 +242,7 @@ async function provisionOntapStorage(params: ProvisionOntapStorageParams) {
 }
 
 async function cleanupOntapStorage(params: CleanupOntapStorageParams) {
-    const { accountId, fsxId, region, svmName, iGroup, fsxDataVolumeName, fsxLogVolumeName } = params;
+    const { accountId, credentialsId, fsxId, region, svmName, iGroup, fsxDataVolumeName, fsxLogVolumeName } = params;
 
     logger.info('Starting cleanupOntapStorage', {
         accountId,
@@ -255,7 +258,7 @@ async function cleanupOntapStorage(params: CleanupOntapStorageParams) {
         return;
     }
 
-    const base = buildOntapProxyBase(accountId, fsxId, region);
+    const base = await buildOntapProxyBase(accountId, credentialsId, fsxId, region);
     const lunPaths = volumeNames.map(
         volumeName => `/vol/${volumeName}/${volumeName === fsxDataVolumeName ? DATALUN : LOGLUN}`
     );
@@ -1354,6 +1357,7 @@ async function configureLuns(
 
         const { iGroup, fsxDataVolumeName, fsxLogVolumeName, dataSerial, logSerial } = await provisionOntapStorage({
             accountId,
+            credentialsId,
             fsxId: fileSystemId as string,
             region,
             svmName: sqlVMName as string,
@@ -1590,6 +1594,7 @@ async function cleanUpDatabaseDeployment(
 
         await cleanupOntapStorage({
             accountId,
+            credentialsId,
             fsxId: fileSystemId as string,
             region,
             svmName: sqlVMName as string,

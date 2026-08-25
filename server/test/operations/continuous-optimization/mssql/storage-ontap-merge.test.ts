@@ -85,7 +85,7 @@ describe('fetchDirectOntapAssessmentData', () => {
             body: ontapPage([{ volume: 'sqldata', space_mgmt_try_first: 'volume_grow' }])
         });
 
-        const result = await fetchDirectOntapAssessmentData('acct-1', buildInstanceRecord());
+        const result = await fetchDirectOntapAssessmentData('acct-1', 'cred-1', buildInstanceRecord());
 
         expect(JSON.parse(result.volumesJson)).toEqual([
             {
@@ -132,7 +132,11 @@ describe('fetchDirectOntapAssessmentData', () => {
             body: ontapPage([{ name: 'sqldata-lun', os_type: 'windows', space: {} }])
         });
 
-        const result = await fetchDirectOntapAssessmentData('acct-1', buildInstanceRecord({ mappedVolumeNames: [] }));
+        const result = await fetchDirectOntapAssessmentData(
+            'acct-1',
+            'cred-1',
+            buildInstanceRecord({ mappedVolumeNames: [] })
+        );
 
         expect(result.errors.spaceMgmtTryFirst).toContain('mapped volume names');
         expect(result.errors.sizing).toContain('mapped volume names');
@@ -150,6 +154,7 @@ describe('fetchDirectOntapAssessmentData', () => {
 
         const result = await fetchDirectOntapAssessmentData(
             'acct-1',
+            'cred-1',
             buildInstanceRecord({ mappedVolumesUuids: [], mappedVolumeNames: [] })
         );
 
@@ -164,7 +169,7 @@ describe('fetchDirectOntapAssessmentData', () => {
 
 describe('fetchLunsBySerialNumbers', () => {
     it('returns an empty result without calling the proxy when there are no serial numbers', async () => {
-        const result = await fetchLunsBySerialNumbers('acct-1', buildInstanceRecord(), []);
+        const result = await fetchLunsBySerialNumbers('acct-1', 'cred-1', buildInstanceRecord(), []);
         expect(result).toEqual({ luns: [] });
     });
 
@@ -183,7 +188,7 @@ describe('fetchLunsBySerialNumbers', () => {
             ])
         });
 
-        const result = await fetchLunsBySerialNumbers('acct-1', buildInstanceRecord(), ['serial-1']);
+        const result = await fetchLunsBySerialNumbers('acct-1', 'cred-1', buildInstanceRecord(), ['serial-1']);
 
         expect(result.error).toBeUndefined();
         expect(result.luns).toEqual([
@@ -200,7 +205,7 @@ describe('fetchLunsBySerialNumbers', () => {
     it('reports an error instead of throwing when no luns match the requested serial numbers', async () => {
         registerProxyGetResponse({ targetId: 'fs-1', ontapPath: 'api/storage/luns', body: ontapPage([]) });
 
-        const result = await fetchLunsBySerialNumbers('acct-1', buildInstanceRecord(), ['missing-serial']);
+        const result = await fetchLunsBySerialNumbers('acct-1', 'cred-1', buildInstanceRecord(), ['missing-serial']);
 
         expect(result.luns).toEqual([]);
         expect(result.error).toContain('Unable to fetch lun details');

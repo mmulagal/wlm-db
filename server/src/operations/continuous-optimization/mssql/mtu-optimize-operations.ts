@@ -88,9 +88,13 @@ async function optimizeMTUAlignment(
     }
 }
 
-async function getFSxMTUValue(instanceRecord: WorkloadInstance, accountId: string): Promise<number> {
+async function getFSxMTUValue(
+    instanceRecord: WorkloadInstance,
+    accountId: string,
+    credentialsId: string
+): Promise<number> {
     try {
-        const fsxMtuData = await fetchFsxMtuData(accountId, instanceRecord);
+        const fsxMtuData = await fetchFsxMtuData(accountId, credentialsId, instanceRecord);
 
         if (fsxMtuData?.error) {
             throw new Error(`Failed to get FSx MTU: ${fsxMtuData.error}`);
@@ -203,7 +207,7 @@ async function handleOptimizeMTUAlignment(
         };
 
         // Get FSx MTU value
-        const targetMTU = await getFSxMTUValue(instanceRecord, accountId);
+        const targetMTU = await getFSxMTUValue(instanceRecord, accountId, credentialsId);
 
         formattedInstanceName = getServerNameWithHostname(resourceName, instanceName);
 

@@ -26,10 +26,11 @@ const FLEXCLONE_VOLUMES_FIELDS =
 
 async function fetchOracleFlexCloneVolumes(
     accountId: string,
+    credentialsId: string,
     fsxFileSystem: string,
     region: string
 ): Promise<VolumeRecord[]> {
-    const base = buildOntapProxyBase(accountId, fsxFileSystem, region);
+    const base = await buildOntapProxyBase(accountId, credentialsId, fsxFileSystem, region);
     return collectAllOntapRecords<VolumeRecord>(base, 'api/storage/volumes', {
         'clone.is_flexclone': true,
         fields: FLEXCLONE_VOLUMES_FIELDS
@@ -79,7 +80,7 @@ async function runOracleCloneAssessment(
         return;
     }
 
-    const flexCloneRecords = await fetchOracleFlexCloneVolumes(accountId, fsxFileSystem, region);
+    const flexCloneRecords = await fetchOracleFlexCloneVolumes(accountId, credentialsId, fsxFileSystem, region);
 
     if (isEmpty(flexCloneRecords)) {
         return {

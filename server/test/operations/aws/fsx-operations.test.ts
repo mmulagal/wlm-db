@@ -593,7 +593,7 @@ describe('fetchOntapVolumeSnapshotDetails', () => {
             body: ontapPage([{ create_time: '2024-05-02T00:00:00Z' }])
         });
 
-        const result = await fetchOntapVolumeSnapshotDetails('acct-1', 'fs-1', 'us-east-1', [
+        const result = await fetchOntapVolumeSnapshotDetails('acct-1', 'cred-1', 'fs-1', 'us-east-1', [
             'vol-uuid-1',
             'vol-uuid-2'
         ]);
@@ -612,7 +612,7 @@ describe('fetchOntapVolumeSnapshotDetails', () => {
             body: ontapPage([])
         });
 
-        const result = await fetchOntapVolumeSnapshotDetails('acct-1', 'fs-1', 'us-east-1', ['vol-uuid-1']);
+        const result = await fetchOntapVolumeSnapshotDetails('acct-1', 'cred-1', 'fs-1', 'us-east-1', ['vol-uuid-1']);
 
         expect(result.response).toEqual({ 'vol-uuid-1': { create_time: undefined } });
         expect(result.errors).toEqual({});
@@ -620,7 +620,9 @@ describe('fetchOntapVolumeSnapshotDetails', () => {
 
     it('records a per-volume error without failing the others', async () => {
         // The 'error-target' fsxId makes the scope's fallback reply with a 500 for every path.
-        const result = await fetchOntapVolumeSnapshotDetails('acct-1', 'error-target', 'us-east-1', ['vol-uuid-1']);
+        const result = await fetchOntapVolumeSnapshotDetails('acct-1', 'cred-1', 'error-target', 'us-east-1', [
+            'vol-uuid-1'
+        ]);
 
         expect(result.response).toEqual({});
         expect(result.errors['vol-uuid-1']).toBeDefined();
@@ -633,7 +635,7 @@ describe('fetchOntapVolumeSnapshotDetails', () => {
             body: ontapPage([{ comment: 'creator=snapcenter' }])
         });
 
-        const result = await fetchOntapVolumeSnapshotDetails('acct-1', 'fs-1', 'us-east-1', ['vol-uuid-1'], {
+        const result = await fetchOntapVolumeSnapshotDetails('acct-1', 'cred-1', 'fs-1', 'us-east-1', ['vol-uuid-1'], {
             queryFilter: 'comment=creator=snapcenter&max_records=1',
             queryFields: 'comment'
         });

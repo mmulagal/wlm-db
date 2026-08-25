@@ -219,13 +219,14 @@ interface OptimizeStorageOperationParams {
 
 async function getExportPolicyRules(
     accountId: string,
+    credentialsId: string,
     region: string,
     fsxId: string,
     svmName: string,
     existingPolicyName: string
 ) {
     logger.info(`Getting export policy rules for policy ${existingPolicyName} in SVM ${svmName}`);
-    const base = buildOntapProxyBase(accountId, fsxId, region);
+    const base = await buildOntapProxyBase(accountId, credentialsId, fsxId, region);
     return getOntapExportPolicyRules(base, svmName, existingPolicyName);
 }
 
@@ -255,7 +256,14 @@ async function createExportPolicy(
     });
 
     try {
-        const existingRules = await getExportPolicyRules(accountId, region, fsxId, svmName, existingPolicyName);
+        const existingRules = await getExportPolicyRules(
+            accountId,
+            credentialsId,
+            region,
+            fsxId,
+            svmName,
+            existingPolicyName
+        );
 
         const newRules = clients.map(client => {
             const existingRule = existingRules.find(
@@ -280,7 +288,7 @@ async function createExportPolicy(
             };
         });
 
-        const base = buildOntapProxyBase(accountId, fsxId, region);
+        const base = await buildOntapProxyBase(accountId, credentialsId, fsxId, region);
         await createOntapExportPolicy(base, {
             name: policyName,
             svm: { name: svmName },

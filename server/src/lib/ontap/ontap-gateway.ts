@@ -2,7 +2,8 @@ import { chunk, flatMap } from 'lodash-es';
 import createError from 'http-errors';
 import throat from 'throat';
 
-import { HttpErrorCodes } from '../../utils/consts';
+import { AWS_FSX_TYPE, HttpErrorCodes } from '../../utils/consts';
+import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 import getLogger from '../../utils/logger';
 import { sleep } from '../../utils/utils';
 
@@ -15,6 +16,7 @@ const ONTAP_JOB_POLL_DEFAULT_TIMEOUT_MS = 900_000;
 const ONTAP_JOB_POLL_DEFAULT_INTERVAL_MS = 10_000;
 const ONTAP_FILTER_BATCH_SIZE = 25;
 const NFS_MANAGEMENT_INTERFACE_NAME = 'nfs_smb_management_1';
+const MANAGEMENT_ENDPOINT_CACHE_TTL = '6h';
 
 interface OntapGatewayTarget {
     accountId: string;
@@ -166,7 +168,7 @@ interface ResolvedVolume {
 }
 
 /**
- * Resolves the ONTAP management endpoint (DNS name, falling back to an IP address) for an FSx
+ * Resolves the ONTAP management endpoint (IP address, falling back to the DNS name) for an FSx
  * for ONTAP file system directly from the raw `DescribeFileSystems` response — deliberately not
  * routed through `getFSXDetails` (which enriches with SVMs/volumes/network interfaces this lookup
  * doesn't need) to avoid an import cycle between this module and `operations/aws/fsx-operations.ts`.
@@ -177,6 +179,14 @@ async function resolveFsxManagementEndpoint(
     fsxId: string,
     accountId: string
 ): Promise<string> {
+    const cacheKey = `ontap-management-endpoint:${accountId}:${credentialsId}:${region}:${fsxId}`;
+    if (hasCache(AWS_FSX_TYPE, cacheKey)) {
+        const endpoint = readFromCacheByKey(AWS_FSX_TYPE, cacheKey);
+        if (endpoint && typeof endpoint === 'string') {
+            return endpoint;
+        }
+    }
+
     const { FileSystems: fileSystems = [] } = await describeFSx(
         credentialsId,
         region,
@@ -185,13 +195,15 @@ async function resolveFsxManagementEndpoint(
     );
     const { DNSName: dnsName, IpAddresses: ipAddresses } =
         fileSystems[0]?.OntapConfiguration?.Endpoints?.Management ?? {};
-    const managementEndpoint = dnsName || ipAddresses?.[0];
+    const managementEndpoint = ipAddresses?.[0] || dnsName;
 
     if (!managementEndpoint) {
         const errorMessage = `Unable to resolve ONTAP management endpoint for FSx file system ${fsxId}`;
         logger.error(errorMessage, { accountId, credentialsId, region, fsxId });
         throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
     }
+
+    writeToCache(AWS_FSX_TYPE, cacheKey, managementEndpoint, MANAGEMENT_ENDPOINT_CACHE_TTL);
 
     return managementEndpoint;
 }
@@ -203,9 +215,8 @@ async function resolveFsxManagementEndpoint(
  */
 async function toProxyBase(target: OntapGatewayTarget): Promise<ProxyOperationBaseOpts> {
     const { accountId, credentialsId, region, fsxId } = target;
-    const endpoint = await resolveFsxManagementEndpoint(credentialsId, region, fsxId, accountId);
 
-    return { accountId, targetId: fsxId, endpoint };
+    return buildOntapProxyBase(accountId, credentialsId, fsxId, region);
 }
 
 /**
@@ -326,8 +337,15 @@ function extractErrorMessage(reason: unknown): string {
 }
 
 /** Builds the `{ accountId, targetId, endpoint }` base shared by all proxy-forwarder ONTAP calls for an FSx file system. */
-function buildOntapProxyBase(accountId: string, targetId: string, region: string): ProxyOperationBaseOpts {
-    return { accountId, targetId, endpoint: `management.${targetId}.fsx.${region}.amazonaws.com` };
+async function buildOntapProxyBase(
+    accountId: string,
+    credentialsId: string,
+    targetId: string,
+    region: string
+): Promise<ProxyOperationBaseOpts> {
+    const endpoint = await resolveFsxManagementEndpoint(credentialsId, region, targetId, accountId);
+
+    return { accountId, targetId, endpoint };
 }
 
 /** Unwraps a settled batched-fetch result, logging and recording an error string on rejection. */

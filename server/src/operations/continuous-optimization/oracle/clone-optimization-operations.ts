@@ -453,7 +453,7 @@ async function deleteClone(
         const effectiveVolumeUuids = IS_DEMO_FLOW ? ['test-volume-uuid'] : volumeUuids;
         const isIscsi = protocol === 'iSCSI';
 
-        const ontapBase = buildOntapProxyBase(accountId, effectiveFsxId, region);
+        const ontapBase = await buildOntapProxyBase(accountId, credentialsId, effectiveFsxId, region);
         const junctionPathsByUuid = isIscsi ? {} : await fetchCloneJunctionPaths(ontapBase, effectiveVolumeUuids);
 
         const script = buildCloneCleanupScript({

@@ -191,7 +191,7 @@ describe('fetchDirectOntapCrrData', () => {
             ])
         });
 
-        const result = await fetchDirectOntapCrrData('acct-1', BASE_INSTANCE_RECORD);
+        const result = await fetchDirectOntapCrrData('acct-1', 'cred-1', BASE_INSTANCE_RECORD);
 
         expect(JSON.parse(result.clusterPeerDetailsJson)).toEqual([
             { peerClusterName: 'FsxIdfs-remote1', availability: 'available' }
@@ -230,7 +230,10 @@ describe('fetchDirectOntapCrrData', () => {
             body: ontapPage([{ name: 'FsxIdfs-remote1', status: { state: 'available' } }])
         });
 
-        const result = await fetchDirectOntapCrrData('acct-1', { ...BASE_INSTANCE_RECORD, svmOntapName: undefined });
+        const result = await fetchDirectOntapCrrData('acct-1', 'cred-1', {
+            ...BASE_INSTANCE_RECORD,
+            svmOntapName: undefined
+        });
 
         expect(JSON.parse(result.clusterPeerDetailsJson)).toHaveLength(1);
         expect(result.vserverPeerDetailsJson).toBe('[]');
@@ -244,7 +247,7 @@ describe('fetchDirectOntapCrrData', () => {
             body: ontapPage([{ name: 'peer-1', state: 'peered', svm: { name: 'svm_oracle_prod', uuid: 'svm-uuid-1' } }])
         });
 
-        const result = await fetchDirectOntapCrrData('acct-1', {
+        const result = await fetchDirectOntapCrrData('acct-1', 'cred-1', {
             ...BASE_INSTANCE_RECORD,
             svmOntapName: ['svm_oracle_prod', 'svm_oracle_standby']
         });

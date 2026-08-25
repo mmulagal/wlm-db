@@ -30,11 +30,12 @@ interface OntapVolumeSvmRecord {
 
 async function fetchSnapCenterVolumeOntapData(
     accountId: string,
+    credentialsId: string,
     fsxFileSystem: string,
     region: string,
     volumeUuids: string[]
 ): Promise<SnapCenterOntapData> {
-    const base = buildOntapProxyBase(accountId, fsxFileSystem, region);
+    const base = await buildOntapProxyBase(accountId, credentialsId, fsxFileSystem, region);
 
     logger.info('Fetching SnapCenter volume ONTAP data via proxy-forwarder', {
         accountId,
@@ -178,6 +179,7 @@ async function initiateSnapCenterAssessmentCollection(
     try {
         const snapCenterOntapData = await fetchSnapCenterVolumeOntapData(
             accountId,
+            credentialsId,
             fsxFileSystem,
             region,
             mappedVolumesUuids ?? []

@@ -121,9 +121,15 @@ function toLunRow(lun: OntapLunRecord) {
 
 async function fetchDirectOntapAssessmentData(
     accountId: string,
+    credentialsId: string,
     instanceRecord: WorkloadInstance
 ): Promise<DirectOntapAssessmentData> {
-    const base = buildOntapProxyBase(accountId, instanceRecord.fsxFileSystem, instanceRecord.region);
+    const base = await buildOntapProxyBase(
+        accountId,
+        credentialsId,
+        instanceRecord.fsxFileSystem,
+        instanceRecord.region
+    );
     const volumeUuids = instanceRecord.mappedVolumesUuids ?? [];
     const volumeNames = instanceRecord.mappedVolumeNames ?? [];
     const lunNames = instanceRecord.mappedLunNames ?? [];
@@ -226,13 +232,19 @@ async function fetchDirectOntapAssessmentData(
  */
 async function fetchLunsBySerialNumbers(
     accountId: string,
+    credentialsId: string,
     instanceRecord: WorkloadInstance,
     serialNumbers: string[]
 ): Promise<{ luns: OntapLunBySerialRecord[]; error?: string }> {
     if (serialNumbers.length === 0) {
         return { luns: [] };
     }
-    const base = buildOntapProxyBase(accountId, instanceRecord.fsxFileSystem, instanceRecord.region);
+    const base = await buildOntapProxyBase(
+        accountId,
+        credentialsId,
+        instanceRecord.fsxFileSystem,
+        instanceRecord.region
+    );
     try {
         const luns = await collectOntapRecordsBatched<OntapLunBySerialRecord>(
             base,

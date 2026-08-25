@@ -1353,7 +1353,7 @@ async function getOracleStorageInfoFromOntap(instanceDetails: DatabaseInstance[]
             Array.from(volumeUuidsByFsxId.entries()).map(
                 throat(3, async ([fsxId, volumeUuids]) => {
                     try {
-                        const base = buildOntapProxyBase(accountId, fsxId, region);
+                        const base = await buildOntapProxyBase(accountId, credentialsId, fsxId, region);
                         const records = await collectOntapRecordsBatched<OntapVolumeSpaceRecord>(
                             base,
                             'api/storage/volumes',

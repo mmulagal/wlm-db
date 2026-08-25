@@ -157,7 +157,7 @@ describe('MTU optimization', () => {
                 num_records: 2
             }
         });
-        const mtu = await getFSxMTUValue(instanceRecord, accountId);
+        const mtu = await getFSxMTUValue(instanceRecord, accountId, credentialsId);
         expect(mtu).toBeDefined();
         expect(typeof mtu).toBe('number');
         expect(mtu).toBeGreaterThan(0);
@@ -180,7 +180,7 @@ describe('MTU optimization', () => {
             ontapPath: 'api/network/ethernet/ports',
             body: { records: [{ name: 'e0a', mtu: 9000 }], num_records: 1 }
         });
-        const mtu = await getFSxMTUValue(instanceRecord, accountId);
+        const mtu = await getFSxMTUValue(instanceRecord, accountId, credentialsId);
         expect(mtu).toBeDefined();
         expect(typeof mtu).toBe('number');
         expect(mtu).toBeGreaterThan(0);

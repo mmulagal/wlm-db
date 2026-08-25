@@ -502,7 +502,7 @@ async function collectScopedOntapAssessment(
         throw new Error(`No ONTAP volumes found for this instance. ${FSX_LINK_INACTIVE_HINT}`);
     }
 
-    const results = await collectOntapAssessmentData(accountId, { ec2s: scopedEc2s });
+    const results = await collectOntapAssessmentData(accountId, credentialsId, { ec2s: scopedEc2s });
     return results.filter(result => result.workloadType === workloadType);
 }
 

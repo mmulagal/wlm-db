@@ -187,6 +187,7 @@ describe('Snapshot policy assessment', () => {
 
         const result = await collectVolumeSnapshotCopiesData(
             accountId,
+            'cred-1',
             instanceRecord,
             volumeAssessmentData as Array<Record<string, unknown>>,
             violations
@@ -382,7 +383,7 @@ describe('fetchDirectOntapCrrData', () => {
             ])
         });
 
-        const result = await fetchDirectOntapCrrData('acct-1', buildCrrInstanceRecord());
+        const result = await fetchDirectOntapCrrData('acct-1', 'cred-1', buildCrrInstanceRecord());
 
         expect(JSON.parse(result.clusterPeerDetailsJson)).toEqual([
             { peerClusterName: 'FsxIdfs-remote1', availability: 'available' }
@@ -421,7 +422,11 @@ describe('fetchDirectOntapCrrData', () => {
             body: ontapPage([{ name: 'FsxIdfs-remote1', status: { state: 'available' } }])
         });
 
-        const result = await fetchDirectOntapCrrData('acct-1', buildCrrInstanceRecord({ svmOntapUuid: undefined }));
+        const result = await fetchDirectOntapCrrData(
+            'acct-1',
+            'cred-1',
+            buildCrrInstanceRecord({ svmOntapUuid: undefined })
+        );
 
         expect(JSON.parse(result.clusterPeerDetailsJson)).toHaveLength(1);
         expect(result.vserverPeerDetailsJson).toBe('[]');
@@ -437,6 +442,7 @@ describe('fetchDirectOntapCrrData', () => {
 
         const result = await fetchDirectOntapCrrData(
             'acct-1',
+            'cred-1',
             buildCrrInstanceRecord({ svmOntapUuid: ['svm-uuid-1', 'svm-uuid-2'] })
         );
 
@@ -450,7 +456,7 @@ describe('fetchLunIgroupMappings', () => {
     });
 
     it('returns an empty result without calling the proxy when there are no LUN UUIDs', async () => {
-        const result = await fetchLunIgroupMappings('acct-1', 'fs-1', 'us-east-1', []);
+        const result = await fetchLunIgroupMappings('acct-1', 'cred-1', 'fs-1', 'us-east-1', []);
 
         expect(result).toEqual({ lunMappings: [] });
     });
@@ -475,7 +481,10 @@ describe('fetchLunIgroupMappings', () => {
             ])
         });
 
-        const result = await fetchLunIgroupMappings('acct-1', 'fs-1', 'us-east-1', ['lun-uuid-1', 'lun-uuid-2']);
+        const result = await fetchLunIgroupMappings('acct-1', 'cred-1', 'fs-1', 'us-east-1', [
+            'lun-uuid-1',
+            'lun-uuid-2'
+        ]);
 
         expect(result).toEqual({
             lunMappings: [
@@ -504,14 +513,14 @@ describe('fetchLunIgroupMappings', () => {
             body: ontapPage([{ lun: { uuid: 'lun-uuid-1', name: '/vol/sqldata/sqldata' } }])
         });
 
-        const result = await fetchLunIgroupMappings('acct-1', 'fs-1', 'us-east-1', ['lun-uuid-1']);
+        const result = await fetchLunIgroupMappings('acct-1', 'cred-1', 'fs-1', 'us-east-1', ['lun-uuid-1']);
 
         expect(result).toEqual({ lunMappings: [] });
     });
 
     it('reports an error instead of throwing when the proxy request fails', async () => {
         // The 'error-target' fsxId makes the scope's fallback reply with a 500 for every path.
-        const result = await fetchLunIgroupMappings('acct-1', 'error-target', 'us-east-1', ['lun-uuid-1']);
+        const result = await fetchLunIgroupMappings('acct-1', 'cred-1', 'error-target', 'us-east-1', ['lun-uuid-1']);
 
         expect(result.lunMappings).toEqual([]);
         expect(result.error).toBeDefined();

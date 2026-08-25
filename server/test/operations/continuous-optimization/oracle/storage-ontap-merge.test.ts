@@ -73,7 +73,7 @@ describe('fetchDirectOntapAssessmentData', () => {
             body: ontapPage([{ vserver: 'svm-1', nfs_rootonly: 'disabled' }])
         });
 
-        const result = await fetchDirectOntapAssessmentData('acct-1', buildInstanceRecord());
+        const result = await fetchDirectOntapAssessmentData('acct-1', 'cred-1', buildInstanceRecord());
 
         expect(JSON.parse(result.volumesJson)).toEqual({
             error: '',
@@ -133,6 +133,7 @@ describe('fetchDirectOntapAssessmentData', () => {
 
         const result = await fetchDirectOntapAssessmentData(
             'acct-1',
+            'cred-1',
             buildInstanceRecord({ storageProtocol: 'iSCSI', mappedLunUuids: ['lun-uuid-1'] })
         );
 
@@ -155,6 +156,7 @@ describe('fetchDirectOntapAssessmentData', () => {
     it('surfaces a fetch error when mapped volume UUIDs are missing', async () => {
         const result = await fetchDirectOntapAssessmentData(
             'acct-1',
+            'cred-1',
             buildInstanceRecord({ mappedVolumesUuids: [], mappedVolumeNames: [] })
         );
 
@@ -199,7 +201,9 @@ describe('resolveBinaryVolumesNfsInfo', () => {
             ])
         });
 
-        const [resolved] = await resolveBinaryVolumesNfsInfo('acct-1', buildInstanceRecord(), [buildRawVolume()]);
+        const [resolved] = await resolveBinaryVolumesNfsInfo('acct-1', 'cred-1', buildInstanceRecord(), [
+            buildRawVolume()
+        ]);
 
         expect(resolved.volumeId).toBe('vol-uuid-orahome');
         expect(resolved.nfsInfo).toEqual({
@@ -214,13 +218,15 @@ describe('resolveBinaryVolumesNfsInfo', () => {
     it('leaves EBS-backed (non-NFS) binary volumes untouched', async () => {
         const rawVolume = buildRawVolume({ isNfsMount: false, volumeId: 'vol-0abc', mountPath: null });
 
-        const [resolved] = await resolveBinaryVolumesNfsInfo('acct-1', buildInstanceRecord(), [rawVolume]);
+        const [resolved] = await resolveBinaryVolumesNfsInfo('acct-1', 'cred-1', buildInstanceRecord(), [rawVolume]);
 
         expect(resolved).toEqual(rawVolume);
     });
 
     it('returns nfsInfo undefined when the ONTAP volume cannot be resolved by name', async () => {
-        const [resolved] = await resolveBinaryVolumesNfsInfo('acct-1', buildInstanceRecord(), [buildRawVolume()]);
+        const [resolved] = await resolveBinaryVolumesNfsInfo('acct-1', 'cred-1', buildInstanceRecord(), [
+            buildRawVolume()
+        ]);
 
         expect(resolved.nfsInfo).toBeUndefined();
     });

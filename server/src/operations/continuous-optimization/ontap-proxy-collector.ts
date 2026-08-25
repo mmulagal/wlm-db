@@ -108,6 +108,7 @@ interface FsxOntapQuery {
     fileSystemId: string;
     fsxName?: string;
     region: string;
+    credentialsId: string;
     volumeUuids: string[];
     volumeNames: string[];
     lunUuids: string[];
@@ -165,9 +166,10 @@ function computeHeadroomData(aggregates: OntapAggregateRecord[]) {
 async function collectOntapHeadroomData(
     accountId: string,
     fileSystemId: string,
-    region: string
+    region: string,
+    credentialsId: string
 ): Promise<AggregateHeadroomData | undefined> {
-    const base = buildOntapProxyBase(accountId, fileSystemId, region);
+    const base = await buildOntapProxyBase(accountId, credentialsId, fileSystemId, region);
     const aggregates = await collectAllOntapRecords<OntapAggregateRecord>(base, 'api/storage/aggregates', {
         fields: AGGREGATE_FIELDS
     });
@@ -240,10 +242,10 @@ async function collectVolumeSnapshots(base: ProxyOperationBaseOpts, volumeUuids:
 }
 
 async function fetchOntapInventory(accountId: string, query: FsxOntapQuery): Promise<FsxOntapInventory> {
-    const { fileSystemId, region, volumeUuids, volumeNames, lunUuids } = query;
+    const { fileSystemId, region, credentialsId, volumeUuids, volumeNames, lunUuids } = query;
     logger.debug('FSx: fetching ONTAP inventory', { accountId, fileSystemId });
 
-    const base = buildOntapProxyBase(accountId, fileSystemId, region);
+    const base = await buildOntapProxyBase(accountId, credentialsId, fileSystemId, region);
 
     const [volumesRes, lunsRes, privateCliRes, footprintRes, headroomRes, snapshotsRes] = await Promise.allSettled([
         volumeUuids.length === 0
@@ -276,7 +278,7 @@ async function fetchOntapInventory(accountId: string, query: FsxOntapQuery): Pro
                   volumeNames,
                   { fields: FOOTPRINT_FIELDS }
               ),
-        collectOntapHeadroomData(accountId, fileSystemId, region),
+        collectOntapHeadroomData(accountId, fileSystemId, region, credentialsId),
         collectVolumeSnapshots(base, volumeUuids)
     ]);
 
@@ -504,6 +506,7 @@ function toOracleStorageAssessment(
 
 async function collectOntapAssessmentData(
     accountId: string,
+    credentialsId: string,
     relationship: Ec2FsxRelationship,
     parentTaskId?: string
 ): Promise<FsxStorageCollectionResult[]> {
@@ -524,6 +527,7 @@ async function collectOntapAssessmentData(
             fileSystemId,
             fsxName,
             region,
+            credentialsId,
             volumeUuids: [...new Set(volumes.map(v => v.volumeUuid).filter(Boolean))],
             volumeNames: [...new Set(volumes.map(v => v.volumeName).filter(Boolean))],
             lunUuids: [...new Set(volumes.flatMap(({ luns = [] }) => luns.map(l => l.lunUuid)).filter(Boolean))]

@@ -126,7 +126,7 @@ describe('handlers — tracker wiring', () => {
         it('should create parent and FSx tracker tasks when discovery finds an FSx', async () => {
             const collectorSpy = vi
                 .spyOn(collectorModule, 'collectOntapAssessmentData')
-                .mockImplementation(async (accountId, _relationship, parentTaskId) =>
+                .mockImplementation(async (accountId, _credentialsId, _relationship, parentTaskId) =>
                     trackSubtask(
                         accountId,
                         parentTaskId!,
@@ -190,7 +190,7 @@ describe('handlers — tracker wiring', () => {
         it('should propagate an FSx assessment failure up through to the parent tracker task', async () => {
             const collectorSpy = vi
                 .spyOn(collectorModule, 'collectOntapAssessmentData')
-                .mockImplementation(async (accountId, _relationship, parentTaskId) =>
+                .mockImplementation(async (accountId, _credentialsId, _relationship, parentTaskId) =>
                     trackSubtask(
                         accountId,
                         parentTaskId!,

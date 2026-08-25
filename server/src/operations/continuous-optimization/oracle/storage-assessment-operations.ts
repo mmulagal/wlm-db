@@ -2688,7 +2688,7 @@ async function initiateStorageAssessmentCollection(
                   )
                 : NFS_OS_ASSESSMENT(activeNodeInstanceid, databaseInstanceName);
 
-        const ontapAssessmentData = await fetchDirectOntapAssessmentData(accountId, instanceRecord);
+        const ontapAssessmentData = await fetchDirectOntapAssessmentData(accountId, credentialsId, instanceRecord);
 
         const combinedResponse = await callSsmExecution({
             credentialsId,
@@ -2710,6 +2710,7 @@ async function initiateStorageAssessmentCollection(
         if (rawBinaryVolumes.length > 0) {
             storageAssessment.binaryVolumes.data = await resolveBinaryVolumesNfsInfo(
                 accountId,
+                credentialsId,
                 instanceRecord,
                 rawBinaryVolumes
             );

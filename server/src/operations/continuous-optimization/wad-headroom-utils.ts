@@ -148,7 +148,7 @@ async function applyWadHeadroomFix({
                 }
 
                 try {
-                    const headroomData = await collectOntapHeadroomData(accountId, fileSystemId, region);
+                    const headroomData = await collectOntapHeadroomData(accountId, fileSystemId, region, credentialsId);
                     if (!headroomData) {
                         throw new Error('Unable to collect storage headroom data for this file system.');
                     }

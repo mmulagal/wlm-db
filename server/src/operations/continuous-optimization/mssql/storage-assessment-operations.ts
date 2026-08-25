@@ -101,6 +101,7 @@ interface DatabaseVolumeRecord {
 
 async function mergeOntapDriveIdentityIntoAssessment(
     accountId: string,
+    credentialsId: string,
     instanceRecord: WorkloadInstance,
     rawResponse: Record<string, unknown>
 ) {
@@ -130,7 +131,7 @@ async function mergeOntapDriveIdentityIntoAssessment(
         .map(drive => drive.lunSerialNumber)
         .filter((serialNumber): serialNumber is string => Boolean(serialNumber));
 
-    const { luns: lunsBySerial } = await fetchLunsBySerialNumbers(accountId, instanceRecord, [
+    const { luns: lunsBySerial } = await fetchLunsBySerialNumbers(accountId, credentialsId, instanceRecord, [
         ...new Set(serialNumbers)
     ]);
 
@@ -182,7 +183,7 @@ async function initiateStorageAssessmentCollection(
             logger.error(errorMessage);
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
         }
-        const ontapAssessmentData = await fetchDirectOntapAssessmentData(accountId, instanceRecord);
+        const ontapAssessmentData = await fetchDirectOntapAssessmentData(accountId, credentialsId, instanceRecord);
         const command = [STORAGE_CONFIGURATION_ASSESSMENT(instanceRecord, ontapAssessmentData)];
         const ssmComment = 'Get Storage Configuration Assessment for MSSQL Database Instance';
         const response = await callSsmExecution({
@@ -197,7 +198,12 @@ async function initiateStorageAssessmentCollection(
         });
 
         const rawResponse = (response ? sqlResponseParsing(response) : {}) as Record<string, unknown>;
-        const finalResponse = await mergeOntapDriveIdentityIntoAssessment(accountId, instanceRecord, rawResponse);
+        const finalResponse = await mergeOntapDriveIdentityIntoAssessment(
+            accountId,
+            credentialsId,
+            instanceRecord,
+            rawResponse
+        );
         const { volumes, luns, os, layout, sizing } = finalResponse as unknown as StorageAssessment;
         await createDatabaseInstanceConfigData([
             {
