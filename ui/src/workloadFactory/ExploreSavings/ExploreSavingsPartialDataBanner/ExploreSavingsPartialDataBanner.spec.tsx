@@ -6,7 +6,7 @@ vi.mock('react-i18next', () => ({
     useTranslation: () => ({
         t: (key: string) =>
             ({
-                'databases.wad.partial-data-displayed-title': 'Partial data is displayed.',
+                'databases.wad.additional-access-banner-title': 'Additional access required',
                 'databases.explore-savings.partial-data-message':
                     'Some savings data may be incomplete because this host is not fully registered.',
                 'databases.explore-savings.authenticate': 'Authenticate',
@@ -24,7 +24,7 @@ describe('ExploreSavingsPartialDataBanner', () => {
         render(<ExploreSavingsPartialDataBanner />);
 
         expect(screen.getByTestId('explore-savings-partial-data-banner')).toBeDefined();
-        expect(screen.getByText('Partial data is displayed.')).toBeDefined();
+        expect(screen.getByText('Additional access required')).toBeDefined();
         expect(
             screen.getByText('Some savings data may be incomplete because this host is not fully registered.')
         ).toBeDefined();

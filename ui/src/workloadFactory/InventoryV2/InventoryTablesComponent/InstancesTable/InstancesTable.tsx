@@ -761,9 +761,13 @@ const InstancesTable = () => {
                     // Use manageActionCol to check for storage and other standard checks (same as old column implementation)
                     const { disableMsg } = manageActionCol(t, selectedHostType, rowData);
 
-                    // Additionally check for new FSx link and permission requirements
+                    // Additionally check for new FSx link and permission requirements.
+                    // hostManageReadiness is only populated by the discover flow; a host that was
+                    // just deregistered from fully-managed has none yet (unknown, not denied) until
+                    // rediscovered, so only block on an explicit false.
                     const fsxLinkMissing = rowData?.hostManageReadiness?.fsxLinkExists === false;
-                    const lacksPermission = !hasFullPermission(rowData?.hostManageReadiness);
+                    const lacksPermission =
+                        rowData?.hostManageReadiness != null && !hasFullPermission(rowData?.hostManageReadiness);
 
                     // Combine checks: disabled if manageActionCol says so OR if FSx link missing OR lacks permission
                     const isDisabled = !!disableMsg || fsxLinkMissing || lacksPermission;

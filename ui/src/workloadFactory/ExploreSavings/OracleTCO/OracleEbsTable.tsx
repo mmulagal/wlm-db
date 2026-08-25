@@ -10,8 +10,7 @@ import {
     renderCellData,
     renderInstanceListText,
     renderUnmanagedAZ,
-    uniqueHostRow,
-    canTriggerUnregisteredAssessment
+    uniqueHostRow
 } from '../../InventoryV2/InventoryUtilsV2';
 import { getSelectedFromSelectionState } from '../../../utils/utilityFunctions';
 import { onClickESHostOracleEbs } from '../ExploreSavingsUtils';
@@ -95,15 +94,11 @@ const OracleEbsTable = () => {
 
                 const limitReached = selectedRowsForExploreSavingsOracleEbsBulk.length >= 5;
                 const shouldDisableDueToLimit = limitReached && !isSelected;
-                const lacksExploreSavingsPermission = !canTriggerUnregisteredAssessment(item?.hostManageReadiness);
 
-                const isDisabled =
-                    !sharesGroupWithSelection || shouldDisableDueToLimit || lacksExploreSavingsPermission;
+                const isDisabled = !sharesGroupWithSelection || shouldDisableDueToLimit;
 
                 let tooltipTitle = '';
-                if (lacksExploreSavingsPermission) {
-                    tooltipTitle = t('databases.inventory.full-permission-required-explore-savings');
-                } else if (!sharesGroupWithSelection) {
+                if (!sharesGroupWithSelection) {
                     tooltipTitle = t('databases.explore-savings.disabled-tooltip');
                 } else if (shouldDisableDueToLimit) {
                     tooltipTitle = t('databases.explore-savings.disabled-tooltip-limit-exceed');
@@ -165,15 +160,11 @@ const OracleEbsTable = () => {
         width: windowSize.width >= 1920 ? '15.37%' : '247px',
         renderCell: (_cellData: any, rowData: any) => {
             const isBulkSelectionActive = selectedRowsForExploreSavingsOracleEbsBulk.length > 0;
-            const lacksExploreSavingsPermission = !canTriggerUnregisteredAssessment(rowData?.hostManageReadiness);
-            const isDisabled = isBulkSelectionActive || lacksExploreSavingsPermission;
+            const isDisabled = isBulkSelectionActive;
 
-            let tooltipMessage = '';
-            if (lacksExploreSavingsPermission) {
-                tooltipMessage = t('databases.inventory.full-permission-required-explore-savings');
-            } else if (isBulkSelectionActive) {
-                tooltipMessage = t('databases.explore-savings.disabled-tooltip-bulk-selection');
-            }
+            const tooltipMessage = isBulkSelectionActive
+                ? t('databases.explore-savings.disabled-tooltip-bulk-selection')
+                : '';
 
             const exploreSavingsButton = (
                 <div

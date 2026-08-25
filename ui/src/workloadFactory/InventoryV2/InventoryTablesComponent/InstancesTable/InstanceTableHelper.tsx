@@ -768,8 +768,10 @@ export const isInstanceActionDisabled = (
         };
     }
 
-    // Check permission level - registration requires extensiveRunPermission for database authentication
-    if (!hasFullPermission(rowData?.hostManageReadiness)) {
+    // Check permission level - registration requires extensiveRunPermission for database authentication.
+    // A previously-managed host has no discover-based hostManageReadiness (null/undefined) until it is
+    // rediscovered; that's "unknown", not "denied", so only block on an explicit false.
+    if (rowData?.hostManageReadiness != null && !hasFullPermission(rowData?.hostManageReadiness)) {
         return {
             isDisabled: true,
             disableMsg: t(getRegistrationRequiresFullPermissionMessageKey(selectedHostType)),

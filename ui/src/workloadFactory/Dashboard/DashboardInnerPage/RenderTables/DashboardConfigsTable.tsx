@@ -51,6 +51,7 @@ import {
     hasAssessmentTimestamp
 } from '../../../WellArchitectedTab/assessmentFormatUtils';
 import {
+    resolveInventoryRowForAssessmentInstance,
     shouldSkipDuplicateAssessmentInstance,
     shouldSkipWellArchAssessmentItem
 } from '../../../InventoryV2/InventoryUtilsV2';
@@ -150,6 +151,11 @@ const DashboardConfigsTable = ({
                     regionsData && regionsData?.regions?.find(entry => entry.regionCode === hostData?.regionId);
 
                 const customData = config.dataMapping(configObj, instanceData);
+                const inventoryRow = resolveInventoryRowForAssessmentInstance(
+                    hostData,
+                    instanceData,
+                    inventoryTableData
+                );
 
                 assessmentData.push({
                     credentialId: hostData?.credentialId,
@@ -169,6 +175,9 @@ const DashboardConfigsTable = ({
                     accountId: matchingCredEntry?.providerAccountId,
                     isWad: hostData?.isWad,
                     isUnregistered: !!hostData?.isUnregistered,
+                    hostManageReadiness: inventoryRow?.hostManageReadiness,
+                    fsxLinkExists: inventoryRow?.fsxLinkExists,
+                    databaseInstanceTopology: inventoryRow?.databaseInstanceTopology,
                     ...customData
                 });
             });

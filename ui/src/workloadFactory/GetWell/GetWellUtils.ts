@@ -44,7 +44,7 @@ import {
     mergeUnregisteredIntoAllAssessmentData,
     removeRegisteredInstanceAssessmentFromBulkStore
 } from '../DatabaseHomePage/DatabaseHomeUtils';
-import { mergeUnregisteredAssessmentIntoInventory } from '../InventoryV2/InventoryUtilsV2';
+import { getInstanceFsxLinkExists, mergeUnregisteredAssessmentIntoInventory } from '../InventoryV2/InventoryUtilsV2';
 import { setInstanceDetailsData } from '../../store/workloadFactory/workloadFactoryResourceSlice';
 import { GENERAL } from '../../utils/appConstants';
 import {
@@ -1707,48 +1707,120 @@ const matchesRegisteredHostAssessment = (
     hostData?.credentialId === identifiers.credentialId &&
     hostData?.regionId === identifiers.regionId;
 
-const findRegisteredInventoryInstance = (identifiers: {
-    databaseHostId: string;
-    databaseInstanceId: string;
-    credentialId: string;
-    regionId: string;
-}) => {
+/** Reuse a bulk-store row already keyed by a host-level id (EC2 id / managed host id) when one
+ *  exists, so Inventory and the Well-architected dashboard (which only look up rows by host-level
+ *  keys) can still find the patched data.
+ *
+ *  A row matching the given identifier/managed-host id exactly is always preferred over a fuzzy
+ *  EC2-id match: the bulk fetch can contain more than one row for the same physical instance (e.g.
+ *  a stale/placeholder duplicate whose vmInstanceId happens to equal the host's EC2 id), and picking
+ *  that duplicate over the exact-key row would make the dedup step below delete the real, findable
+ *  row instead of the stale one. */
+const findExistingBulkHostId = (
+    assessmentData: any[],
+    identifiers: { databaseHostId: string; credentialId: string; regionId: string },
+    host: any
+) => {
+    const matchesCredRegion = (row: any) =>
+        row?.credentialId === identifiers.credentialId && row?.regionId === identifiers.regionId;
+
+    const primaryIds = [identifiers.databaseHostId, host?.resourceId, host?.id].filter(Boolean);
+    const primaryRow = assessmentData?.find(
+        (row: any) => matchesCredRegion(row) && primaryIds.includes(row?.databaseHostId)
+    );
+    if (primaryRow) {
+        return primaryRow.databaseHostId;
+    }
+
+    const fuzzyIds = [host?.ec2InstanceId].filter(Boolean);
+    const fuzzyRow = assessmentData?.find(
+        (row: any) =>
+            matchesCredRegion(row) && (fuzzyIds.includes(row?.databaseHostId) || fuzzyIds.includes(row?.vmInstanceId))
+    );
+    return fuzzyRow?.databaseHostId;
+};
+
+const findRegisteredInventoryInstance = (
+    identifiers: {
+        databaseHostId: string;
+        databaseInstanceId: string;
+        credentialId: string;
+        regionId: string;
+    },
+    assessmentData: any[]
+) => {
     const { inventoryTableData } = store.getState().inventoryV2;
     const instanceLookup = identifiers.databaseInstanceId?.toLowerCase();
-    for (const host of Object.values(inventoryTableData || {}) as any[]) {
-        if (host?.credentialId !== identifiers.credentialId || host?.regionId !== identifiers.regionId) {
-            continue;
-        }
-        const instance = host?.sqlServerInstances?.find(
+    const hosts = Object.values(inventoryTableData || {}) as any[];
+    const isCredRegionMatch = (h: any) =>
+        h?.credentialId === identifiers.credentialId && h?.regionId === identifiers.regionId;
+    const isTargetHost = (h: any) =>
+        [h?.id, h?.resourceId, h?.ec2InstanceId].filter(Boolean).includes(identifiers.databaseHostId);
+
+    const resolveWithinHost = (host: any, instance: any) => {
+        const existingBulkHostId = findExistingBulkHostId(assessmentData, identifiers, host);
+        return {
+            databaseHostId:
+                existingBulkHostId ||
+                instance?.resourceId ||
+                host?.resourceId ||
+                host?.id ||
+                identifiers.databaseHostId,
+            databaseInstanceId: instance?.databaseInstanceId || identifiers.databaseInstanceId,
+            databaseInstanceName: instance?.databaseInstanceName
+        };
+    };
+
+    // Prefer identifying the host by its own id first: standalone hosts commonly share the same
+    // default instance name/id (e.g. "MSSQLSERVER"), so an id/name match scoped to the CORRECT host
+    // is required before trusting it — otherwise it can resolve to a completely unrelated host.
+    const targetHost = hosts.find((h: any) => isCredRegionMatch(h) && isTargetHost(h));
+    if (targetHost) {
+        const instance = targetHost?.sqlServerInstances?.find(
             (row: any) =>
                 row?.databaseInstanceId === identifiers.databaseInstanceId ||
                 (!!instanceLookup && row?.databaseInstanceName?.toLowerCase() === instanceLookup)
         );
+        return resolveWithinHost(targetHost, instance);
+    }
+
+    // Legacy fallback: the raw databaseHostId sometimes carries an instance-level resourceId rather
+    // than a host id (e.g. from an older data path), so the host can only be found via its instance's
+    // own unique id — never via a shared display name, since that requires the host match above.
+    for (const host of hosts) {
+        if (!isCredRegionMatch(host)) {
+            continue;
+        }
+        const instance = host?.sqlServerInstances?.find(
+            (row: any) => row?.databaseInstanceId === identifiers.databaseInstanceId
+        );
         if (instance) {
-            return {
-                databaseHostId: instance?.resourceId || host?.resourceId || host?.id || identifiers.databaseHostId,
-                databaseInstanceId: instance?.databaseInstanceId || identifiers.databaseInstanceId,
-                databaseInstanceName: instance?.databaseInstanceName
-            };
+            return resolveWithinHost(host, instance);
         }
     }
     return null;
 };
 
 /** Inventory keys use host.id; inner page may pass resourceId — resolve before patching bulk store */
-const resolveRegisteredDatabaseHostId = (identifiers: {
-    databaseHostId: string;
-    databaseInstanceId: string;
-    credentialId: string;
-    regionId: string;
-}) => findRegisteredInventoryInstance(identifiers)?.databaseHostId ?? identifiers.databaseHostId;
+const resolveRegisteredDatabaseHostId = (
+    identifiers: {
+        databaseHostId: string;
+        databaseInstanceId: string;
+        credentialId: string;
+        regionId: string;
+    },
+    assessmentData: any[]
+) => findRegisteredInventoryInstance(identifiers, assessmentData)?.databaseHostId ?? identifiers.databaseHostId;
 
-const resolveRegisteredDatabaseInstanceId = (identifiers: {
-    databaseHostId: string;
-    databaseInstanceId: string;
-    credentialId: string;
-    regionId: string;
-}) => findRegisteredInventoryInstance(identifiers)?.databaseInstanceId ?? identifiers.databaseInstanceId;
+const resolveRegisteredDatabaseInstanceId = (
+    identifiers: {
+        databaseHostId: string;
+        databaseInstanceId: string;
+        credentialId: string;
+        regionId: string;
+    },
+    assessmentData: any[]
+) => findRegisteredInventoryInstance(identifiers, assessmentData)?.databaseInstanceId ?? identifiers.databaseInstanceId;
 
 const resolveRegisteredInstanceDisplayName = (
     identifiers: {
@@ -1757,9 +1829,10 @@ const resolveRegisteredInstanceDisplayName = (
         credentialId: string;
         regionId: string;
     },
-    freshAssessmentData: any
+    freshAssessmentData: any,
+    assessmentData: any[]
 ) =>
-    findRegisteredInventoryInstance(identifiers)?.databaseInstanceName ??
+    findRegisteredInventoryInstance(identifiers, assessmentData)?.databaseInstanceName ??
     freshAssessmentData?.metadata?.databaseInstanceName;
 
 export const updateAccountLevelAssessmentData = (
@@ -1788,10 +1861,10 @@ export const updateAccountLevelAssessmentData = (
 
     const resolvedIdentifiers = {
         ...identifiers,
-        databaseHostId: resolveRegisteredDatabaseHostId(identifiers),
-        databaseInstanceId: resolveRegisteredDatabaseInstanceId(identifiers)
+        databaseHostId: resolveRegisteredDatabaseHostId(identifiers, assessmentData),
+        databaseInstanceId: resolveRegisteredDatabaseInstanceId(identifiers, assessmentData)
     };
-    const resolvedInstanceName = resolveRegisteredInstanceDisplayName(identifiers, freshAssessmentData);
+    const resolvedInstanceName = resolveRegisteredInstanceDisplayName(identifiers, freshAssessmentData, assessmentData);
 
     let hostMatched = false;
     const updatedData = assessmentData.map((hostData: any) => {
@@ -1848,23 +1921,34 @@ export const updateAccountLevelAssessmentData = (
         });
     }
 
-    // Drop stale wrong-key host row (resourceId) when the same instance was patched under host.id
-    const dedupedData = updatedData.filter((hostData: any) => {
-        if (hostData?.databaseHostId === resolvedIdentifiers.databaseHostId) {
-            return true;
-        }
-        const hasSameInstance = hostData?.instancesAssessment?.some(
-            (instance: any) =>
-                instance?.databaseInstanceId === resolvedIdentifiers.databaseInstanceId ||
-                (!!resolvedInstanceName &&
-                    instance?.databaseInstanceName?.toLowerCase() === resolvedInstanceName.toLowerCase())
-        );
-        return !(
-            hasSameInstance &&
-            hostData?.credentialId === resolvedIdentifiers.credentialId &&
-            hostData?.regionId === resolvedIdentifiers.regionId
-        );
-    });
+    // Drop the stale duplicate instance entry left behind under the pre-resolution host key
+    // (e.g. EC2 id vs managed resourceId) without deleting sibling instances on that same host row.
+    const dedupedData =
+        identifiers.databaseHostId === resolvedIdentifiers.databaseHostId
+            ? updatedData
+            : updatedData.reduce((acc: any[], hostData: any) => {
+                  const isStaleKeyRow =
+                      hostData?.databaseHostId === identifiers.databaseHostId &&
+                      hostData?.credentialId === resolvedIdentifiers.credentialId &&
+                      hostData?.regionId === resolvedIdentifiers.regionId;
+                  if (!isStaleKeyRow) {
+                      acc.push(hostData);
+                      return acc;
+                  }
+
+                  const remainingInstances = (hostData?.instancesAssessment ?? []).filter(
+                      (instance: any) =>
+                          instance?.databaseInstanceId !== resolvedIdentifiers.databaseInstanceId &&
+                          !(
+                              !!resolvedInstanceName &&
+                              instance?.databaseInstanceName?.toLowerCase() === resolvedInstanceName.toLowerCase()
+                          )
+                  );
+                  if (remainingInstances.length > 0) {
+                      acc.push({ ...hostData, instancesAssessment: remainingInstances });
+                  }
+                  return acc;
+              }, []);
 
     if (isOracle) {
         dispatch(addAllOracleHostAssessmentData(dedupedData));
@@ -1935,6 +2019,14 @@ export const getConfigDrillDownFixDisableState = (
                 dbType === DBType.ORACLE
                     ? translation('databases.wad.unregistered-tab-disabled-message-oracle')
                     : translation('databases.wad.unregistered-tab-disabled-message')
+        };
+    }
+    // Registered rows carry their own fsxLinkExists (from databaseInstanceTopology); hostManageReadiness
+    // is discover-only and is often absent once a host is fully managed, so it's just the last fallback.
+    if (getInstanceFsxLinkExists(rowData ?? {}) === false) {
+        return {
+            isDisabled: true,
+            errorMessage: translation('databases.wad.registered-missing-fs-link-disabled-message')
         };
     }
     return { isDisabled: false, errorMessage: '' };

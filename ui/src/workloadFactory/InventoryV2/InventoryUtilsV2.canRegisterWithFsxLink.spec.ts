@@ -38,13 +38,16 @@ const isFsxLinkMissingForRegistration = (rowData: {
 
 /**
  * Mirrors InstancesTable register menu tooltip priority: permission first, then FSx link.
+ * hostManageReadiness is only populated by the discover flow; a host just deregistered from
+ * fully-managed has none yet (unknown, not denied) until rediscovered, so only an explicit
+ * `false` should block registration.
  */
 const getRegisterBlockReasonKey = (
     rowData: { hostManageReadiness?: { fsxLinkExists?: boolean; extensiveRunPermission?: boolean } },
     engineType: string
 ) => {
     const fsxLinkMissing = rowData.hostManageReadiness?.fsxLinkExists === false;
-    const lacksPermission = !hasFullPermission(rowData.hostManageReadiness);
+    const lacksPermission = rowData.hostManageReadiness != null && !hasFullPermission(rowData.hostManageReadiness);
 
     if (lacksPermission) {
         return getRegistrationRequiresFullPermissionMessageKey(engineType);
@@ -118,15 +121,19 @@ describe('registration pre-checks (inline InstanceTableHelper / InstancesTable f
         ).toBe(false);
     });
 
-    it('blocks on missing full permission when hostManageReadiness is undefined', () => {
+    it('hasFullPermission treats missing hostManageReadiness as not-granted (raw predicate)', () => {
         expect(hasFullPermission(undefined)).toBe(false);
-        expect(getRegisterBlockReasonKey({}, DBType.MSSQL)).toBe(
-            getRegistrationRequiresFullPermissionMessageKey(DBType.MSSQL)
-        );
+        expect(hasFullPermission(null as any)).toBe(false);
     });
 
-    it('blocks on missing full permission when hostManageReadiness is null', () => {
-        expect(hasFullPermission(null as any)).toBe(false);
+    it('does not block registration when hostManageReadiness is undefined (unknown, e.g. freshly deregistered host pending rediscovery)', () => {
+        expect(getRegisterBlockReasonKey({}, DBType.MSSQL)).toBeUndefined();
+    });
+
+    it('blocks registration when hostManageReadiness explicitly denies extensiveRunPermission', () => {
+        expect(
+            getRegisterBlockReasonKey({ hostManageReadiness: { extensiveRunPermission: false } }, DBType.MSSQL)
+        ).toBe(getRegistrationRequiresFullPermissionMessageKey(DBType.MSSQL));
     });
 
     it('allows register pre-check when fsxLinkExists is true and full permission is granted', () => {

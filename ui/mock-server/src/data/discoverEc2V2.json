@@ -1,5 +1,5 @@
 {
-    "count": 42,
+    "count": 45,
     "items": [
         {
             "ec2InstanceId": "i-0a6c761f84a4adfd1",
@@ -2848,6 +2848,225 @@
                         {
                             "type": "MULTI_AZ_1",
                             "zones": ["us-east-1a", "us-east-1b"]
+                        }
+                    ],
+                    "manageReadiness": {
+                        "assessment": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-es-ebs-no-auth",
+            "ec2InstanceType": "m5.xlarge",
+            "ssmState": "connected",
+            "ec2InstanceName": "es-ebs-no-auth",
+            "ec2UsageOperation": "RunInstances:0002",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
+            },
+            "source": "discover",
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "CASEESNOAUTH",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.4015.1",
+                    "sqlServerProductYear": 2022,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": false,
+                    "windowsDomainUserAuthentication": false,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "es-ebs-no-auth-sql",
+                    "sqlServerNodes": ["es-ebs-no-auth-sql"],
+                    "nodeIps": ["172.31.90.10"],
+                    "sqlServerDeploymentType": "Standalone",
+                    "databaseCount": 2,
+                    "sqlServerAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "EBS",
+                            "id": "vol-es-ebs-no-auth-data"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-es-ebs-no-auth-log"
+                        }
+                    ],
+                    "deploymentTypes": [
+                        {
+                            "type": "SINGLE_AZ_1",
+                            "zones": ["us-east-1a"]
+                        }
+                    ],
+                    "manageReadiness": {
+                        "assessment": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-es-ebs-missing-permission",
+            "ec2InstanceType": "m5.xlarge",
+            "ssmState": "connected",
+            "ec2InstanceName": "es-ebs-missing-permission",
+            "ec2UsageOperation": "RunInstances:0002",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
+            },
+            "source": "discover",
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "CASEESMISSINGPERM",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.4015.1",
+                    "sqlServerProductYear": 2022,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": true,
+                    "windowsDomainUserAuthentication": false,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "es-ebs-missing-permission-sql",
+                    "sqlServerNodes": ["es-ebs-missing-permission-sql"],
+                    "nodeIps": ["172.31.90.20"],
+                    "sqlServerDeploymentType": "Standalone",
+                    "databaseCount": 2,
+                    "sqlServerAuthentication": true,
+                    "storage": [
+                        {
+                            "type": "EBS",
+                            "id": "vol-es-ebs-missing-perm-data"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-es-ebs-missing-perm-log"
+                        }
+                    ],
+                    "deploymentTypes": [
+                        {
+                            "type": "SINGLE_AZ_1",
+                            "zones": ["us-east-1a"]
+                        }
+                    ],
+                    "manageReadiness": {
+                        "assessment": {
+                            "missingSqlPermissions": ["VIEW SERVER STATE"],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-es-ebs-not-registered",
+            "ec2InstanceType": "m5.xlarge",
+            "ssmState": "connected",
+            "ec2InstanceName": "es-ebs-not-registered",
+            "ec2UsageOperation": "RunInstances:0002",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "hostManageReadiness": {
+                "extensiveRunPermission": false,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
+            },
+            "source": "discover",
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "CASEESNOTREG",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.4015.1",
+                    "sqlServerProductYear": 2022,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": true,
+                    "windowsDomainUserAuthentication": false,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "es-ebs-not-registered-sql",
+                    "sqlServerNodes": ["es-ebs-not-registered-sql"],
+                    "nodeIps": ["172.31.90.30"],
+                    "sqlServerDeploymentType": "Standalone",
+                    "databaseCount": 2,
+                    "sqlServerAuthentication": true,
+                    "storage": [
+                        {
+                            "type": "EBS",
+                            "id": "vol-es-ebs-not-reg-data"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-es-ebs-not-reg-log"
+                        }
+                    ],
+                    "deploymentTypes": [
+                        {
+                            "type": "SINGLE_AZ_1",
+                            "zones": ["us-east-1a"]
                         }
                     ],
                     "manageReadiness": {

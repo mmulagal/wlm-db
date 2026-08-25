@@ -1,5 +1,5 @@
 {
-    "count": 29,
+    "count": 32,
     "items": [
         {
             "ec2InstanceId": "i-12456768",
@@ -2074,6 +2074,189 @@
                                     "mountPath": "/u01"
                                 }
                             ]
+                        }
+                    ],
+                    "manageReadiness": {
+                        "assessment": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-oracle-es-ebs-no-auth",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "oracle-es-ebs-no-auth",
+            "ec2HostName": "ip-172-31-90-40.us-west-2.compute.internal",
+            "ec2UsageOperation": "RunInstances",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "platform": "Red Hat Enterprise Linux 8.9 (Ootpa)",
+            "oracleServerDeploymentType": "Standalone",
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
+            },
+            "source": "discover",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "ORACASESNOAUTH",
+                    "instanceId": "ORACASESNOAUTH",
+                    "instanceState": "OPEN",
+                    "version": "19.0.0.0.0",
+                    "instanceType": "SINGLE_TENANT",
+                    "databaseCount": 1,
+                    "databaseDetails": {
+                        "databaseId": "1111111111",
+                        "openMode": "READ WRITE"
+                    },
+                    "oracleServerAuthentication": false,
+                    "isDefaultAuthentication": false,
+                    "isInstanceStorageAsmManaged": false,
+                    "asmAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "EBS",
+                            "id": "vol-oracle-es-no-auth-001"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-oracle-es-no-auth-002"
+                        }
+                    ],
+                    "manageReadiness": {
+                        "assessment": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-oracle-es-ebs-missing-permission",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "oracle-es-ebs-missing-permission",
+            "ec2HostName": "ip-172-31-90-50.us-west-2.compute.internal",
+            "ec2UsageOperation": "RunInstances",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "platform": "Red Hat Enterprise Linux 8.9 (Ootpa)",
+            "oracleServerDeploymentType": "Standalone",
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
+            },
+            "source": "discover",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "ORACASESMISSINGPERM",
+                    "instanceId": "ORACASESMISSINGPERM",
+                    "instanceState": "OPEN",
+                    "version": "19.0.0.0.0",
+                    "instanceType": "SINGLE_TENANT",
+                    "databaseCount": 1,
+                    "databaseDetails": {
+                        "databaseId": "2222222222",
+                        "openMode": "READ WRITE"
+                    },
+                    "oracleServerAuthentication": false,
+                    "isDefaultAuthentication": true,
+                    "isInstanceStorageAsmManaged": false,
+                    "asmAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "EBS",
+                            "id": "vol-oracle-es-missing-perm-001"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-oracle-es-missing-perm-002"
+                        }
+                    ],
+                    "manageReadiness": {
+                        "assessment": {
+                            "missingSqlPermissions": ["VIEW SERVER STATE"],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-oracle-es-ebs-not-registered",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "oracle-es-ebs-not-registered",
+            "ec2HostName": "ip-172-31-90-60.us-west-2.compute.internal",
+            "ec2UsageOperation": "RunInstances",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "platform": "Red Hat Enterprise Linux 8.9 (Ootpa)",
+            "oracleServerDeploymentType": "Standalone",
+            "hostManageReadiness": {
+                "extensiveRunPermission": false,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
+            },
+            "source": "discover",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "ORACASESNOTREG",
+                    "instanceId": "ORACASESNOTREG",
+                    "instanceState": "OPEN",
+                    "version": "19.0.0.0.0",
+                    "instanceType": "SINGLE_TENANT",
+                    "databaseCount": 1,
+                    "databaseDetails": {
+                        "databaseId": "3333333344",
+                        "openMode": "READ WRITE"
+                    },
+                    "oracleServerAuthentication": false,
+                    "isDefaultAuthentication": true,
+                    "isInstanceStorageAsmManaged": false,
+                    "asmAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "EBS",
+                            "id": "vol-oracle-es-not-reg-001"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-oracle-es-not-reg-002"
                         }
                     ],
                     "manageReadiness": {

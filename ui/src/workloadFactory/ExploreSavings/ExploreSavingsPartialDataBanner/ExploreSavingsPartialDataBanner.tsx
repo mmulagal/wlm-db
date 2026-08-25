@@ -29,7 +29,9 @@ const ExploreSavingsPartialDataBanner = ({
             <div className={styles.topSection}>
                 <div className={styles.firstSegment}>
                     <Warning />
-                    <DsTypography variant="Regular_14">{t('databases.wad.partial-data-displayed-title')}</DsTypography>
+                    <DsTypography variant="Regular_14">
+                        {t('databases.wad.additional-access-banner-title')}
+                    </DsTypography>
                 </div>
                 <button
                     type="button"

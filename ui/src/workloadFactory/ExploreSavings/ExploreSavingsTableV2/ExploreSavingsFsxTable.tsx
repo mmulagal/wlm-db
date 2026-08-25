@@ -15,13 +15,11 @@ import {
     renderCellData,
     renderInstanceListText,
     renderUnmanagedAZ,
-    uniqueHostRow,
-    canTriggerUnregisteredAssessment
+    uniqueHostRow
 } from '../../InventoryV2/InventoryUtilsV2';
 import { getFilterOptions } from '../../../utils/utilityFunctions';
 import useResize from '../../../common/hooks/useResize';
 import { resetOptimizedStorage } from '../../../store/workloadFactory/exploreSavingsSlice';
-import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 
 const ExploreSavingsFsxTable = () => {
     const dispatch = useDispatch();
@@ -95,40 +93,20 @@ const ExploreSavingsFsxTable = () => {
         accessor: '',
         isSticky: true,
         width: windowSize.width >= 1920 ? '15.37%' : '247px',
-        renderCell: (cellData: any, rowData: any) => {
-            const lacksExploreSavingsPermission = !canTriggerUnregisteredAssessment(rowData?.hostManageReadiness);
-            const tooltipMessage = lacksExploreSavingsPermission
-                ? t('databases.inventory.full-permission-required-explore-savings')
-                : '';
-
-            const exploreSavingsButton = (
-                <div
-                    className={
-                        lacksExploreSavingsPermission ? CommonStyles.detectManageDisable : CommonStyles.detectManage
-                    }
-                    onClick={() => {
-                        if (lacksExploreSavingsPermission) {
-                            return;
-                        }
-                        dispatch(resetOptimizedStorage());
-                        onClickESHost(dispatch, rowData, isWorkloadFactory, navigate);
-                    }}
-                    id="wlm-db-fsxw-explore-savings-table-button"
-                >
-                    <Typography variant="Regular_14" className={CommonStyles.textStyle}>
-                        {GENERAL.ES_SAVINGS}
-                    </Typography>
-                </div>
-            );
-
-            return lacksExploreSavingsPermission ? (
-                <TooltipComponent title={tooltipMessage} placement="bottom" width="380px" height="50px">
-                    {exploreSavingsButton}
-                </TooltipComponent>
-            ) : (
-                exploreSavingsButton
-            );
-        }
+        renderCell: (cellData: any, rowData: any) => (
+            <div
+                className={CommonStyles.detectManage}
+                onClick={() => {
+                    dispatch(resetOptimizedStorage());
+                    onClickESHost(dispatch, rowData, isWorkloadFactory, navigate);
+                }}
+                id="wlm-db-fsxw-explore-savings-table-button"
+            >
+                <Typography variant="Regular_14" className={CommonStyles.textStyle}>
+                    {GENERAL.ES_SAVINGS}
+                </Typography>
+            </div>
+        )
     });
 
     const ExploreSavingsColDefs: ColumnProps[] = [

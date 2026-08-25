@@ -5228,8 +5228,10 @@ export const manageActionCol = (translation: TFunction, engineType: string, rowD
     } else if (rowData?.isWad && (!rowData?.credentialId || !rowData?.regionId)) {
         // WAD (offline assessment) rows without credentials cannot be registered
         disableMsg = translation('databases.wad.register-disabled-no-credentials');
-    } else if (!hasFullPermission(rowData?.hostManageReadiness)) {
-        // Registration requires extensiveRunPermission for database authentication
+    } else if (rowData?.hostManageReadiness != null && !hasFullPermission(rowData?.hostManageReadiness)) {
+        // Registration requires extensiveRunPermission for database authentication. A previously-managed
+        // host has no discover-based hostManageReadiness (null/undefined) until it is rediscovered; that's
+        // "unknown", not "denied", so only block on an explicit false.
         disableMsg = translation(getRegistrationRequiresFullPermissionMessageKey(engineType));
     }
 

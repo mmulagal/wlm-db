@@ -245,19 +245,18 @@ const RegisteredResourcesTable = () => {
                 const viewAndFixDisableMsg = getViewAndFixDisableMsg(rowData, canViewAndFix, t);
                 const isDisabled = isOffline || !!viewAndFixDisableMsg;
 
+                let tooltipMessage =
+                    viewAndFixDisableMsg || t('databases.well-architected-tab.resource-view-fix-hover-msg');
+                if (isOffline) {
+                    tooltipMessage = t('databases.well-architect.only-online-instances');
+                }
+
                 return (
                     <div className={styles.buttonContainer}>
                         <div />
                         <Popover
                             isAppendedToBody
-                            children={
-                                <DsTypography variant="Regular_14">
-                                    {isOffline
-                                        ? t('databases.well-architect.only-online-instances')
-                                        : viewAndFixDisableMsg ||
-                                          t('databases.well-architected-tab.resource-view-fix-hover-msg')}
-                                </DsTypography>
-                            }
+                            children={<DsTypography variant="Regular_14">{tooltipMessage}</DsTypography>}
                             trigger="hover"
                             container={
                                 <DsButton
