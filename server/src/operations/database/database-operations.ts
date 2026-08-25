@@ -282,7 +282,8 @@ async function getResources(
         nextToken,
         includeDatabaseInstances,
         allRecords,
-        assessmentData
+        assessmentData,
+        selectKeys
     } = params;
 
     logger.info(' Get the Resources', {
@@ -297,6 +298,7 @@ async function getResources(
     });
 
     const resourceType = inputResourceType || [RESOURCESTYPE.MSSQL, RESOURCESTYPE.PGSQL];
+    const resourceSelectKeys = selectKeys ?? [...RESOURCE_DEFAULT_SELECT_FIELDS, 'assessment_data', 'configurations'];
 
     let finalPageSize: number | undefined = pageSize;
     if (allRecords) {
@@ -314,7 +316,7 @@ async function getResources(
             pageSize: finalPageSize,
             nextToken,
             includeDatabaseInstances,
-            selectKeys: [...RESOURCE_DEFAULT_SELECT_FIELDS, 'assessment_data', 'configurations']
+            selectKeys: resourceSelectKeys
         });
 
         const countPromise = countResources(accountId);

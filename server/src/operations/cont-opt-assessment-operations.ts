@@ -1,37 +1,48 @@
+import { DATABASE_TYPE, JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { groupBy, isEmpty } from 'lodash-es';
-import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import throat from 'throat';
-import getLogger from '../utils/logger';
-import { DatabaseInstancesIncludingResource } from '../utils/common-types';
-import { ACCOUNT_ID, GOV_ACCOUNT, DatabaseTypes, isGovCloudRegion } from '../utils/consts';
+
+import { callWlmHostsGraphql, EC2_UNREGISTERED_ASSESSMENT_SCOPES_QUERY } from '../lib/cloud-manager/tagging-service';
 import { setAsyncLocalStorageResource, getLocalStorage } from '../utils/async-local-storage';
-import { IS_DEMO_FLOW, formatDuration, sleep } from '../utils/utils';
-import { registerJob, updateParentJobStatus } from './database/job-operations';
+import { DatabaseInstancesIncludingResource, Metadata, ResourceDetails } from '../utils/common-types';
+import { ACCOUNT_ID, GOV_ACCOUNT, DatabaseTypes, RESOURCESTYPE, WINDOWS, isGovCloudRegion } from '../utils/consts';
 import {
     AssessmentCategories,
     AssessmentCategoriesOracle,
     AssessmentTriggeredBy
 } from '../utils/continous-optimization-consts';
-import { getPaginatedDatabaseInstances } from './database/database-operations';
+import { INSTANCE_DEFAULT_SELECT_FIELDS } from '../utils/database-consts';
+import getLogger from '../utils/logger';
+import { IS_DEMO_FLOW, formatDuration, sleep } from '../utils/utils';
+
+import { getFsxLinkReadinessByFsId } from './aws/fsx-operations';
+import { canReadFleetManagerResource } from './aws/ssm-operations';
+import { buildEc2FsxRelationship } from './cloud-manager/tagging-service-operations';
 import {
     triggerMssqlAssessment,
     updateAssessmentResultsInInstanceMetadata
 } from './continuous-optimization/mssql/assessment-operations';
-import { INSTANCE_DEFAULT_SELECT_FIELDS } from '../utils/database-consts';
+import { triggerMssqlUnregisteredAssessment } from './continuous-optimization/mssql/offline-assessment-operations';
 import { triggerOracleAssessment } from './continuous-optimization/oracle/assessment-operations';
+import { triggerOracleUnregisteredAssessment } from './continuous-optimization/oracle/offline-assessment-operations';
+import { getPaginatedDatabaseInstances, getResources } from './database/database-operations';
+import { registerJob, updateParentJobStatus } from './database/job-operations';
+import { getSqlServerInstancesFromRegistry } from './ssm-doc-operations';
 
 const logger = getLogger();
+
 interface AccountJobInfo {
     parentJobId: string;
     totalInstances: number;
     processedInstances: number;
 }
 
-async function createParentJobForAccount(accountId: string, initiatedBy: string): Promise<string | null> {
+async function createParentJobForAccount(
+    accountId: string,
+    initiatedBy: string,
+    jobDescription = `Assess online database server instances in account ${accountId} for best practice misalignments.`
+): Promise<string | null> {
     try {
-        // Keep simple description without dynamic updates
-        const jobDescription = `Assess online database server instances in account ${accountId} for best practice misalignments.`;
-
         const { id: parentJobId } = await registerJob(accountId, '', '', {
             name: jobDescription,
             description: jobDescription,
@@ -254,6 +265,178 @@ async function processAccountInstancesBatch(
     }
 }
 
+function collectManagedEc2Ids(resources: ResourceDetails[]) {
+    const ids = new Set<string>();
+    for (const { resource_id: resourceId, metadata } of resources) {
+        if (resourceId) {
+            ids.add(resourceId);
+        }
+        const { node1InstanceId, node2InstanceId } = (metadata ?? {}) as Metadata;
+        if (node1InstanceId) {
+            ids.add(node1InstanceId);
+        }
+        if (node2InstanceId) {
+            ids.add(node2InstanceId);
+        }
+    }
+    return ids;
+}
+
+async function triggerUnregisteredAssessmentsForScope({
+    accountId,
+    credentialsId,
+    region,
+    topLevelJobId
+}: {
+    accountId: string;
+    credentialsId: string;
+    region: string;
+    topLevelJobId: string;
+}) {
+    logger.info('Triggering unregistered assessments', { accountId, credentialsId, region });
+
+    try {
+        await getLocalStorage().run(new Map(), async () => {
+            setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
+            setAsyncLocalStorageResource(GOV_ACCOUNT, isGovCloudRegion(region));
+
+            const [{ ec2s }, { items: managedResources }] = await Promise.all([
+                buildEc2FsxRelationship(accountId, credentialsId, region),
+                getResources({
+                    accountId,
+                    credentialsId,
+                    region,
+                    resourceType: [RESOURCESTYPE.MSSQL, RESOURCESTYPE.ORACLE],
+                    allRecords: true,
+                    selectKeys: ['id', 'account_id', 'resource_id', 'credentials_id', 'region', 'metadata']
+                })
+            ]);
+
+            if (!ec2s.length) {
+                logger.info('No database server hosts found. Skipping unregistered assessments.', {
+                    accountId,
+                    credentialsId,
+                    region
+                });
+                return;
+            }
+
+            const managedEc2Ids = collectManagedEc2Ids(managedResources);
+            const unmanagedHosts = ec2s.filter(({ instanceId }) => !managedEc2Ids.has(instanceId));
+            if (!unmanagedHosts.length) {
+                logger.info('No unregistered hosts found. Skipping unregistered assessments.', {
+                    accountId,
+                    credentialsId,
+                    region
+                });
+                return;
+            }
+
+            const fsxLinksByFsId = await getFsxLinkReadinessByFsId(
+                credentialsId,
+                region,
+                unmanagedHosts.flatMap(({ fsxs }) => fsxs.map(({ fileSystemId }) => fileSystemId))
+            );
+            const hostsWithFsxLink = unmanagedHosts.filter(({ fsxs }) =>
+                fsxs.some(({ fileSystemId }) => fsxLinksByFsId.get(fileSystemId)?.exists)
+            );
+            if (!hostsWithFsxLink.length) {
+                logger.info('No unregistered hosts with an active FSx link. Skipping unregistered assessments.', {
+                    accountId,
+                    credentialsId,
+                    region,
+                    unmanagedHostCount: unmanagedHosts.length
+                });
+                return;
+            }
+
+            const canReadByInstanceId = new Map(
+                await Promise.all(
+                    hostsWithFsxLink.map(
+                        throat(3, async ({ instanceId, operatingSystem }) => {
+                            const platform = operatingSystem === WINDOWS ? ('windows' as const) : ('linux' as const);
+                            return [
+                                instanceId,
+                                await canReadFleetManagerResource({
+                                    credentialsId,
+                                    region,
+                                    instanceIds: [instanceId],
+                                    platform,
+                                    accountId
+                                })
+                            ] as const;
+                        })
+                    )
+                )
+            );
+            const eligibleHosts = hostsWithFsxLink.filter(({ instanceId }) => canReadByInstanceId.get(instanceId));
+            if (!eligibleHosts.length) {
+                logger.info(
+                    'No unregistered hosts with SSM document read permission. Skipping unregistered assessments.',
+                    { accountId, credentialsId, region, fsxLinkedHostCount: hostsWithFsxLink.length }
+                );
+                return;
+            }
+
+            const mssqlInstanceIds = eligibleHosts
+                .filter(({ workloadTypes }) => workloadTypes.includes(DATABASE_TYPE.mssql))
+                .map(({ instanceId }) => instanceId);
+            const sqlServerInstancesByEc2 = mssqlInstanceIds.length
+                ? await getSqlServerInstancesFromRegistry(credentialsId, region, mssqlInstanceIds, accountId)
+                : new Map<string, { sqlServerInstance: string }[]>();
+
+            const assessments = eligibleHosts.flatMap(({ instanceId, workloadTypes }) => [
+                ...(workloadTypes.includes(DATABASE_TYPE.mssql)
+                    ? (sqlServerInstancesByEc2.get(instanceId) ?? []).map(({ sqlServerInstance }) => ({
+                          instanceId,
+                          databaseType: DATABASE_TYPE.mssql,
+                          instanceName: sqlServerInstance
+                      }))
+                    : []),
+                ...(workloadTypes.includes(DATABASE_TYPE.oracle)
+                    ? [{ instanceId, databaseType: DATABASE_TYPE.oracle, instanceName: 'oracle' }]
+                    : [])
+            ]);
+
+            if (!assessments.length) {
+                logger.info('No unregistered assessments to trigger', { accountId, credentialsId, region });
+                return;
+            }
+
+            await Promise.all(
+                assessments.map(
+                    throat(3, async ({ instanceId, databaseType, instanceName }) => {
+                        try {
+                            await (databaseType === DATABASE_TYPE.mssql
+                                ? triggerMssqlUnregisteredAssessment
+                                : triggerOracleUnregisteredAssessment)(
+                                accountId,
+                                credentialsId,
+                                region,
+                                instanceId,
+                                instanceName,
+                                topLevelJobId
+                            );
+                        } catch (error) {
+                            logger.error('Failed to trigger unregistered assessment', {
+                                accountId,
+                                credentialsId,
+                                region,
+                                instanceId,
+                                instanceName,
+                                databaseType,
+                                error
+                            });
+                        }
+                    })
+                )
+            );
+        });
+    } catch (error) {
+        logger.error('Error triggering unregistered assessments', { accountId, credentialsId, region, error });
+    }
+}
+
 async function processCurrentBatch(
     instances: DatabaseInstancesIncludingResource[],
     accountJobsMap: Record<string, AccountJobInfo>,
@@ -401,6 +584,8 @@ async function cronAssessmentCollection(initiatedBy: string) {
             }
         } while (nextToken);
 
+        await cronAssessmentCollectionForUnregistered(initiatedBy);
+
         const duration = Date.now() - startTime;
         logger.info(
             `Cron assessment collection completed successfully. Total instances processed: ${totalProcessed}, Total batches: ${
@@ -416,4 +601,93 @@ async function cronAssessmentCollection(initiatedBy: string) {
     }
 }
 
-export { cronAssessmentCollection, processAccountInstancesBatch };
+async function cronAssessmentCollectionForUnregistered(initiatedBy: string) {
+    logger.info('Cron unregistered assessment collection started', { initiatedBy });
+
+    const startTime = Date.now();
+    const parentJobByAccount: Record<string, string> = {};
+
+    try {
+        const { ec2Instances = [] } = await callWlmHostsGraphql<{
+            ec2Instances?: {
+                accountId?: string;
+                credential?: string;
+                region?: string;
+                workloads?: unknown[];
+            }[];
+        }>('', '', '', EC2_UNREGISTERED_ASSESSMENT_SCOPES_QUERY, {
+            first: 1000,
+            workloadWhere: [
+                {
+                    field: 'workload',
+                    op: 'IN',
+                    value: ['Oracle Database', 'Microsoft SQL Server']
+                }
+            ]
+        });
+
+        const scopes = [
+            ...new Map(
+                ec2Instances.flatMap(({ accountId, credential: credentialsId, region, workloads }) =>
+                    accountId && credentialsId && region && workloads?.length
+                        ? [[`${accountId}||${credentialsId}||${region}`, { accountId, credentialsId, region }]]
+                        : []
+                )
+            ).values()
+        ];
+        if (!scopes.length) {
+            logger.warn(
+                'Unable to find any Microsoft SQL Server or Oracle database server instances in any of your AWS accounts. Skipping unregistered assessments.'
+            );
+            return;
+        }
+
+        await Promise.all(
+            Object.entries(groupBy(scopes, 'accountId')).map(
+                throat(3, async ([accountId, accountScopes]) => {
+                    const parentJobId = await createParentJobForAccount(
+                        accountId,
+                        initiatedBy,
+                        `Assess unregistered database server instances in account ${accountId} for best practice misalignments.`
+                    );
+                    if (!parentJobId) {
+                        logger.warn(`No parent job ID returned for unregistered assessments in account ${accountId}`);
+                        return;
+                    }
+
+                    parentJobByAccount[accountId] = parentJobId;
+                    await Promise.all(
+                        accountScopes.map(scope =>
+                            triggerUnregisteredAssessmentsForScope({
+                                ...scope,
+                                topLevelJobId: parentJobId
+                            })
+                        )
+                    );
+                })
+            )
+        );
+
+        logger.info(
+            `Cron unregistered assessment collection completed. Scopes: ${scopes.length}, Duration: ${formatDuration(
+                Date.now() - startTime
+            )}`
+        );
+    } catch (error) {
+        logger.error('Fatal error in cron unregistered assessment collection:', error);
+        throw error;
+    } finally {
+        await Promise.all(
+            Object.entries(parentJobByAccount).map(
+                throat(3, ([accountId, parentJobId]) => updateParentJobStatus(accountId, parentJobId))
+            )
+        );
+    }
+}
+
+export {
+    cronAssessmentCollection,
+    cronAssessmentCollectionForUnregistered,
+    processAccountInstancesBatch,
+    triggerUnregisteredAssessmentsForScope
+};

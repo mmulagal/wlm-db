@@ -135,7 +135,7 @@ async function getFsxFileSystemActiveLinks(credentialsId: string, region: string
         return [{ fsId, status: 'AVAILABLE' }];
     }
 
-    const token = getAsyncLocalStorageResource(USER_TOKEN) as string;
+    const { token } = await getWfServiceToken();
     const accountId = getAsyncLocalStorageResource(ACCOUNT_ID);
 
     const { activeLinks } = await gotInstanceForInternalRequest

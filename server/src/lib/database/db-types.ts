@@ -172,6 +172,7 @@ interface GetResourcesParams {
     includeDatabaseInstances?: boolean;
     allRecords?: boolean;
     assessmentData?: boolean;
+    selectKeys?: string[];
 }
 interface PaginatedDatabaseInstancesResponse {
     items: any[];

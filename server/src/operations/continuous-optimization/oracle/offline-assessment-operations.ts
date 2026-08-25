@@ -915,7 +915,8 @@ async function triggerOracleUnregisteredAssessment(
     credentialsId: string,
     region: string,
     ec2InstanceId: string,
-    instanceName: string
+    instanceName: string,
+    parentJobId?: string
 ) {
     const resourceName = `${ec2InstanceId}/${instanceName}`;
     const jobName = `Oracle storage assessment for instance ${resourceName}`;
@@ -925,7 +926,8 @@ async function triggerOracleUnregisteredAssessment(
         resourceName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
-        type: JOBTYPE.ASSESSMENT
+        type: JOBTYPE.ASSESSMENT,
+        ...(parentJobId && { parentJobId })
     });
     logger.info('Initiating Oracle unregistered-instance assessment', {
         accountId,

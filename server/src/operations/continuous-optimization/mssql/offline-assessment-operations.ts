@@ -1313,7 +1313,8 @@ async function triggerMssqlUnregisteredAssessment(
     credentialsId: string,
     region: string,
     ec2InstanceId: string,
-    instanceName: string
+    instanceName: string,
+    parentJobId?: string
 ) {
     const resourceName = `${ec2InstanceId}/${instanceName}`;
     const jobName = `Microsoft SQL Server storage assessment for instance ${resourceName}`;
@@ -1323,7 +1324,8 @@ async function triggerMssqlUnregisteredAssessment(
         resourceName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
-        type: JOBTYPE.ASSESSMENT
+        type: JOBTYPE.ASSESSMENT,
+        ...(parentJobId && { parentJobId })
     });
     logger.info('Initiating MSSQL unregistered-instance assessment', {
         accountId,

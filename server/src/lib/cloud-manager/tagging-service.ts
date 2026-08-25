@@ -128,6 +128,22 @@ query Ec2DatabaseInstances(
 }
 `.trim();
 
+const EC2_UNREGISTERED_ASSESSMENT_SCOPES_QUERY = `
+query Ec2UnregisteredAssessmentScopes(
+  $workloadWhere: [FilterClause!]
+  $first: Int = 1000
+) {
+  ec2Instances(first: $first) {
+    accountId
+    credential
+    region
+    workloads(where: $workloadWhere) {
+      workload
+    }
+  }
+}
+`.trim();
+
 async function callWlmHostsGraphql<T>(
     accountId: string,
     credentialsId: string,
@@ -168,4 +184,9 @@ async function callWlmHostsGraphql<T>(
     }
 }
 
-export { callWlmHostsGraphql, EC2_DATABASE_INSTANCES_QUERY, EC2_STORAGE_ORACLE_MSSQL_QUERY };
+export {
+    callWlmHostsGraphql,
+    EC2_DATABASE_INSTANCES_QUERY,
+    EC2_STORAGE_ORACLE_MSSQL_QUERY,
+    EC2_UNREGISTERED_ASSESSMENT_SCOPES_QUERY
+};
