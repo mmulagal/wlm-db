@@ -341,7 +341,6 @@ const FetchMssqlPatchScanSchema = {
     tags: [RouteTags.MSSQL_ASSESSMENT],
     response: {
         200: MssqlPatchScanDocResponse,
-        400: HttpErrorResponse,
         404: HttpErrorResponse,
         500: HttpErrorResponse
     }

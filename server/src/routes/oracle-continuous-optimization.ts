@@ -1,5 +1,6 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
+import createError from 'http-errors';
 import { AssessmentTriggeredBy, OptimizeStorageParams } from '../utils/continous-optimization-consts';
 import { TriggerOracleDriftAssessmentSchema } from './schemas/mssql-continuous-optimization-schema';
 import castRequest from './utils';
@@ -27,7 +28,7 @@ import {
 } from './schemas/oracle-continuous-optimization-schema';
 import { optimizeStorage } from '../operations/cont-opt-optimize-operations';
 import { updateDismissConfigurations } from '../operations/continuous-optimization/assessment-dismiss-operations';
-import { DatabaseTypes } from '../utils/consts';
+import { DatabaseTypes, HttpErrorCodes } from '../utils/consts';
 import { optimizeOracleStorageLayout } from '../operations/continuous-optimization/oracle/storage-optimize-operations';
 import { optimizeOracleDatabase } from '../operations/continuous-optimization/oracle/optimization-operations';
 import { OptimizeRequestBodyType } from './types/oracle-continuous-optimization.types';
@@ -291,7 +292,7 @@ export default function oracleContinuousOptimizationRoutes(fastify: FastifyInsta
                 } = castRequest(request);
 
                 if (!fileName.toLowerCase().endsWith('.json')) {
-                    return reply.status(400).send({ message: 'Only JSON files are accepted' });
+                    throw createError(HttpErrorCodes.BAD_REQUEST, 'Only JSON files are accepted');
                 }
 
                 const response = await uploadOfflineAssessment(

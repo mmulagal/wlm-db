@@ -76,7 +76,6 @@ const FetchOraclePatchScanSchema = {
     tags: [RouteTags.ORACLE_ASSESSMENT],
     response: {
         200: OraclePatchScanDocResponse,
-        400: HttpErrorResponse,
         404: HttpErrorResponse,
         500: HttpErrorResponse
     }

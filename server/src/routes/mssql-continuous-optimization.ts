@@ -1,5 +1,6 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
+import createError from 'http-errors';
 import {
     AssessmentTriggeredBy,
     OPTIMIZATION_CATEGORIES,
@@ -60,7 +61,7 @@ import {
     BulkOptimizeCloneInHostRequestBodyType
 } from './types/mssql-continuous-optimisation.types';
 import { updateDismissConfigurations } from '../operations/continuous-optimization/assessment-dismiss-operations';
-import { DatabaseTypes } from '../utils/consts';
+import { DatabaseTypes, HttpErrorCodes } from '../utils/consts';
 import {
     fetchMssqlDriftAssessment,
     fetchMssqlDriftAssessmentPerAccount,
@@ -675,7 +676,7 @@ export default function mssqlContinuousOptimizationRoutes(fastify: FastifyInstan
 
                 // Validate file extension
                 if (!fileName.toLowerCase().endsWith('.json')) {
-                    return reply.status(400).send({ message: 'Only JSON files are accepted' });
+                    throw createError(HttpErrorCodes.BAD_REQUEST, 'Only JSON files are accepted');
                 }
 
                 const response = await uploadOfflineAssessment(

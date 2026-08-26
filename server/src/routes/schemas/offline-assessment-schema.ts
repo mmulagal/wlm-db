@@ -35,16 +35,15 @@ const getOfflineAssessmentTags = (databaseType?: string) => {
 
 const OfflineAssessmentUploadSchema = (databaseType?: string) => ({
     summary: `Upload ${databaseType} one-time assessment JSON`,
-    description: `Upload one-time WAD (Workload Assessment and Discovery) JSON file for ${databaseType} instances`,
+    description:
+        `Upload one-time WAD (Workload Assessment and Discovery) JSON file for ${databaseType} instances. ` +
+        'The request is rejected when fileName does not have a .json extension.',
     tags: getOfflineAssessmentTags(databaseType),
     params: OfflineAssessmentUploadPathParams,
     querystring: OfflineAssessmentUploadQueryParams,
     body: UploadOfflineAssessmentFileBody,
     response: {
-        202: OfflineAssessmentUploadResponse,
-        400: Type.Object({
-            message: Type.String()
-        })
+        202: OfflineAssessmentUploadResponse
     }
 });
 

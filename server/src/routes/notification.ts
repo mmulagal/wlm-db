@@ -2,7 +2,9 @@ import { MultipartFile } from '@fastify/multipart';
 import { FastifyInstance } from 'fastify/types/instance';
 import { FastifyRequest } from 'fastify';
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
+import createError from 'http-errors';
 import { emailSchema, notificationSchema } from './schemas/notification-schema';
+import { HttpErrorCodes } from '../utils/consts';
 import castRequest from './utils';
 import processEmailRequest from '../operations/notification-operations';
 import prepareWFNotificationRequest from '../operations/wf-notification-operations';
@@ -48,7 +50,7 @@ export default function notificationRoutes(fastify: FastifyInstance) {
             } = castRequest(request);
 
             if (!request.isMultipart()) {
-                return reply.status(400).send({ message: 'No calculations file attached' });
+                throw createError(HttpErrorCodes.BAD_REQUEST, 'No calculations file attached');
             }
 
             const response = await processEmailRequest(
