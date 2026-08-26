@@ -361,7 +361,7 @@ describe('MSSQL Offline Assessment Operations', () => {
                             ssdStorageCapacityInBytes: 1099511627776, // 1 TiB
                             storageUsedInBytes: 824633720832, // 768 GiB (70% used)
                             storageAvailableInBytes: 274877906944, // 256 GiB
-                            headroomPercent: 25, // Under MIN_OPTIMIZED_HEADROOM_PERCENTAGE (35%)
+                            headroomPercent: 25, // Under MIN_OPTIMIZED_HEADROOM_PERCENTAGE
                             aggregateCount: 1
                         },
                         hostLevelHighAvailability: {}
@@ -374,7 +374,7 @@ describe('MSSQL Offline Assessment Operations', () => {
                         databaseInstanceName: 'MSSQLSERVER'
                     }
                 },
-                // Test data with headroom - optimized
+                // Test data with headroom between 35% and 50%
                 {
                     accountId: ACCOUNT_ID,
                     resourceId: 'fetch-test-headroom-optimal',
@@ -387,7 +387,7 @@ describe('MSSQL Offline Assessment Operations', () => {
                             ssdStorageCapacityInBytes: 1099511627776, // 1 TiB
                             storageUsedInBytes: 659706976666, // ~60% used
                             storageAvailableInBytes: 439804651110, // ~40% available
-                            headroomPercent: 40, // Between MIN_OPTIMIZED_HEADROOM_PERCENTAGE (35%) and 50%
+                            headroomPercent: 40, // Under MIN_OPTIMIZED_HEADROOM_PERCENTAGE and below the 50% mark
                             aggregateCount: 1
                         },
                         hostLevelHighAvailability: {}
@@ -400,7 +400,7 @@ describe('MSSQL Offline Assessment Operations', () => {
                         databaseInstanceName: 'MSSQLSERVER'
                     }
                 },
-                // Test data with headroom - over-provisioned (headroom > 50% and capacity > 1 TiB)
+                // Test data with headroom > 50% and capacity > 1 TiB
                 {
                     accountId: ACCOUNT_ID,
                     resourceId: 'fetch-test-headroom-over',
@@ -698,7 +698,7 @@ describe('MSSQL Offline Assessment Operations', () => {
             expect(headroomAssessment?.recommendedSizeInGib).toBeGreaterThan(0);
         });
 
-        it('should include headroom assessment with OPTIMIZED status when headroom is within range', async () => {
+        it('should include headroom assessment with UNDER_PROVISIONED status when headroom is between 35% and 50%', async () => {
             const result = await fetchMssqlOfflineAssessment(
                 ACCOUNT_ID,
                 'fetch-test-headroom-optimal',
@@ -708,12 +708,12 @@ describe('MSSQL Offline Assessment Operations', () => {
             expect(result).toBeDefined();
             const headroomAssessment = result.assessments.find(a => a.id === 'headroom') as any;
             expect(headroomAssessment).toBeDefined();
-            expect(headroomAssessment?.status).toBe(AssessmentStatus.OPTIMIZED);
+            expect(headroomAssessment?.status).toBe(AssessmentStatus.UNDER_PROVISIONED);
             expect(headroomAssessment?.current).toBe('40%');
-            expect(headroomAssessment?.totalObjectsInViolation).toBe(0);
+            expect(headroomAssessment?.totalObjectsInViolation).toBe(1);
         });
 
-        it('should include headroom assessment with OVER_PROVISIONED status when headroom > 50% and capacity > 1 TiB', async () => {
+        it('should include headroom assessment with UNDER_PROVISIONED status when headroom > 50% and capacity > 1 TiB', async () => {
             const result = await fetchMssqlOfflineAssessment(
                 ACCOUNT_ID,
                 'fetch-test-headroom-over',
@@ -723,7 +723,7 @@ describe('MSSQL Offline Assessment Operations', () => {
             expect(result).toBeDefined();
             const headroomAssessment = result.assessments.find(a => a.id === 'headroom') as any;
             expect(headroomAssessment).toBeDefined();
-            expect(headroomAssessment?.status).toBe(AssessmentStatus.OVER_PROVISIONED);
+            expect(headroomAssessment?.status).toBe(AssessmentStatus.UNDER_PROVISIONED);
             expect(headroomAssessment?.current).toBe('70%');
             expect(headroomAssessment?.totalObjectsInViolation).toBe(1);
         });
@@ -1535,7 +1535,7 @@ describe('MSSQL Offline Assessment Operations', () => {
             const headroomFinding = result.assessments.find(a => a.id === 'headroom') as any;
             expect(headroomFinding).toBeDefined();
             expect(headroomFinding.errorMessage).toBeUndefined();
-            expect(headroomFinding.status).toBe(AssessmentStatus.OPTIMIZED);
+            expect(headroomFinding.status).toBe(AssessmentStatus.UNDER_PROVISIONED);
         });
     });
 

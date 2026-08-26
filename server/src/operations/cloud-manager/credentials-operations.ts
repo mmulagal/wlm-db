@@ -3,7 +3,7 @@ import { isEmpty } from 'lodash-es';
 import { getAllWfCredentials, getWfCredentialDetails, wfCredentials } from '../../lib/cloud-manager/credentials';
 import { CredentialsResponseType } from '../../routes/types/credentials.types';
 import getLogger from '../../utils/logger';
-import { derivePropertiesFromARN } from '../../utils/utils';
+import { derivePropertiesFromARN, IS_DEMO_FLOW } from '../../utils/utils';
 
 const logger = getLogger();
 
@@ -68,7 +68,7 @@ async function getCredentialsDetails(credentialsId: string, accountId?: string) 
         const {
             credentials: { accessKeyId, secretAccessKey, sessionToken },
             metadata
-        } = (await getWfCredentialDetails(credentialsId, accountId)) as wfCredentials;
+        } = (await getWfCredentialDetails(credentialsId, accountId, IS_DEMO_FLOW)) as wfCredentials;
 
         return {
             credentials: {

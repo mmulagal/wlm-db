@@ -881,7 +881,7 @@ async function getDatabaseHostSummaryV2(
         if (credentialsId && region) {
             if (IS_DEMO_FLOW) {
                 const hostResourceName = resourceDetail?.resource_name || '';
-                instancesDetails = instancesDetails!
+                instancesDetails = (instancesDetails ?? [])
                     .filter((instance: { instanceName: string | (string | null)[] }) => {
                         if (instance.instanceName.includes('$')) {
                             return true; // Exclude instances with '$' from filtering
