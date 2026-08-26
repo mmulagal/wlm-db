@@ -5,7 +5,6 @@ import { DsTypography } from '@netapp/design-system';
 import { ColumnProps, Table } from '../../../../../common/Lib/Table/Table';
 import { useTable } from '../../../../../common/Lib/Table/useTable';
 import {
-    setRowsRequiringAuthBulk,
     setSelectedRowsForExploreSavingsEBSBulk,
     setSelectedRowsForExploreSavingsOracleEbsBulk,
     setTriggerBulkDataFetch
@@ -17,16 +16,14 @@ import { useAppSelector } from '../../../../../store/storeHooks';
 import { TableTopBar } from '../../../../../common/Lib/Table/TableTopBar';
 import { renderAllocatedCapacity, renderUnmanagedAZ, uniqueHostRow } from '../../../../InventoryV2/InventoryUtilsV2';
 import { GENERAL } from '../../../../../utils/appConstants';
-import { shouldAuthDialogOpenBulk } from '../../../ExploreSavingsUtils';
 import { DBType, SAVINGS_CALC_MODE } from '../../../../../utils/consts';
 
 interface TCOAddHostTableProps {
     onExploreSavings?: () => void;
     onHandlerReady?: (handler: () => void) => void;
-    onAuthRequired?: (selectedRows: any[]) => void;
 }
 
-const TCOAddHostTable = ({ onExploreSavings, onHandlerReady, onAuthRequired }: TCOAddHostTableProps) => {
+const TCOAddHostTable = ({ onExploreSavings, onHandlerReady }: TCOAddHostTableProps) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const [ebsTableData, setEBSTableData] = useState<any>([]);
@@ -212,33 +209,22 @@ const TCOAddHostTable = ({ onExploreSavings, onHandlerReady, onAuthRequired }: T
     const handleExploreSavings = () => {
         const selectedRows = getSelectedFromSelectionState(tableProps.selectionState, updatedTableData);
 
-        // Check if any of the selected hosts need authentication
-        const rowsNeedingAuth = shouldAuthDialogOpenBulk(selectedRows || []);
+        // Auth is handled by the top partial-data banner (only for hosts that need it), not a dialog here.
+        const existingHostsMap = new Map(activeRows.map((host: any) => [host.id, host]));
 
-        if (rowsNeedingAuth && rowsNeedingAuth.length > 0) {
-            dispatch(setRowsRequiringAuthBulk(rowsNeedingAuth));
+        const rowsWithByolPreserved = selectedRows.map((row: any) => {
+            const existingHost: any = existingHostsMap.get(row.id);
+            return {
+                ...row,
+                monthlySqlByolCost:
+                    existingHost?.monthlySqlByolCost !== undefined ? existingHost.monthlySqlByolCost : null
+            };
+        });
 
-            if (onAuthRequired) {
-                onAuthRequired(selectedRows);
-            }
-        } else {
-            const existingHostsMap = new Map(activeRows.map((host: any) => [host.id, host]));
-
-            const rowsWithByolPreserved = selectedRows.map((row: any) => {
-                const existingHost: any = existingHostsMap.get(row.id);
-                return {
-                    ...row,
-                    monthlySqlByolCost:
-                        existingHost?.monthlySqlByolCost !== undefined ? existingHost.monthlySqlByolCost : null
-                };
-            });
-
-            dispatch(setActiveRows(rowsWithByolPreserved));
-            // Trigger data fetch after adding hosts when authentication is not required
-            dispatch(setTriggerBulkDataFetch(true));
-            if (onExploreSavings) {
-                onExploreSavings();
-            }
+        dispatch(setActiveRows(rowsWithByolPreserved));
+        dispatch(setTriggerBulkDataFetch(true));
+        if (onExploreSavings) {
+            onExploreSavings();
         }
     };
 

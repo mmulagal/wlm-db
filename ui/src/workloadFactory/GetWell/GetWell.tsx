@@ -52,7 +52,8 @@ import GetWellApi from './GetWellApi';
 import {
     setGwAdhocError,
     setGwRefreshPage,
-    setIsInnerPageOptimize
+    setIsInnerPageOptimize,
+    setTriggerAssessmentInProgress
 } from '../../store/workloadFactory/getWellOptimizeSlice';
 // @ts-ignore
 // import domToPdf from 'dom-to-pdf';
@@ -111,7 +112,8 @@ const GetWell = () => {
         isWad: isWadFromStore,
         isUnregistered: isUnregisteredFromStore,
         hostManageReadiness,
-        fsxLinkExists: fsxLinkExistsFromStore
+        fsxLinkExists: fsxLinkExistsFromStore,
+        triggerAssessmentInProgress
     } = useAppSelector(state => state.getWellOptimize);
     const { inventoryTableData } = useAppSelector(state => state.inventoryV2);
     const isUnregistered = isUnregisteredFromStore || !!cardData?.isUnregistered;
@@ -144,7 +146,6 @@ const GetWell = () => {
     const [instanceDeploymentType, setInstanceDeploymentType] = useState<string>('');
     const [configCount, setConfigCount] = useState(0);
     const [showChartArea, setShowChartArea] = useState(true);
-    const [triggerAssessmentInProgress, setTriggerAssessmentInProgress] = useState(false);
     const [showDismissedConfigurations, setShowDismissedConfigurations] = useState(false);
     const { setDialog, closeDialog } = useDialog();
     // @ts-ignore
@@ -204,7 +205,8 @@ const GetWell = () => {
 
     const triggerAssessmentHandler = () => {
         handleTriggerAssessment({
-            setTriggerAssessmentInProgress,
+            setTriggerAssessmentInProgress: (inProgress: boolean) =>
+                dispatch(setTriggerAssessmentInProgress(inProgress)),
             triggerAssessmentApi,
             triggerUnregisteredAssessmentApi,
             credentialId: selectedGwInstanceCredId,
@@ -524,7 +526,7 @@ const GetWell = () => {
                 {/* Assessment Section here */}
                 <AssessmentContainer
                     onClick={triggerAssessmentHandler}
-                    isLoading={triggerAssessmentInProgress}
+                    isLoading={triggerAssessmentInProgress || false}
                     gwTimestamp={gwTimestamp || ''}
                     gwAdhocError={gwAdhocError || ''}
                     optimizePageLoading={loading || false}

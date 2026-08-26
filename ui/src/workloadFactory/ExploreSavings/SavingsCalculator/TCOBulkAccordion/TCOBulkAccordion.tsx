@@ -4,7 +4,6 @@ import { DsButton } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
 import classNames from 'classnames';
 import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
 import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
 import { AccordionCard, AccordionController } from '../../../../common/AccordionCard/AccordionCard';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
@@ -17,13 +16,11 @@ import SelectedVolumeSummary from '../SelectedVolumeSummary/SelectedVolumeSummar
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import TCOAddHostTable from './TCOAddHostTable/TCOAddHostTable';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { FROM_DIALOG, SAVINGS_CALC_MODE } from '../../../../utils/consts';
+import { SAVINGS_CALC_MODE } from '../../../../utils/consts';
 import SeparatorComponent from '../../../../common/SeparatorComponent/SeparatorComponent';
 import {
     setSelectedRowsForExploreSavingsEBSBulk,
     setSelectedRowsForExploreSavingsOracleEbsBulk,
-    resetBulkAuthCredentialsAndStatus,
-    resetRowsRequiringAuthBulk,
     setRowsRequiringAuthBulk,
     setTriggerBulkDataFetch
 } from '../../../../store/workloadFactory/exploreSavingsBulkSlice';
@@ -33,28 +30,22 @@ import {
     removeOnPremStorageAndComputeInfoKey
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { generateOptionType, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
-import { generateLabel2ForInstanceType, handleAuthenticate } from '../../ExploreSavingsUtils';
+import { generateLabel2ForInstanceType } from '../../ExploreSavingsUtils';
 import { checkIfByolFieldRequired } from '../savingsUtil';
 import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
 import { GENERAL } from '../../../../utils/appConstants';
 import hostInstanceStyles from './HostInstanceSelection.module.scss';
 import LearnHowDialog from '../SavingsSelection/LearnHowDialog/LearnHowDialog';
-import AuthBulkDialog from '../../ExploreSavingsTableV2/AuthDialog/AuthBulkDialog';
-import { useRegisterResourceCredentialsBulkMutation } from '../../../../utils/apiService';
-import { resetDialogComponent } from '../../../../store/workloadFactory/dialogComponentSlice';
 
 const TCOBulkAccordion = ({ printState = false }: { printState?: boolean }) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
-    const navigate = useNavigate();
     const { setDialog, closeDialog } = useDialog();
     const { selectedRowsForExploreSavingsEBSBulk, selectedRowsForExploreSavingsOracleEbsBulk, rowsRequiringAuthBulk } =
         useAppSelector(state => state.exploreSavingsBulk);
     const { savingsCalculatorFrom, viewCalculationsResponse, onPremStorageAndComputeInfo } = useAppSelector(
         state => state.exploreSavings
     );
-    const { isWorkloadFactory } = useAppSelector(state => state.auth);
-    const [registerResourceCredBulk] = useRegisterResourceCredentialsBulkMutation();
 
     const isOracleEbs = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
     const activeRows = isOracleEbs ? selectedRowsForExploreSavingsOracleEbsBulk : selectedRowsForExploreSavingsEBSBulk;
@@ -150,37 +141,6 @@ const TCOBulkAccordion = ({ printState = false }: { printState?: boolean }) => {
 
     const addHostsDialogCallback = () => {
         closeDialog();
-    };
-
-    const handleAddHostsAuthDialog = (rowData: any) => {
-        setDialog(
-            <DialogComponent
-                header={t('databases.explore-savings.authentication-required')}
-                content={<AuthBulkDialog />}
-                primaryButton={t('databases.explore-savings.apply')}
-                secondaryButton={t('databases.explore-savings.close')}
-                closeCallback={() => {
-                    dispatch(resetDialogComponent());
-                    dispatch(resetBulkAuthCredentialsAndStatus());
-                    dispatch(resetRowsRequiringAuthBulk());
-                    closeDialog();
-                }}
-                dialogFrom={FROM_DIALOG.EXPLORE_SAVINGS}
-                callback={() => {
-                    handleAuthenticate(
-                        rowData,
-                        dispatch,
-                        GENERAL.EBS,
-                        isWorkloadFactory,
-                        navigate,
-                        () => closeDialog(),
-                        t,
-                        registerResourceCredBulk,
-                        true // isFromAddHosts = true
-                    );
-                }}
-            />
-        );
     };
 
     // Host-specific instance selection component
@@ -477,14 +437,6 @@ const TCOBulkAccordion = ({ printState = false }: { printState?: boolean }) => {
                         onExploreSavings={addHostsDialogCallback}
                         onHandlerReady={(handler: () => void) => {
                             exploreSavingsHandler = handler;
-                        }}
-                        onAuthRequired={(selectedRows: any[]) => {
-                            // Close the add hosts dialog first
-                            closeDialog();
-                            // Open the auth dialog after a small delay to allow the first dialog to close
-                            setTimeout(() => {
-                                handleAddHostsAuthDialog(selectedRows[0]);
-                            }, 100);
                         }}
                     />
                 }

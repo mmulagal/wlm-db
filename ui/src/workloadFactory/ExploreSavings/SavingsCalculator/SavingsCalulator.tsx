@@ -398,9 +398,9 @@ const SavingsCalculator = ({ statusCheck }: any) => {
     const selectedExploreSavingsFileSystemType = getExploreSavingsFileSystemType(savingsCalculatorFrom);
 
     const openPartialDataAuthDialog = () => {
-        const { rowsRequiringAuthBulk } = store.getState().exploreSavingsBulk;
-        const bannerAuthHosts = getPartialDataBannerAuthHosts(partialDataHosts, savingsCalculatorFrom);
-        const rowsToAuth = rowsRequiringAuthBulk?.length > 0 ? rowsRequiringAuthBulk : bannerAuthHosts;
+        // Always recompute live from partialDataHosts (includes hosts added after a previous partial-auth
+        // failure); it already excludes hosts recorded in partialDataBannerAuthedHostKeys.
+        const rowsToAuth = getPartialDataBannerAuthHosts(partialDataHosts, savingsCalculatorFrom);
 
         if (rowsToAuth.length === 0) {
             return;

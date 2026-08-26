@@ -94,7 +94,7 @@ vi.mock('../SelectedVolumeSummary/SelectedVolumeSummary', () => ({
 }));
 
 vi.mock('./TCOAddHostTable/TCOAddHostTable', () => ({
-    default: ({ onExploreSavings, onHandlerReady, onAuthRequired }: any) => (
+    default: ({ onExploreSavings, onHandlerReady }: any) => (
         <div data-testid="tco-add-host-table">
             <button data-testid="add-host-callback" onClick={onExploreSavings}>
                 add
@@ -105,10 +105,6 @@ vi.mock('./TCOAddHostTable/TCOAddHostTable', () => ({
 
 vi.mock('../SavingsSelection/LearnHowDialog/LearnHowDialog', () => ({
     default: ({ type }: any) => <div data-testid="learn-how-dialog">{type}</div>
-}));
-
-vi.mock('../../ExploreSavingsTableV2/AuthDialog/AuthBulkDialog', () => ({
-    default: () => <div data-testid="auth-bulk-dialog" />
 }));
 
 vi.mock('./TCOBulkAccordion.module.scss', () => ({
@@ -141,8 +137,6 @@ vi.mock('../../../../utils/CommonStyles.module.scss', () => ({
 
 vi.mock('../../../../store/workloadFactory/exploreSavingsBulkSlice', () => ({
     setSelectedRowsForExploreSavingsEBSBulk: (val: any) => ({ type: 'test/setSelectedRowsEBS', payload: val }),
-    resetBulkAuthCredentialsAndStatus: () => ({ type: 'test/resetBulkAuth' }),
-    resetRowsRequiringAuthBulk: () => ({ type: 'test/resetRowsAuth' }),
     setRowsRequiringAuthBulk: (val: any) => ({ type: 'test/setRowsAuth', payload: val }),
     setTriggerBulkDataFetch: (val: any) => ({ type: 'test/setTrigger', payload: val })
 }));
@@ -151,18 +145,13 @@ vi.mock('../../../../store/workloadFactory/exploreSavingsSlice', () => ({
     setRecommendedTargetInstance: (val: any) => ({ type: 'test/setRecommended', payload: val })
 }));
 
-vi.mock('../../../../store/workloadFactory/dialogComponentSlice', () => ({
-    resetDialogComponent: () => ({ type: 'test/resetDialog' })
-}));
-
 vi.mock('../../../../utils/utilityFunctions', () => ({
     generateOptionType: (l: string, v: any, l2?: string) => ({ label: l, value: v, label2: l2 }),
     getSelectedFromSelectionState: (state: any, data: any) => data || []
 }));
 
 vi.mock('../../ExploreSavingsUtils', () => ({
-    generateLabel2ForInstanceType: () => 'Recommended',
-    handleAuthenticate: vi.fn()
+    generateLabel2ForInstanceType: () => 'Recommended'
 }));
 
 vi.mock('../savingsUtil', () => ({
@@ -188,12 +177,7 @@ vi.mock('../../../../utils/appConstants', () => ({
 }));
 
 vi.mock('../../../../utils/consts', () => ({
-    FROM_DIALOG: { EXPLORE_SAVINGS: 'EXPLORE_SAVINGS' },
     SAVINGS_CALC_MODE: { AUTO_EBS: 'Auto_EBS' }
-}));
-
-vi.mock('../../../../utils/apiService', () => ({
-    useRegisterResourceCredentialsBulkMutation: () => [vi.fn()]
 }));
 
 const makeStore = (overrides: any = {}) => {

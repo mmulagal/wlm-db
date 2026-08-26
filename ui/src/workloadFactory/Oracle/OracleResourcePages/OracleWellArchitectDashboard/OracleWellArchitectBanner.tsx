@@ -1,11 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@netapp/design-system';
 
 import { useAppSelector } from '../../../../store/storeHooks';
 
-import { setGwAdhocError, setIsInnerPageOptimize } from '../../../../store/workloadFactory/getWellOptimizeSlice';
+import {
+    setGwAdhocError,
+    setIsInnerPageOptimize,
+    setTriggerAssessmentInProgress
+} from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { setRefreshOracleWellArchitect } from '../../../../store/workloadFactory/oracleSlice';
 import { GENERAL } from '../../../../utils/appConstants';
 import {
@@ -33,9 +37,9 @@ const OracleWellArchitectBanner = () => {
         isWad: isWadFromStore,
         isUnregistered: isUnregisteredFromStore,
         selectedResourceId: getWellResourceId,
-        selectedDatabaseInstanceName
+        selectedDatabaseInstanceName,
+        triggerAssessmentInProgress
     } = useAppSelector(state => state.getWellOptimize);
-    const [triggerAssessmentInProgress, setTriggerAssessmentInProgress] = useState(false);
 
     const isWad = isWadFromStore || !!cardData?.isWad;
     const isUnregistered = isUnregisteredFromStore || !!cardData?.isUnregistered;
@@ -66,7 +70,8 @@ const OracleWellArchitectBanner = () => {
 
     const triggerAssessmentHandler = () => {
         handleTriggerAssessment({
-            setTriggerAssessmentInProgress,
+            setTriggerAssessmentInProgress: (inProgress: boolean) =>
+                dispatch(setTriggerAssessmentInProgress(inProgress)),
             triggerAssessmentApi,
             triggerUnregisteredAssessmentApi,
             credentialId: selectedResourceCredId,
@@ -96,7 +101,7 @@ const OracleWellArchitectBanner = () => {
     return (
         <AssessmentContainer
             onClick={triggerAssessmentHandler}
-            isLoading={triggerAssessmentInProgress}
+            isLoading={triggerAssessmentInProgress || false}
             gwTimestamp={gwTimestamp || ''}
             gwAdhocError={gwAdhocError || ''}
             optimizePageLoading={optimizePageLoading || false}
