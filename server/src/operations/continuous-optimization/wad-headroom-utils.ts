@@ -29,7 +29,8 @@ function calculateWADHeadroomDrift(
     fsxFileSystemId: string,
     headroomData: OneTimeWADHeadroomData,
     goldenConfig: GoldenConfigEntry | undefined,
-    workloadType: RESOURCESTYPE.MSSQL | RESOURCESTYPE.ORACLE
+    workloadType: RESOURCESTYPE.MSSQL | RESOURCESTYPE.ORACLE,
+    fsxFileSystemName?: string
 ): HeadroomDriftResult | undefined {
     logger.info('WAD headroom: calculating drift', { workloadType, fsxFileSystemId });
 
@@ -70,7 +71,7 @@ function calculateWADHeadroomDrift(
     const assessmentDetails: DriftAssessmentDetail[] = [
         {
             id: fsxFileSystemId,
-            name: fsxFileSystemId,
+            name: fsxFileSystemName || fsxFileSystemId,
             status,
             metadata: {
                 components: [

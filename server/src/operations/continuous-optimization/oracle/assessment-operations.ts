@@ -1522,7 +1522,7 @@ async function getOracleStorageResourceScan(
     headroomData?: AggregateHeadroomData,
     snapcenterData?: WadSnapcenterData
 ): Promise<WadScanResultRecord> {
-    const { accountId, credentialsId, region, filesystemId } = ctx;
+    const { accountId, credentialsId, region, filesystemId, fsxName } = ctx;
     logger.info('Oracle: WAD storage resource scan', {
         accountId,
         credentialsId,
@@ -1552,7 +1552,8 @@ async function getOracleStorageResourceScan(
                   filesystemId,
                   headroomData,
                   ORACLE_GOLDEN_CONFIG.find(e => e.id === 'headroom'),
-                  RESOURCESTYPE.ORACLE
+                  RESOURCESTYPE.ORACLE,
+                  fsxName || filesystemId
               )
             : undefined,
         snapcenterData

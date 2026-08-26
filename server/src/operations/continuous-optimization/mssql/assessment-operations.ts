@@ -1705,7 +1705,7 @@ async function getMssqlStorageResourceScan(
     headroomData?: AggregateHeadroomData,
     snapcenterData?: WadSnapcenterData
 ): Promise<WadScanResultRecord> {
-    const { accountId, credentialsId, region, filesystemId } = ctx;
+    const { accountId, credentialsId, region, filesystemId, fsxName } = ctx;
     logger.info('Getting MSSQL storage resource scan', {
         accountId,
         credentialsId,
@@ -1725,7 +1725,8 @@ async function getMssqlStorageResourceScan(
                   filesystemId,
                   headroomData,
                   MSSQL_GOLDEN_CONFIG.find(e => e.id === 'headroom'),
-                  RESOURCESTYPE.MSSQL
+                  RESOURCESTYPE.MSSQL,
+                  fsxName || filesystemId
               )
             : undefined,
         snapcenterData
