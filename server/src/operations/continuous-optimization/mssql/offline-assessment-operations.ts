@@ -529,10 +529,12 @@ async function uploadMssqlOfflineAssessment(
         ec2InstanceId,
         hostname,
         storageEndpoint,
+        storageEndpoints,
         fsxId,
         numberOfDatabaseInstances,
         assessmentTimestamp,
         osVersion,
+        scriptVersion,
         vmName,
         virtualNetworkId,
         virtualNetworkName,
@@ -582,10 +584,12 @@ async function uploadMssqlOfflineAssessment(
             ec2InstanceId,
             hostname,
             storageEndpoint,
+            storageEndpoints,
             fsxId,
             numberOfDatabaseInstances,
             assessmentTimestamp,
             osVersion,
+            scriptVersion,
             vmName,
             virtualNetworkId,
             virtualNetworkName,
@@ -594,7 +598,20 @@ async function uploadMssqlOfflineAssessment(
         { hostLevelDetails, instanceLevelDetails },
         credentialsId,
         metadataRegion || region
-    );
+    ).catch(error => {
+        logger.error('Unhandled error in processOfflineAssessmentUpload', { accountId, jobId, error });
+        updateJobDetails(accountId, jobId, {
+            status: JOBSTATUS.FAILED,
+            endTime: Date.now(),
+            error: error instanceof Error ? error.message : 'Upload failed'
+        }).catch(updateError =>
+            logger.error('Failed to mark offline assessment upload job as failed', {
+                accountId,
+                jobId,
+                error: updateError
+            })
+        );
+    });
 
     return { jobId };
 }
@@ -1131,6 +1148,7 @@ async function calculateMultiFilesystemStorageDrift(
     const nonVolumeLunItems = allPrimaryItems.filter(item => !volumeLunIds.has((item as AssessmentItemType).id));
     return [...nonVolumeLunItems, ...volumeLunItems];
 }
+
 async function processMssqlUnregisteredAssessment(
     accountId: string,
     credentialsId: string,

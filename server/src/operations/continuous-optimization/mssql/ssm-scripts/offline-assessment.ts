@@ -896,7 +896,7 @@ try {
     Write-Log -Level "WARNING" -Message "Could not enumerate SQL Server instances: $($_.Exception.Message)"
 }
 
-# ── Connect-OntapFilesystem ──────────────────────────────────────────────────
+# --- Connect-OntapFilesystem ------------------------------------------------
 # Resolves credentials and management endpoint for one storage address,
 # connects to ONTAP, resolves the FSx ID from the cluster name, and returns
 # the context needed to call Invoke-ONTAPRequest for that filesystem.
@@ -1004,7 +1004,7 @@ Function Connect-OntapFilesystem {
 $FSxRegion = $vmRegion
 ${invokeOntapRequestTemplate}
 
-# ── Connect to all requested FSx filesystems ─────────────────────────────────
+# --- Connect to all requested FSx filesystems -------------------------------
 Write-Log "Resolving ONTAP connections for $($AddressList.Count) address(es)..."
 $visitedFileSystems     = @{}
 $script:FilesystemContexts = @()
@@ -1022,7 +1022,7 @@ foreach ($addr in $AddressList) {
     }
 }
 
-# Primary filesystem — sets backward-compat globals used by templates / headroom / MTU
+# Primary filesystem - sets backward-compat globals used by templates / headroom / MTU
 $primaryCtx              = $script:FilesystemContexts[0]
 $FSxID                   = $primaryCtx.FSxID
 $OntapHostName           = $primaryCtx.FSxHostName
@@ -1560,7 +1560,7 @@ ${SERVER_DETAILS}
             ${cloneAssessmentTemplate}
 
             # Per-filesystem volume/LUN assessment
-            # For each FS: re-run LUN serial-number → volume-name resolution so $MappedVolumeUuids
+            # For each FS: re-run LUN serial-number to volume-name resolution so $MappedVolumeUuids
             # contains only that FS's volumes (different FSes have different ONTAP volume UUIDs).
             $AssessmentsArray = @()
             foreach ($fsCtx in $script:FilesystemContexts) {
@@ -1583,7 +1583,7 @@ ${SERVER_DETAILS}
                         if ($lun.name) { $MappedLunNames += $lun.name }
                     }
                 } else {
-                    Write-Log -Level "WARNING" -Message "No volumes found on filesystem '$instanceLevelFsxnId' for instance '$serverInstanceName' — skipping volume/LUN assessment for this FS"
+                    Write-Log -Level "WARNING" -Message "No volumes found on filesystem '$instanceLevelFsxnId' for instance '$serverInstanceName' - skipping volume/LUN assessment for this FS"
                 }
 
                 # Skip filesystems with no matching volumes/LUNs to avoid emitting empty per-FS assessment objects.
