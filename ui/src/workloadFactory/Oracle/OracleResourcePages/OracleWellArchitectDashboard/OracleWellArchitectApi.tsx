@@ -24,6 +24,7 @@ import {
     syncUnregisteredAssessmentToInventory,
     updateAccountLevelAssessmentData
 } from '../../../GetWell/GetWellUtils';
+import { hasAssessmentTimestamp } from '../../../WellArchitectedTab/assessmentFormatUtils';
 
 const useOracleWellArchitectApi = () => {
     const dispatch = useDispatch();
@@ -159,7 +160,10 @@ const useOracleWellArchitectApi = () => {
                 credentialId: selectedResourceCredId || credIdFromJM || null
             });
 
-            if (result && !result?.error && result?.data) {
+            // A resource with no completed assessment (e.g. offline collection never ran) comes back
+            // as a "successful" response with no lastAssessmentTimestamp. Treat that like no data so the
+            // inventory row isn't synced into a permanent "In progress" state.
+            if (result && !result?.error && result?.data && hasAssessmentTimestamp(result.data)) {
                 const assessmentData = {
                     ...result.data,
                     isUnregistered: true

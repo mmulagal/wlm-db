@@ -112,6 +112,8 @@ describe('GetWellApi page-load routing', () => {
             selectedGwInstanceCredId: 'cred-1',
             selectedGwInstanceRegionId: 'ap-southeast-1'
         };
+        const assessmentData = { metadata: { lastAssessmentTimestamp: 1773500000000 } };
+        mockGetUnregisteredMssqlAssessmentData.mockResolvedValue({ data: assessmentData });
 
         await renderGetWellApi();
 
@@ -125,17 +127,37 @@ describe('GetWellApi page-load routing', () => {
         });
         expect(mockGetOfflineMssqlAssessmentData).not.toHaveBeenCalled();
         expect(mockAssessmentDetailsApi).not.toHaveBeenCalled();
-        expect(mockSyncUnregisteredAssessmentToInventory).toHaveBeenCalledWith(
-            mockDispatch,
-            { metadata: {} },
-            {
-                ec2InstanceId: 'i-case2',
-                instanceName: 'CASE2SQL',
-                credentialId: 'cred-1',
-                regionId: 'ap-southeast-1'
-            }
-        );
+        expect(mockSyncUnregisteredAssessmentToInventory).toHaveBeenCalledWith(mockDispatch, assessmentData, {
+            ec2InstanceId: 'i-case2',
+            instanceName: 'CASE2SQL',
+            credentialId: 'cred-1',
+            regionId: 'ap-southeast-1'
+        });
         expect(mockUpdateAccountLevelAssessmentData).not.toHaveBeenCalled();
+        expect(mockDispatch).toHaveBeenCalledWith({ type: 'setIsAssessmentAvailable', payload: true });
+    });
+
+    it('treats an unregistered assessment with no lastAssessmentTimestamp as no data (GH-11998)', async () => {
+        // Regression test: an "unregistered" resource with no completed assessment returns
+        // a 200 response with empty metadata/assessments. This must not be synced into inventory
+        // as that leaves the well-architected status stuck on "In progress" forever.
+        getWellState = {
+            ...baseGetWellState,
+            isUnregistered: true,
+            selectedResourceId: 'i-empty',
+            selectedDatabaseInstance: 'EMPTYSQL'
+        };
+        mockGetUnregisteredMssqlAssessmentData.mockResolvedValue({
+            data: { metadata: {}, assessments: [], dismissedConfigurations: [] }
+        });
+
+        await renderGetWellApi();
+
+        expect(mockSyncUnregisteredAssessmentToInventory).not.toHaveBeenCalled();
+        expect(mockFormatGetWellDataFlat).not.toHaveBeenCalled();
+        expect(mockDispatch).toHaveBeenCalledWith({ type: 'setIsAssessmentAvailable', payload: false });
+        expect(mockDispatch).toHaveBeenCalledWith({ type: 'setGwRefreshTimestamp', payload: '' });
+        expect(mockDispatch).toHaveBeenCalledWith({ type: 'setGwTimestamp', payload: '0' });
     });
 
     it('calls offline-assessment GET on page load when isWad is true', async () => {

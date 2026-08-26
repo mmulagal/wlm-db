@@ -23,6 +23,7 @@ import {
     syncUnregisteredAssessmentToInventory,
     updateAccountLevelAssessmentData
 } from './GetWellUtils';
+import { hasAssessmentTimestamp } from '../WellArchitectedTab/assessmentFormatUtils';
 import { WLF_TABS } from '../../utils/consts';
 
 const GetWellApi = () => {
@@ -118,7 +119,10 @@ const GetWellApi = () => {
                 region: selectedGwInstanceRegionId || null,
                 credentialId: selectedGwInstanceCredId || null
             });
-            if (result && !result?.error && result?.data) {
+            // A resource with no completed assessment (e.g. offline collection never ran) comes back
+            // as a "successful" response with no lastAssessmentTimestamp. Treat that like no data so the
+            // inventory row isn't synced into a permanent "In progress" state.
+            if (result && !result?.error && result?.data && hasAssessmentTimestamp(result.data)) {
                 const assessmentData = result.data;
 
                 dispatch(setDriftAssessmentData(assessmentData));
