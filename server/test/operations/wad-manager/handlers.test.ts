@@ -8,8 +8,10 @@ import {
 } from '../../simulator/scopes/cloud-manager/tracker-scope';
 import { startWadSubscriber } from '../../../src/operations/wad-manager/subscriber';
 import { TrackerTaskStatus } from '../../../src/utils/common-types';
-import * as collectorModule from '../../../src/operations/continuous-optimization/ontap-proxy-collector';
+import * as realCollectorModule from '../../../src/operations/continuous-optimization/ontap-proxy-collector';
+import * as simulatedCollectorModule from '../../../src/operations/continuous-optimization/simulated-ontap-collector';
 import * as mssqlModule from '../../../src/operations/continuous-optimization/mssql/assessment-operations';
+import type { FsxStorageCollectionResult } from '../../../src/operations/continuous-optimization/ontap-storage-assessment';
 import {
     FixRequestMessage,
     ScanRequestMessage,
@@ -125,7 +127,7 @@ describe('handlers — tracker wiring', () => {
 
         it('should create parent and FSx tracker tasks when discovery finds an FSx', async () => {
             const collectorSpy = vi
-                .spyOn(collectorModule, 'collectOntapAssessmentData')
+                .spyOn(realCollectorModule, 'collectOntapAssessmentData')
                 .mockImplementation(async (accountId, _credentialsId, _relationship, parentTaskId) =>
                     trackSubtask(
                         accountId,
@@ -141,7 +143,7 @@ describe('handlers — tracker wiring', () => {
                                 instanceId: 'i-001',
                                 fileSystemId: 'fs-001',
                                 workloadType: 'unknown-workload',
-                                storageAssessment: {} as never
+                                storageAssessment: {} as unknown as FsxStorageCollectionResult['storageAssessment']
                             }
                         ]
                     )
@@ -189,7 +191,7 @@ describe('handlers — tracker wiring', () => {
 
         it('should propagate an FSx assessment failure up through to the parent tracker task', async () => {
             const collectorSpy = vi
-                .spyOn(collectorModule, 'collectOntapAssessmentData')
+                .spyOn(realCollectorModule, 'collectOntapAssessmentData')
                 .mockImplementation(async (accountId, _credentialsId, _relationship, parentTaskId) =>
                     trackSubtask(
                         accountId,
@@ -234,6 +236,9 @@ describe('handlers — tracker wiring', () => {
         });
 
         it('should create and complete tracker tasks for a simulated scan request', async () => {
+            const collectorSpy = vi
+                .spyOn(simulatedCollectorModule, 'collectSimulatedOntapAssessmentData')
+                .mockResolvedValue([]);
             queueTrackerCreateIds('sim-scan-001');
 
             await startWadSubscriber();
@@ -264,21 +269,58 @@ describe('handlers — tracker wiring', () => {
                 .map(({ body }) => body.task);
             expect(bodies.find(task => task.id === undefined)).toMatchObject({ parentTaskId: 'root-sim-001' });
             expect(bodies.find(task => task.id === 'sim-scan-001')).toMatchObject({ status: 'success' });
+            expect(collectorSpy).toHaveBeenCalledWith('account-sim-scan', 'creds-1', 'us-east-1', 'sim-scan-001');
 
             const statusMessages = getPublishedMessages(WAD_SCAN_STATUS_QUEUE).map(b => JSON.parse(b.toString()));
             expect(statusMessages.find(m => m.status === TaskStatus.COMPLETED)).toBeDefined();
+            collectorSpy.mockRestore();
+        });
+
+        it('should pass the collector FSx volume id mapping into the workload scan context', async () => {
+            const collectorSpy = vi
+                .spyOn(simulatedCollectorModule, 'collectSimulatedOntapAssessmentData')
+                .mockResolvedValue([
+                    {
+                        instanceId: '',
+                        fileSystemId: 'fs-sim',
+                        workloadType: 'mssql',
+                        storageAssessment: {} as unknown as FsxStorageCollectionResult['storageAssessment'],
+                        fsxVolumeIdByUuid: { 'volume-uuid-from-api': 'fsvol-sim' }
+                    }
+                ]);
+            const scanSpy = vi.spyOn(mssqlModule, 'getMssqlStorageResourceScan').mockResolvedValue({
+                taskId: 'task-001',
+                requestId: 'req-001',
+                accountId: 'account-001',
+                serviceId: 'wlmdb',
+                completedAt: Date.now(),
+                configurations: []
+            });
+
+            await startWadSubscriber();
+
+            const handler = getSubscribedHandler(WAD_SIM_SCAN_REQUESTS_QUEUE)!;
+            await handler(Buffer.from(JSON.stringify(makeScanRequest({ isSimulated: true }))), vi.fn(), vi.fn());
+
+            expect(scanSpy.mock.calls[0][0]).toMatchObject({
+                filesystemId: 'fs-sim',
+                fsxVolumeIdByUuid: { 'volume-uuid-from-api': 'fsvol-sim' }
+            });
+
+            collectorSpy.mockRestore();
+            scanSpy.mockRestore();
         });
 
         it('should publish successful FSx configurations when a sibling pair assessment fails', async () => {
             const collectorSpy = vi
-                .spyOn(collectorModule, 'collectOntapAssessmentData')
+                .spyOn(realCollectorModule, 'collectOntapAssessmentData')
                 .mockResolvedValueOnce([
                     {
                         instanceId: 'i-success',
                         fileSystemId: 'fs-success',
                         fsxName: 'Successful FSx',
                         workloadType: 'mssql',
-                        storageAssessment: {} as never
+                        storageAssessment: {} as unknown as FsxStorageCollectionResult['storageAssessment']
                     }
                 ])
                 .mockResolvedValueOnce([
@@ -287,7 +329,7 @@ describe('handlers — tracker wiring', () => {
                         fileSystemId: 'fs-failure',
                         fsxName: 'Failed FSx',
                         workloadType: 'mssql',
-                        storageAssessment: {} as never
+                        storageAssessment: {} as unknown as FsxStorageCollectionResult['storageAssessment']
                     }
                 ]);
             const scanSpy = vi.spyOn(mssqlModule, 'getMssqlStorageResourceScan').mockImplementation(async context => {

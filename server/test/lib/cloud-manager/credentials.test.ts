@@ -8,7 +8,9 @@ import {
     allCredentials,
     genericDecryptedCredentials
 } from '../../simulator/scopes/cloud-manager/workload-factory-credentials-scope';
+import { WF_USER_CRED_TYPE } from '../../../src/utils/consts';
 import { DEFAULT_AWS_CREDENTIALS_ID } from '../../utils/consts';
+import * as cache from '../../../src/utils/cache';
 
 const accountId = `account-${faker.string.alpha(6)}`;
 
@@ -30,6 +32,26 @@ describe('Get workload factory credentials ', () => {
     it('should return decrypted AWS credentials for credentials id passed', async () => {
         const resp = await getWfCredentialDetails(DEFAULT_AWS_CREDENTIALS_ID, accountId);
         expect(resp).toEqual(genericDecryptedCredentials);
+    });
+
+    it('should not read or write the shared credential cache for simulated fetches', async () => {
+        const cachedNonSimulated = { id: 'cached-non-simulated' };
+        const hasCacheSpy = vi.spyOn(cache, 'hasCache').mockImplementation(type => type === WF_USER_CRED_TYPE);
+        const readSpy = vi.spyOn(cache, 'readFromCacheByKey').mockReturnValue(cachedNonSimulated);
+        const writeSpy = vi.spyOn(cache, 'writeToCache');
+
+        try {
+            const resp = await getWfCredentialDetails(DEFAULT_AWS_CREDENTIALS_ID, accountId, true);
+            expect(hasCacheSpy).not.toHaveBeenCalledWith(WF_USER_CRED_TYPE, DEFAULT_AWS_CREDENTIALS_ID);
+            expect(readSpy).not.toHaveBeenCalledWith(WF_USER_CRED_TYPE, DEFAULT_AWS_CREDENTIALS_ID);
+            expect(writeSpy).not.toHaveBeenCalledWith(WF_USER_CRED_TYPE, DEFAULT_AWS_CREDENTIALS_ID, expect.anything());
+            expect(resp).toEqual(genericDecryptedCredentials);
+            expect(resp).not.toEqual(cachedNonSimulated);
+        } finally {
+            hasCacheSpy.mockRestore();
+            readSpy.mockRestore();
+            writeSpy.mockRestore();
+        }
     });
 
     it('Associate resources in credentials service', async () => {

@@ -11,7 +11,6 @@ import {
     WadScanContext,
     WadScanResultRecord
 } from '../../utils/wad-consts';
-import { buildSimulatedWadScanConfigurations } from '../../utils/demo-utils/demoMockdata';
 import { createTrackerTask, getTrackerTask, updateTrackerTaskStatus } from '../../lib/cloud-manager/tracker';
 import { publishFixResult, publishFixStatus, publishScanResult, publishScanStatus } from './publishers';
 import { buildEc2FsxRelationship } from '../cloud-manager/tagging-service-operations';
@@ -21,6 +20,7 @@ import {
     AggregateHeadroomData,
     WadSnapcenterData
 } from '../continuous-optimization/ontap-proxy-collector';
+import { collectSimulatedOntapAssessmentData } from '../continuous-optimization/simulated-ontap-collector';
 import { StorageAssessment as MssqlStorageAssessment, TrackerTaskStatus } from '../../utils/common-types';
 import { StorageAssessment as OracleStorageAssessment } from '../continuous-optimization/oracle/common-types';
 import { getMssqlStorageResourceScan } from '../continuous-optimization/mssql/assessment-operations';
@@ -160,53 +160,18 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
         isSimulated
     });
 
-    if (isSimulated) {
-        logger.info('WAD: handling simulated scan request', {
-            taskId,
-            accountId,
-            regions,
-            credentialsIds,
-            configurationIds
-        });
-        const scanTask = trackerParentTaskId
-            ? await createTrackerTask(
-                  accountId,
-                  {
-                      parentTaskId: trackerParentTaskId,
-                      status: TrackerTaskStatus.PENDING,
-                      actionName,
-                      resourceId: accountId,
-                      resourceName: accountId
-                  },
-                  isSimulated
-              )
-            : undefined;
-        const configurations = buildSimulatedWadScanConfigurations(req);
-        if (configurations.length > 0) {
-            publishScanResult({
-                ...baseStatus,
-                completedAt: Date.now(),
-                configurations
-            });
-        }
-        publishScanStatus({
-            ...baseStatus,
-            updatedAt: Date.now(),
-            status: TaskStatus.COMPLETED,
-            hasFailedTasks: false
-        });
-        updateTrackerTaskStatus(accountId, scanTask?.id ?? '', { status: TrackerTaskStatus.SUCCESS }, isSimulated);
-        return;
-    }
-
     const scanTask = trackerParentTaskId
-        ? await createTrackerTask(accountId, {
-              parentTaskId: trackerParentTaskId,
-              status: TrackerTaskStatus.PENDING,
-              actionName,
-              resourceId: accountId,
-              resourceName: accountId
-          })
+        ? await createTrackerTask(
+              accountId,
+              {
+                  parentTaskId: trackerParentTaskId,
+                  status: TrackerTaskStatus.PENDING,
+                  actionName,
+                  resourceId: accountId,
+                  resourceName: accountId
+              },
+              isSimulated
+          )
         : undefined;
     const scanTaskId = scanTask?.id ?? '';
     let status: TaskStatus = TaskStatus.COMPLETED;
@@ -220,20 +185,33 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
         const settled = await Promise.allSettled(
             pairs.map(({ credentialsId, region }) =>
                 throat(3, async () => {
-                    const relationship = await buildEc2FsxRelationship(accountId, credentialsId, region);
-                    const storageAssessments = await collectOntapAssessmentData(
-                        accountId,
-                        credentialsId,
-                        relationship,
-                        scanTaskId
-                    );
-                    const ontapUuidToFsxVolumeId = new Map(
-                        relationship.ec2s.flatMap(({ fsxs }) =>
-                            fsxs.flatMap(({ volumes }) =>
-                                volumes.map(({ volumeUuid, fsxVolumeId }) => [volumeUuid, fsxVolumeId] as const)
+                    let pairFsxVolumeIdByUuid: Record<string, string> | undefined;
+                    let storageAssessments: FsxStorageCollectionResult[];
+                    if (isSimulated) {
+                        storageAssessments = await collectSimulatedOntapAssessmentData(
+                            accountId,
+                            credentialsId,
+                            region,
+                            scanTaskId
+                        );
+                    } else {
+                        const relationship = await buildEc2FsxRelationship(accountId, credentialsId, region);
+                        pairFsxVolumeIdByUuid = Object.fromEntries(
+                            relationship.ec2s.flatMap(({ fsxs }) =>
+                                fsxs.flatMap(({ volumes }) =>
+                                    volumes.flatMap(({ volumeUuid, fsxVolumeId }) =>
+                                        volumeUuid && fsxVolumeId ? [[volumeUuid, fsxVolumeId] as const] : []
+                                    )
+                                )
                             )
-                        )
-                    );
+                        );
+                        storageAssessments = await collectOntapAssessmentData(
+                            accountId,
+                            credentialsId,
+                            relationship,
+                            scanTaskId
+                        );
+                    }
                     const pairConfigs: WadConfigurationEntry[] = [];
 
                     for (const {
@@ -242,7 +220,8 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
                         fsxName,
                         storageAssessment,
                         headroomData,
-                        snapcenterData
+                        snapcenterData,
+                        fsxVolumeIdByUuid: resultFsxVolumeIdByUuid
                     } of storageAssessments) {
                         const scanFn = WORKLOAD_SCAN_FNS[workloadType];
                         if (scanFn) {
@@ -255,7 +234,7 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
                                     filesystemId: fileSystemId,
                                     fsxName,
                                     workload: workloadType,
-                                    ontapUuidToFsxVolumeId
+                                    fsxVolumeIdByUuid: resultFsxVolumeIdByUuid ?? pairFsxVolumeIdByUuid
                                 },
                                 storageAssessment,
                                 headroomData,
@@ -316,10 +295,15 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
             errorMessage,
             hasFailedTasks: status === TaskStatus.FAILED
         });
-        updateTrackerTaskStatus(accountId, scanTaskId, {
-            status: status === TaskStatus.COMPLETED ? TrackerTaskStatus.SUCCESS : TrackerTaskStatus.FAILURE,
-            ...(status === TaskStatus.FAILED && { failureReason: [errorMessage] })
-        });
+        updateTrackerTaskStatus(
+            accountId,
+            scanTaskId,
+            {
+                status: status === TaskStatus.COMPLETED ? TrackerTaskStatus.SUCCESS : TrackerTaskStatus.FAILURE,
+                ...(status === TaskStatus.FAILED && { failureReason: [errorMessage] })
+            },
+            isSimulated
+        );
     }
 }
 

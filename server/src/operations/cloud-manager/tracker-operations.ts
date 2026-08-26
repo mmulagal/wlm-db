@@ -5,13 +5,18 @@ async function trackSubtask<T>(
     accountId: string,
     parentTaskId: string,
     task: Omit<TaskCreate, 'parentTaskId' | 'status'>,
-    run: () => Promise<T>
+    run: () => Promise<T>,
+    isSimulated = false
 ): Promise<T> {
-    const subtask = await createTrackerTask(accountId, {
-        ...task,
-        parentTaskId,
-        status: TrackerTaskStatus.PENDING
-    });
+    const subtask = await createTrackerTask(
+        accountId,
+        {
+            ...task,
+            parentTaskId,
+            status: TrackerTaskStatus.PENDING
+        },
+        isSimulated
+    );
     let status: TaskUpdateParams['status'] = TrackerTaskStatus.SUCCESS;
     let failureReason: string[] | undefined;
     try {
@@ -21,10 +26,15 @@ async function trackSubtask<T>(
         failureReason = [error instanceof Error ? error.message : String(error)];
         throw error;
     } finally {
-        updateTrackerTaskStatus(accountId, subtask?.id ?? '', {
-            status,
-            ...(failureReason && { failureReason })
-        });
+        updateTrackerTaskStatus(
+            accountId,
+            subtask?.id ?? '',
+            {
+                status,
+                ...(failureReason && { failureReason })
+            },
+            isSimulated
+        );
     }
 }
 

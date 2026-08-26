@@ -1,4 +1,6 @@
 import { connect, subscribeExternalQueue } from '../../lib/amqp/broker';
+import { ACCOUNT_ID } from '../../utils/consts';
+import { getLocalStorage, setAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import getLogger from '../../utils/logger';
 import { isDemoFlow } from '../../utils/utils';
 import {
@@ -43,7 +45,7 @@ async function onScanMessage(content: Buffer, ack: () => void, nack: () => void)
     ack();
     logger.debug('WAD: scan request acked', { taskId });
 
-    await handleScanRequest(req);
+    await withAccountContext(accountId, () => handleScanRequest(req));
     logger.debug('WAD: scan request handled', { taskId });
 }
 
@@ -82,8 +84,15 @@ async function onFixMessage(content: Buffer, ack: () => void, nack: () => void):
     ack();
     logger.debug('WAD: fix request acked', { taskId, configurationId });
 
-    await handleFixRequest(req);
+    await withAccountContext(accountId, () => handleFixRequest(req));
     logger.debug('WAD: fix request handled', { taskId, configurationId });
+}
+
+function withAccountContext<T>(accountId: string, run: () => Promise<T>): Promise<T> {
+    return getLocalStorage().run(new Map(), async () => {
+        setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
+        return run();
+    });
 }
 
 /**

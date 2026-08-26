@@ -235,9 +235,11 @@ const AUTH0_AUDIENCE = process.env.AUTH0_AUDIENCE
 const SECRETS: Record<string, string | undefined> = {
     AUTH_CLIENT_ID: process.env.AUTH_CLIENT_ID,
     AUTH_CLIENT_SECRET: process.env.AUTH_CLIENT_SECRET,
+    AMQP_PASSWORD: process.env.AMQP_PASSWORD,
     DATABASE_URL: process.env.DATABASE_URL,
     SIGNURL_ACCESS_KEY: process.env.SIGNURL_ACCESS_KEY || process.env.AWS_ACCESS_KEY_ID,
-    SIGNURL_SECRET_KEY: process.env.SIGNURL_SECRET_KEY || process.env.AWS_SECRET_ACCESS_KEY
+    SIGNURL_SECRET_KEY: process.env.SIGNURL_SECRET_KEY || process.env.AWS_SECRET_ACCESS_KEY,
+    SIMULATOR_AUTH: process.env.SIMULATOR_AUTH
 };
 
 const SECRETS_MANAGER_KEYS: Record<string, string> = {
@@ -249,7 +251,8 @@ const SECRETS_MANAGER_KEYS: Record<string, string> = {
     AUTH_CLIENT_ID: 'AUTH-CLIENT-ID',
     AUTH_CLIENT_SECRET: 'AUTH-CLIENT-SECRET',
     REDIS_PASSWORD: 'REDIS_KEY',
-    AMQP_PASSWORD: 'AMQP_PASSWORD'
+    AMQP_PASSWORD: 'AMQP_PASSWORD',
+    SIMULATOR_AUTH: 'SIMULATOR_AUTH'
 };
 
 const DEMO_ACCOUNT_ID = 'account-j3aZttuL';

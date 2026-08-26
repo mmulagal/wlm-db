@@ -35,7 +35,7 @@ function toConfigurationEntry(
         credentialsId,
         region,
         workload,
-        ontapUuidToFsxVolumeId
+        fsxVolumeIdByUuid
     } = ctx;
     logger.info('Mapping drift to WAD configuration entry', {
         accountId,
@@ -59,10 +59,11 @@ function toConfigurationEntry(
             credentialsIds: [credentialsId]
         },
         resources: (assessmentDetails ?? []).map(({ id, name, status, svmName, metadata }): WadResourceEntry => {
+            const fsxVolumeId = fsxVolumeIdByUuid?.[id];
             const components = metadata?.components ?? [];
             return {
                 resource: {
-                    id: ontapUuidToFsxVolumeId?.get(id) ?? id,
+                    id: fsxVolumeId ?? id,
                     type: resourceType ?? '',
                     name,
                     metadata: {
@@ -91,7 +92,10 @@ async function mapDriftToWadScanRecords(
 
     const configurations = assessmentData.flatMap(item => {
         const prefixedConfigurationId = `${serviceId}-${item.id}`;
-        if ('errorMessage' in item || !configurationIds.includes(prefixedConfigurationId)) {
+        if (
+            'errorMessage' in item ||
+            (configurationIds?.length && !configurationIds.includes(prefixedConfigurationId))
+        ) {
             return [];
         }
         return [toConfigurationEntry(ctx, item, prefixedConfigurationId)];

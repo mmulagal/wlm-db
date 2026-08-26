@@ -52,13 +52,34 @@ const genericCredentials = {
     credentials: 'arn:aws:iam::718273455463:role/test-assume-role',
     numAssociatedResources: 0
 };
+
+// Stands in for an ONTAP credential registered against a simulated FSx file system. `metadata.ip`
+// is omitted so callers address ONTAP by the management DNS name from DescribeFileSystems.
+const ontapCredentialsId = 'ontap-credentials-simulated';
+const ontapUserName = 'fsxadmin';
+const ontapPassword = 'simulated-fsxadmin-password';
+const ontapDecryptedCredentials = {
+    id: ontapCredentialsId,
+    type: 'ONTAP',
+    metadata: { userName: ontapUserName },
+    credentials: ontapPassword
+};
 nock(`${WORKLOAD_FACTORY_ENDPOINT}`, {
     allowUnmocked: process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'simulator'
 })
     .persist(true)
+    .get(/^\/accounts\/(.+)\/credentials\/v1\/credentials/)
+    .query(queryObj => String(queryObj?.filter ?? '').includes('ONTAP'))
+    .reply(() => [
+        200,
+        {
+            items: [{ id: ontapCredentialsId, type: 'ONTAP', metadata: { userName: ontapUserName } }],
+            nextToken: null
+        }
+    ])
     .get(/^\/accounts\/(.+)\/credentials\/v1\/generic\/(.+)/)
     .query(queryObj => Boolean(queryObj?.decrypt) === true)
-    .reply(() => [200, genericDecryptedCredentials])
+    .reply(uri => [200, uri.includes(ontapCredentialsId) ? ontapDecryptedCredentials : genericDecryptedCredentials])
     .get(/^\/accounts\/(.+)\/credentials\/v1\/generic\/(.+)/)
     .query(queryObj => Boolean(queryObj?.decrypt) === false)
     .reply(() => [200, genericCredentials])
@@ -82,4 +103,4 @@ nock(`${WORKLOAD_FACTORY_ENDPOINT}`, {
         }
     ]);
 
-export { allCredentials, genericDecryptedCredentials, credentialsId };
+export { allCredentials, genericDecryptedCredentials, credentialsId, ontapUserName, ontapPassword };

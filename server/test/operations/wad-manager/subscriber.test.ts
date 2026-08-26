@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { resetBroker, getPublishedMessages, getSubscribedHandler } from '../../simulator/scopes/amqp/broker-scope';
 import {
     FixRequestMessage,
@@ -13,6 +13,10 @@ import {
     WAD_SIM_FIX_REQUESTS_QUEUE,
     WAD_SIM_SCAN_REQUESTS_QUEUE
 } from '../../../src/utils/wad-consts';
+import * as collectorModule from '../../../src/operations/continuous-optimization/simulated-ontap-collector';
+import * as mssqlModule from '../../../src/operations/continuous-optimization/mssql/assessment-operations';
+import * as oracleModule from '../../../src/operations/continuous-optimization/oracle/assessment-operations';
+import type { FsxStorageCollectionResult } from '../../../src/operations/continuous-optimization/ontap-storage-assessment';
 
 // ─── Test helpers ─────────────────────────────────────────────────────────────
 
@@ -102,7 +106,84 @@ describe('subscriber', () => {
             expect(nack).toHaveBeenCalledOnce();
         });
 
-        it('publishes simulated MSSQL and Oracle scan results without contacting ONTAP', async () => {
+        it('publishes simulated MSSQL and Oracle scan results via assessment path', async () => {
+            const collectorSpy = vi.spyOn(collectorModule, 'collectSimulatedOntapAssessmentData').mockResolvedValue([
+                {
+                    instanceId: '',
+                    fileSystemId: 'fs-sim-001',
+                    workloadType: 'mssql',
+                    storageAssessment: {} as unknown as FsxStorageCollectionResult['storageAssessment']
+                },
+                {
+                    instanceId: '',
+                    fileSystemId: 'fs-sim-001',
+                    workloadType: 'oracle',
+                    storageAssessment: {} as unknown as FsxStorageCollectionResult['storageAssessment']
+                }
+            ]);
+            const mssqlSpy = vi.spyOn(mssqlModule, 'getMssqlStorageResourceScan').mockResolvedValue({
+                taskId: 'task-001',
+                requestId: 'req-001',
+                accountId: 'account-001',
+                serviceId: 'wlmdb',
+                completedAt: Date.now(),
+                configurations: [
+                    {
+                        configurationId: 'wlmdb-thin-provision',
+                        parentResource: {
+                            id: 'fs-sim-001',
+                            name: 'fs-sim-001',
+                            type: 'fsx',
+                            accountId: 'account-001',
+                            region: 'us-east-1',
+                            credentialsIds: ['creds-1']
+                        },
+                        resources: [
+                            {
+                                resource: {
+                                    id: 'volume-uuid-from-api',
+                                    type: 'volume',
+                                    name: 'vol1',
+                                    metadata: { workload: 'mssql', components: [] }
+                                },
+                                status: ResourceOptimizationStatus.NOT_OPTIMIZED
+                            }
+                        ]
+                    }
+                ]
+            });
+            const oracleSpy = vi.spyOn(oracleModule, 'getOracleStorageResourceScan').mockResolvedValue({
+                taskId: 'task-001',
+                requestId: 'req-001',
+                accountId: 'account-001',
+                serviceId: 'wlmdb',
+                completedAt: Date.now(),
+                configurations: [
+                    {
+                        configurationId: 'wlmdb-thin-provision',
+                        parentResource: {
+                            id: 'fs-sim-001',
+                            name: 'fs-sim-001',
+                            type: 'fsx',
+                            accountId: 'account-001',
+                            region: 'us-east-1',
+                            credentialsIds: ['creds-1']
+                        },
+                        resources: [
+                            {
+                                resource: {
+                                    id: 'volume-uuid-from-api',
+                                    type: 'volume',
+                                    name: 'vol1',
+                                    metadata: { workload: 'oracle', components: [] }
+                                },
+                                status: ResourceOptimizationStatus.NOT_OPTIMIZED
+                            }
+                        ]
+                    }
+                ]
+            });
+
             const { startWadSubscriber } = await import('../../../src/operations/wad-manager/subscriber');
             await startWadSubscriber();
 
@@ -120,11 +201,21 @@ describe('subscriber', () => {
             );
             const statuses = getPublishedMessages(WAD_SCAN_STATUS_QUEUE).map(buf => JSON.parse(buf.toString()));
 
-            expect(workloads).toEqual(['mssql', 'oracle']);
+            expect(collectorSpy).toHaveBeenCalled();
+            expect(mssqlSpy).toHaveBeenCalled();
+            expect(oracleSpy).toHaveBeenCalled();
+            expect(workloads.sort()).toEqual(['mssql', 'oracle']);
+            expect(result.configurations[0].parentResource.id).toBe('fs-sim-001');
             expect(statuses.at(-1).status).toBe(TaskStatus.COMPLETED);
+
+            collectorSpy.mockRestore();
+            mssqlSpy.mockRestore();
+            oracleSpy.mockRestore();
         });
 
-        it('uses all simulated configurations when configuration IDs are omitted', async () => {
+        it('completes simulated scan with no configurations when inventory is empty', async () => {
+            const collectorSpy = vi.spyOn(collectorModule, 'collectSimulatedOntapAssessmentData').mockResolvedValue([]);
+
             const { startWadSubscriber } = await import('../../../src/operations/wad-manager/subscriber');
             await startWadSubscriber();
 
@@ -135,25 +226,10 @@ describe('subscriber', () => {
             });
             await scanHandler!(Buffer.from(JSON.stringify(req)), vi.fn(), vi.fn());
 
-            const [result] = getPublishedMessages(WAD_SCAN_RESULTS_QUEUE).map(buf => JSON.parse(buf.toString()));
-
-            expect(result.configurations).toHaveLength(8);
-            expect(
-                result.configurations.map((configuration: { configurationId: string }) => configuration.configurationId)
-            ).toEqual([
-                'wlmdb-thin-provision',
-                'wlmdb-os-type',
-                'wlmdb-block-device-space-management',
-                'wlmdb-snapcenter-snapshot',
-                'wlmdb-tiering-tco-optimization',
-                'wlmdb-storage-efficiencies',
-                'wlmdb-snapshot-policy',
-                'wlmdb-headroom'
-            ]);
-            expect(result.configurations[0].parentResource).toMatchObject({
-                region: 'us-east-1',
-                credentialsIds: ['creds-1']
-            });
+            expect(getPublishedMessages(WAD_SCAN_RESULTS_QUEUE)).toHaveLength(0);
+            const statuses = getPublishedMessages(WAD_SCAN_STATUS_QUEUE).map(buf => JSON.parse(buf.toString()));
+            expect(statuses.at(-1).status).toBe(TaskStatus.COMPLETED);
+            collectorSpy.mockRestore();
         });
     });
 

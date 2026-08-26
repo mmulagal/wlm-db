@@ -110,14 +110,14 @@ interface WadScanContext {
     requestId: string;
     accountId: string;
     serviceId: string;
-    configurationIds: string[];
     credentialsId: string;
     region: string;
     filesystemId: string;
-    fsxName?: string;
     workload: string;
+    configurationIds?: string[];
+    fsxName?: string;
     svmName?: string;
-    ontapUuidToFsxVolumeId?: Map<string, string>;
+    fsxVolumeIdByUuid?: Record<string, string>;
 }
 
 interface ScanRequestMessage {

@@ -8,6 +8,7 @@ import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 import { getWfServiceToken } from './auth';
 
 const logger = getLogger();
+
 interface AllWfCredentials {
     items: [
         {
@@ -21,6 +22,23 @@ interface AllWfCredentials {
         }
     ];
     nextToken: string;
+}
+
+interface OntapCredentialsListItem {
+    id: string;
+    type: string;
+    metadata?: { ip?: string; userName?: string; fileSystemId?: string; isSecret?: boolean };
+}
+
+interface OntapCredentialsListResponse {
+    items: OntapCredentialsListItem[];
+    nextToken: string | null;
+}
+
+interface DecryptedOntapCredential {
+    id: string;
+    credentials: string;
+    metadata?: { ip?: string; userName?: string };
 }
 
 /**
@@ -87,10 +105,10 @@ interface wfCredentials {
     type: string;
     metadata: { name: string; arn: string };
 }
-async function getWfCredentialDetails(credentialsId: string, accountId?: string) {
-    logger.debug('Getting workload factory credential details for ', { credentialsId, accountId });
+async function getWfCredentialDetails(credentialsId: string, accountId?: string, isSimulated = false) {
+    logger.debug('Getting workload factory credential details for ', { credentialsId, accountId, isSimulated });
 
-    if (!process.env.TEST && hasCache(WF_USER_CRED_TYPE, credentialsId)) {
+    if (!isSimulated && !process.env.TEST && hasCache(WF_USER_CRED_TYPE, credentialsId)) {
         return readFromCacheByKey(WF_USER_CRED_TYPE, credentialsId);
     }
 
@@ -104,17 +122,62 @@ async function getWfCredentialDetails(credentialsId: string, accountId?: string)
         .get(`accounts/${tenancyAccountId}/credentials/v1/generic/${credentialsId}`, {
             prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
             headers: {
-                [HEADERS.AUTHORIZATION]: token
+                [HEADERS.AUTHORIZATION]: token,
+                ...(isSimulated && { [HEADERS.SIMULATOR]: 'true' })
             },
             searchParams: {
                 decrypt: true
             }
         })
         .json<wfCredentials>();
-    if (!isEmpty(response?.credentials?.accessKeyId)) {
+    if (!isSimulated && !isEmpty(response?.credentials?.accessKeyId)) {
         writeToCache(WF_USER_CRED_TYPE, credentialsId, response);
     }
     return response;
+}
+
+async function getSimulatedOntapCredentialsForFileSystem(
+    accountId: string,
+    fsxId: string
+): Promise<{ ip?: string; userName: string; password: string } | undefined> {
+    const { token } = await getWfServiceToken();
+    const headers = {
+        [HEADERS.AUTHORIZATION]: token,
+        [HEADERS.SIMULATOR]: 'true'
+    };
+    const filterString = encodeURIComponent(`associatedResourceId eq '${fsxId}' and type eq 'ONTAP'`);
+
+    const { items } = await gotInstanceForInternalRequest
+        .get(`accounts/${accountId}/credentials/v1/credentials?filter=${filterString}`, {
+            prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
+            headers
+        })
+        .json<OntapCredentialsListResponse>();
+
+    const credentialId = items?.[0]?.id;
+    if (!credentialId) {
+        return undefined;
+    }
+
+    const decrypted = await gotInstanceForInternalRequest
+        .get(`accounts/${accountId}/credentials/v1/generic/${credentialId}`, {
+            prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
+            headers,
+            searchParams: {
+                decrypt: true
+            }
+        })
+        .json<DecryptedOntapCredential>();
+
+    if (!decrypted?.credentials) {
+        return undefined;
+    }
+
+    return {
+        ip: decrypted.metadata?.ip,
+        userName: decrypted.metadata?.userName || 'fsxadmin',
+        password: decrypted.credentials
+    };
 }
 
 interface Resource {
@@ -182,4 +245,11 @@ async function createAwsCredential(
     }
 }
 
-export { wfCredentials, getAllWfCredentials, getWfCredentialDetails, associateResource, createAwsCredential };
+export {
+    wfCredentials,
+    getAllWfCredentials,
+    getWfCredentialDetails,
+    getSimulatedOntapCredentialsForFileSystem,
+    associateResource,
+    createAwsCredential
+};

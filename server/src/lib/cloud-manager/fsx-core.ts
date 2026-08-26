@@ -47,6 +47,16 @@ interface FSXREQUESTBODY {
     automaticBackupRetentionDays: number;
 }
 
+interface listCredentialsResponse {
+    credentials: {
+        ip: string;
+        userName: string;
+        password: string;
+        /** When `true`, `password` is actually a Secrets Manager ARN (GovCloud accounts). */
+        isSecret?: boolean;
+    };
+}
+
 async function registerFsxOntapCredentials(
     accountId: string,
     credentialsId: string,
@@ -75,17 +85,8 @@ async function registerFsxOntapCredentials(
     return response;
 }
 
-interface listCredentialsResponse {
-    credentials: {
-        ip: string;
-        userName: string;
-        password: string;
-        /** When `true`, `password` is actually a Secrets Manager ARN (GovCloud accounts). */
-        isSecret?: boolean;
-    };
-}
-async function listFsxOntapCredentials(accountId: string, fsxId: string) {
-    logger.info('Listing FSx for ONTAP credentials ', { accountId, fsxId });
+async function listFsxOntapCredentials(accountId: string, fsxId: string, isSimulated = false) {
+    logger.info('Listing FSx for ONTAP credentials ', { accountId, fsxId, isSimulated });
 
     // Since list credentials API doesn't support service token, we are using user token here.
     const token = getAsyncLocalStorageResource(USER_TOKEN) as string;
@@ -95,7 +96,8 @@ async function listFsxOntapCredentials(accountId: string, fsxId: string) {
             .get(`accounts/${accountId}/fsx/v2/file-systems/${fsxId}/ontap-credentials`, {
                 prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
                 headers: {
-                    [HEADERS.AUTHORIZATION]: token
+                    [HEADERS.AUTHORIZATION]: token,
+                    ...(isSimulated && { [HEADERS.SIMULATOR]: 'true' })
                 }
             })
             .json<listCredentialsResponse>();
