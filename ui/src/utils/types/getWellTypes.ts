@@ -314,7 +314,7 @@ export interface GetWellSliceInterface {
     landingFromInnerPage?: boolean;
     isInnerPageOptimize?: boolean;
     gwAdhocError?: string;
-    triggerAssessmentInProgress?: boolean;
+    assessmentInProgressKeys: string[];
     cloneDashboardData: any;
     cloneIsOptimizedRows: any;
     inProgressStateData: any;

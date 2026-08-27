@@ -44,7 +44,7 @@ const initialState: GetWellSliceInterface = {
     landingFromInnerPage: false,
     isInnerPageOptimize: false,
     gwAdhocError: '',
-    triggerAssessmentInProgress: false,
+    assessmentInProgressKeys: [],
     selectedCloneTab: GENERAL.CLONE_MANAGEMENT_TAB1,
     cloneDashboardData: [], // Data stored for clone in inner page
     cloneIsOptimizedRows: {}, // To maintain optimized rows in clone assessment (resourceId + instanceId + cloneDatabasename)
@@ -172,7 +172,6 @@ const getWellOptimizeSlice = createSlice({
             state.gwTimestamp = '0';
             state.hostManageReadiness = undefined;
             state.fsxLinkExists = undefined;
-            state.triggerAssessmentInProgress = false;
         },
         setOptimizingData: (state, action: PayloadAction<any>) => {
             state.optimizingData = action.payload;
@@ -227,7 +226,6 @@ const getWellOptimizeSlice = createSlice({
             state.instanceStatus = action.payload.instanceStatus || '';
             state.hostManageReadiness = action.payload.hostManageReadiness;
             state.fsxLinkExists = action.payload.fsxLinkExists;
-            state.triggerAssessmentInProgress = false;
         },
         setFsxLinkExists: (state, action: PayloadAction<boolean | undefined>) => {
             state.fsxLinkExists = action.payload;
@@ -241,8 +239,13 @@ const getWellOptimizeSlice = createSlice({
         setGwAdhocError: (state, action: PayloadAction<any>) => {
             state.gwAdhocError = action.payload;
         },
-        setTriggerAssessmentInProgress: (state, action: PayloadAction<boolean>) => {
-            state.triggerAssessmentInProgress = action.payload;
+        addAssessmentInProgressKey: (state, action: PayloadAction<string>) => {
+            if (!state.assessmentInProgressKeys.includes(action.payload)) {
+                state.assessmentInProgressKeys.push(action.payload);
+            }
+        },
+        removeAssessmentInProgressKey: (state, action: PayloadAction<string>) => {
+            state.assessmentInProgressKeys = state.assessmentInProgressKeys.filter(key => key !== action.payload);
         },
         setCloneDashboardData: (state, action: PayloadAction<any>) => {
             state.cloneDashboardData = action.payload;
@@ -301,7 +304,8 @@ export const {
     setGwSelectedRowFsxId,
     setIsInnerPageOptimize,
     setGwAdhocError,
-    setTriggerAssessmentInProgress,
+    addAssessmentInProgressKey,
+    removeAssessmentInProgressKey,
     setCloneDashboardData,
     setCloneIsOptimizedRows,
     setInProgressStateData

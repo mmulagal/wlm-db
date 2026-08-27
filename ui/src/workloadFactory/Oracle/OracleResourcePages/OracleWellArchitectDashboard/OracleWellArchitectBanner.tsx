@@ -8,7 +8,8 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import {
     setGwAdhocError,
     setIsInnerPageOptimize,
-    setTriggerAssessmentInProgress
+    addAssessmentInProgressKey,
+    removeAssessmentInProgressKey
 } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { setRefreshOracleWellArchitect } from '../../../../store/workloadFactory/oracleSlice';
 import { GENERAL } from '../../../../utils/appConstants';
@@ -18,7 +19,11 @@ import {
     useTriggerUnregisteredOracleAssessmentMutation
 } from '../../../../utils/apiService';
 import AssessmentContainer from '../../../../common/AssessmentContainer/AssessmentContainer';
-import { handleTriggerAssessment, useWellArchitectRefresh } from '../../../../utils/resourceUtils';
+import {
+    handleTriggerAssessment,
+    useWellArchitectRefresh,
+    buildAssessmentInstanceKey
+} from '../../../../utils/resourceUtils';
 import { resetGwValuesOnRefresh } from '../../../GetWell/GetWellUtils';
 import { DBType } from '../../../../utils/consts';
 
@@ -38,11 +43,18 @@ const OracleWellArchitectBanner = () => {
         isUnregistered: isUnregisteredFromStore,
         selectedResourceId: getWellResourceId,
         selectedDatabaseInstanceName,
-        triggerAssessmentInProgress
+        assessmentInProgressKeys
     } = useAppSelector(state => state.getWellOptimize);
 
     const isWad = isWadFromStore || !!cardData?.isWad;
     const isUnregistered = isUnregisteredFromStore || !!cardData?.isUnregistered;
+    const currentAssessmentInstanceKey = buildAssessmentInstanceKey(
+        isUnregistered ? getWellResourceId || selectedResourceId : selectedResourceId,
+        selectedDatabaseInstance,
+        selectedResourceCredId,
+        selectedResourceRegionId
+    );
+    const triggerAssessmentInProgress = assessmentInProgressKeys?.includes(currentAssessmentInstanceKey) || false;
 
     const [triggerAssessmentApi] = useTriggerOracleInstanceAssessmentMutation();
     const [triggerUnregisteredAssessmentApi] = useTriggerUnregisteredOracleAssessmentMutation();
@@ -70,8 +82,8 @@ const OracleWellArchitectBanner = () => {
 
     const triggerAssessmentHandler = () => {
         handleTriggerAssessment({
-            setTriggerAssessmentInProgress: (inProgress: boolean) =>
-                dispatch(setTriggerAssessmentInProgress(inProgress)),
+            setAssessmentInProgressForKey: (key: string, inProgress: boolean) =>
+                dispatch(inProgress ? addAssessmentInProgressKey(key) : removeAssessmentInProgressKey(key)),
             triggerAssessmentApi,
             triggerUnregisteredAssessmentApi,
             credentialId: selectedResourceCredId,
@@ -101,7 +113,7 @@ const OracleWellArchitectBanner = () => {
     return (
         <AssessmentContainer
             onClick={triggerAssessmentHandler}
-            isLoading={triggerAssessmentInProgress || false}
+            isLoading={triggerAssessmentInProgress}
             gwTimestamp={gwTimestamp || ''}
             gwAdhocError={gwAdhocError || ''}
             optimizePageLoading={optimizePageLoading || false}

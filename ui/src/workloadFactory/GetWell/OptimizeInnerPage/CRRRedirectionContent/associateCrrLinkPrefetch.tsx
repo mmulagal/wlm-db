@@ -30,7 +30,8 @@ import {
     setFsxLinkExists,
     setGwAdhocError,
     setGwRefreshPage,
-    setTriggerAssessmentInProgress
+    addAssessmentInProgressKey,
+    removeAssessmentInProgressKey
 } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { markInstanceFsxLinkExistsInInventory } from '../../../InventoryV2/InventoryUtilsV2';
 import { resetGwValuesOnRefresh } from '../../GetWellUtils';
@@ -120,8 +121,8 @@ export function useAssociateCrrLinkPrefetch(
         );
 
         handleTriggerAssessment({
-            setTriggerAssessmentInProgress: (inProgress: boolean) =>
-                dispatch(setTriggerAssessmentInProgress(inProgress)),
+            setAssessmentInProgressForKey: (key: string, inProgress: boolean) =>
+                dispatch(inProgress ? addAssessmentInProgressKey(key) : removeAssessmentInProgressKey(key)),
             triggerAssessmentApi: isOracle ? triggerOracleAssessmentApi : triggerMssqlAssessmentApi,
             triggerUnregisteredAssessmentApi: isOracle
                 ? triggerUnregisteredOracleAssessmentApi

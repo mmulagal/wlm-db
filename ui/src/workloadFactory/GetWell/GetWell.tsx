@@ -53,7 +53,8 @@ import {
     setGwAdhocError,
     setGwRefreshPage,
     setIsInnerPageOptimize,
-    setTriggerAssessmentInProgress
+    addAssessmentInProgressKey,
+    removeAssessmentInProgressKey
 } from '../../store/workloadFactory/getWellOptimizeSlice';
 // @ts-ignore
 // import domToPdf from 'dom-to-pdf';
@@ -75,7 +76,8 @@ import {
     removeEntry,
     removeObjectFromArray,
     handleTriggerAssessment,
-    useWellArchitectRefresh
+    useWellArchitectRefresh,
+    buildAssessmentInstanceKey
 } from '../../utils/resourceUtils';
 import {
     ActivatingInfo,
@@ -113,7 +115,7 @@ const GetWell = () => {
         isUnregistered: isUnregisteredFromStore,
         hostManageReadiness,
         fsxLinkExists: fsxLinkExistsFromStore,
-        triggerAssessmentInProgress
+        assessmentInProgressKeys
     } = useAppSelector(state => state.getWellOptimize);
     const { inventoryTableData } = useAppSelector(state => state.inventoryV2);
     const isUnregistered = isUnregisteredFromStore || !!cardData?.isUnregistered;
@@ -138,6 +140,13 @@ const GetWell = () => {
             selectedDatabaseInstanceName
         ]
     );
+    const currentAssessmentInstanceKey = buildAssessmentInstanceKey(
+        selectedResourceId,
+        selectedDatabaseInstance,
+        selectedGwInstanceCredId,
+        selectedGwInstanceRegionId
+    );
+    const triggerAssessmentInProgress = assessmentInProgressKeys?.includes(currentAssessmentInstanceKey) || false;
     const showPartialPermissionBanner = isUnregistered && hasPartialRunPermission(hostManageReadiness);
     const showMissingLinkBanner = !isWadFromStore && !cardData?.isWad && !isUnregistered && fsxLinkExists === false;
     const [isAccordionOpen, setsAccordionOpen] = useState(false);
@@ -205,8 +214,8 @@ const GetWell = () => {
 
     const triggerAssessmentHandler = () => {
         handleTriggerAssessment({
-            setTriggerAssessmentInProgress: (inProgress: boolean) =>
-                dispatch(setTriggerAssessmentInProgress(inProgress)),
+            setAssessmentInProgressForKey: (key: string, inProgress: boolean) =>
+                dispatch(inProgress ? addAssessmentInProgressKey(key) : removeAssessmentInProgressKey(key)),
             triggerAssessmentApi,
             triggerUnregisteredAssessmentApi,
             credentialId: selectedGwInstanceCredId,
@@ -526,7 +535,7 @@ const GetWell = () => {
                 {/* Assessment Section here */}
                 <AssessmentContainer
                     onClick={triggerAssessmentHandler}
-                    isLoading={triggerAssessmentInProgress || false}
+                    isLoading={triggerAssessmentInProgress}
                     gwTimestamp={gwTimestamp || ''}
                     gwAdhocError={gwAdhocError || ''}
                     optimizePageLoading={loading || false}

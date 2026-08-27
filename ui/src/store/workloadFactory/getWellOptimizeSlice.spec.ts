@@ -1,8 +1,9 @@
 import { createStore } from '@reduxjs/toolkit';
 import getWellOptimizeSlice, {
+    addAssessmentInProgressKey,
+    removeAssessmentInProgressKey,
     resetGwData,
-    setGwPageLoadInstanceData,
-    setTriggerAssessmentInProgress
+    setGwPageLoadInstanceData
 } from './getWellOptimizeSlice';
 
 describe('getWellOptimizeSlice', () => {
@@ -12,24 +13,39 @@ describe('getWellOptimizeSlice', () => {
         store = createStore(getWellOptimizeSlice.reducer);
     });
 
-    test('should set triggerAssessmentInProgress correctly', () => {
-        expect(store.getState().triggerAssessmentInProgress).toEqual(false);
+    test('adds and removes an instance key from assessmentInProgressKeys', () => {
+        expect(store.getState().assessmentInProgressKeys).toEqual([]);
 
-        store.dispatch(setTriggerAssessmentInProgress(true));
-        expect(store.getState().triggerAssessmentInProgress).toEqual(true);
+        store.dispatch(addAssessmentInProgressKey('instance-A'));
+        expect(store.getState().assessmentInProgressKeys).toEqual(['instance-A']);
 
-        store.dispatch(setTriggerAssessmentInProgress(false));
-        expect(store.getState().triggerAssessmentInProgress).toEqual(false);
+        // Adding the same key twice does not duplicate it.
+        store.dispatch(addAssessmentInProgressKey('instance-A'));
+        expect(store.getState().assessmentInProgressKeys).toEqual(['instance-A']);
+
+        store.dispatch(removeAssessmentInProgressKey('instance-A'));
+        expect(store.getState().assessmentInProgressKeys).toEqual([]);
     });
 
-    test('should clear triggerAssessmentInProgress when resetting or switching instance', () => {
-        store.dispatch(setTriggerAssessmentInProgress(true));
+    test('tracks multiple in-progress instances independently', () => {
+        store.dispatch(addAssessmentInProgressKey('instance-A'));
+        store.dispatch(addAssessmentInProgressKey('instance-B'));
+        expect(store.getState().assessmentInProgressKeys).toEqual(['instance-A', 'instance-B']);
+
+        store.dispatch(removeAssessmentInProgressKey('instance-A'));
+        expect(store.getState().assessmentInProgressKeys).toEqual(['instance-B']);
+    });
+
+    test('resetGwData and setGwPageLoadInstanceData do not wipe out in-progress keys of other instances', () => {
+        // Navigating between instances (reset/page-load) must not forget an assessment that is
+        // still running elsewhere - otherwise returning to that instance would incorrectly show
+        // "not loading" for an assessment that hasn't finished yet.
+        store.dispatch(addAssessmentInProgressKey('instance-A'));
 
         store.dispatch(resetGwData(undefined));
-        expect(store.getState().triggerAssessmentInProgress).toEqual(false);
+        expect(store.getState().assessmentInProgressKeys).toEqual(['instance-A']);
 
-        store.dispatch(setTriggerAssessmentInProgress(true));
         store.dispatch(setGwPageLoadInstanceData({}));
-        expect(store.getState().triggerAssessmentInProgress).toEqual(false);
+        expect(store.getState().assessmentInProgressKeys).toEqual(['instance-A']);
     });
 });
