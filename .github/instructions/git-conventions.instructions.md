@@ -1,5 +1,5 @@
 ---
-description: Git workflow - branch naming, commit messages, pull requests, issue comments (no-fix), pre-push validation
+description: Git workflow - branch naming, commit messages, pull requests, lockfile hygiene, issue comments (no-fix), pre-push validation
 applyTo: '**/*'
 ---
 
@@ -44,6 +44,43 @@ Do not use a title with no `GH-<issue-number>:` prefix; non-compliant titles are
 **Branch and title must agree:** Use the same `<issue-number>` in the branch ([branch naming](#branch-naming)), commits, and PR title. The branch name **must** include `copilot/GH-<issue-number>-` (not only a matching number somewhere in the name).
 
 **Which issue number (single source of truth):** Use only the GitHub issue **this PR is intended to close**—the one you were assigned or explicitly asked to fix. Do **not** copy numbers from linked or parent issues, duplicates, unrelated `#…` / `GH-…` mentions in the issue body or comments, or from logs and stack traces. If anything is ambiguous, take the number `N` from that target issue’s URL (`…/issues/N`) and use **that same `N`** in the branch name, commits, PR title, and `Fixes #N` / `Closes #N`.
+
+### Lockfiles — never commit install drift (ALL PRs)
+
+**A PR must not contain `package-lock.json` (or `yarn.lock`) changes unless that same PR also changes the matching `package.json`.** This applies to every PR in this repo—human or agent, error-agent or not.
+
+Running `npm install` (or `npm i`) to build, lint, or test rewrites the lockfile whenever your npm version differs from the one that generated it. The resulting diff is pure metadata churn (e.g. added or removed `"peer": true` entries) with no dependency change, and it buries the real fix in thousands of unrelated lines.
+
+**Prevention — install with `npm ci`, never `npm install`:** `npm ci` installs exactly what the lockfile specifies and never writes to it. Use `npm install` **only** when you are deliberately adding, removing, or upgrading a dependency.
+
+**Pairing rule:** treat each lockfile with its matching `package.json` as a unit:
+
+| Lockfile | Matching package.json |
+| --- | --- |
+| `package-lock.json` | `package.json` |
+| `server/package-lock.json` | `server/package.json` |
+| `ui/package-lock.json` | `ui/package.json` |
+| `logs-analyzer/package-lock.json` | `logs-analyzer/package.json` |
+
+- If you **did not** change that `package.json`, restore the lockfile from `origin/master`. Do not leave install drift.
+- If you **did** change that `package.json` (add / remove / upgrade a dependency), **keep** the matching lockfile update. Restoring from `origin/master` would leave `package.json` and the lockfile out of sync. Commit both files together.
+
+**Before opening or updating a PR**, inspect the full PR diff — not just uncommitted work (`git status` looks clean if a lockfile is already committed):
+
+```bash
+git diff --name-only origin/master...HEAD   # review every file
+```
+
+Then revert **only drifted** lockfiles (lockfile changed, matching `package.json` did not):
+
+```bash
+# example: server lockfile drifted, server/package.json unchanged
+git checkout origin/master -- server/package-lock.json
+```
+
+Do **not** run that checkout against a lockfile whose matching `package.json` is also in the same diff.
+
+**Why it matters (and why it is not a build risk):** install drift changes only lockfile bookkeeping — the `version`, `resolved`, and `integrity` fields stay identical, so the installed tree is unchanged. The cost is a misleading changed-files list and merge conflicts on a 13,000-line file, not broken builds. GitHub collapses lockfile diffs automatically (they are generated files), but the file still appears in the PR's changed-files list and still conflicts, so revert it.
 
 ### Linking the PR to the issue (body or title)
 

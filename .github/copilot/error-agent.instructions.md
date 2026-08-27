@@ -23,17 +23,24 @@ Error-agent issues have a specific structure. Use these sections to guide your i
 
 ## Root Cause Analysis
 
--   Always trace the data flow from where the error is THROWN back to where the bad data ORIGINATES
--   Distinguish between the SYMPTOM (crash site) and the ROOT CAUSE (where wrong data is produced/stored)
--   If a variable has the wrong type or shape, find WHERE it was assigned — was it a database write, an API response mapper, a cache store?
+-   Always trace the data flow from where the error is THROWN back to where the bad data ORIGINATES. The stack frame is the **symptom**. The PR must name the **producer**.
+-   Distinguish between the SYMPTOM (crash site: `.toLowerCase()`, `.map()`, missing property) and the ROOT CAUSE (where that value was serialized, mapped, written, or truncated).
+-   **Inspect the actual failing value**, not a guessed one. Log or read the stored/API payload at the crash site: `typeof`, JSON, array vs object vs string. Do not invent `{ field: undefined }` because that is the cheapest way to reproduce the throw.
+-   If a variable has the wrong type or shape, find WHERE it was assigned — database write, collector/script output, API mapper, cache, or a serialization step (`JSON.stringify`, PowerShell `ConvertTo-Json -Depth`, XML, protobuf). Type-name strings (`System.Collections.Hashtable`, `[object Object]`) almost always mean **serialization truncated nested objects**, not a missing optional field.
+-   When the same logical payload exists in two shapes (legacy object vs `items[]` / `assessment` vs `assessments[]`, v1 vs v2), **compare both copies**. A depth/schema bug often corrupts only the deeper copy; the shallower sibling may still hold correct data. That sibling is evidence of origin, not a reason to only skip the bad copy.
+-   Reproduce with the **real request** (same path, query, account, `pageSize`) against stored data when the issue is an API 500. Confirm which record on the page is sufficient to fail the whole list. A guard that empties one item is not equivalent to restoring the payload.
 -   If you have a code fix: explain your full analysis in the **PR description** before the diff stands on its own. If you have **no** fix: do **not** open a PR — comment on the issue instead (**When not to open a PR** and **Issue Comment Format (no-fix)** in `git-conventions.instructions.md`).
 
 ## Fix Strategy
 
--   Fix at the SOURCE (the producer/writer of bad data) when possible, not just at the consumer/reader
--   If a type contract (interface, schema) exists between producer and consumer, enforce it
--   Prefer runtime validation (e.g., Array.isArray) at trust boundaries over deep-in-the-stack guards
--   If the root cause is outside the codebase (AWS SDK, OS syscall, infrastructure, transient environment), do not attempt an in-repo workaround. Comment on the issue with the analysis and classify it as external.
+-   Fix at the SOURCE (the producer/writer of bad data). A crash-site `filter`, optional chain, or `?.` is a **symptom guard**, not the fix. Do **not** open a PR whose only code change is skipping falsy/nameless entries so `.toLowerCase()` no longer throws.
+-   Required shape of an in-repo fix:
+    1. **Producer** — stop emitting the bad shape (correct depth/encoding, mapper, write path, or schema).
+    2. **Reader recovery** (when stored rows are already corrupted) — use an intact sibling field if one exists; do not silently drop recoverable records.
+    3. **Optional crash-site guard** — only as belt-and-suspenders **after** (1), never instead of (1).
+-   If a type contract (interface, schema) exists between producer and consumer, enforce it at the producer and at the trust boundary.
+-   Prefer runtime validation (e.g., `Array.isArray`, `typeof x === 'object'`) at trust boundaries over deep-in-the-stack guards that hide producer bugs.
+-   If the root cause is outside the codebase (AWS SDK, OS syscall, infrastructure, transient environment), do not attempt an in-repo workaround. Comment on the issue with the analysis and classify it as external. A consumer skip is still a workaround — do not ship it as the complete fix.
 
 ## Branch naming
 
@@ -50,13 +57,14 @@ Condensed requirements:
 ## Process (follow this order)
 
 1. If a stack trace is available, use it to locate the crash site (file and function). If not, search for the exact error message text (or the variable name in it) to locate the code path.
-2. Identify where the failing variable is produced or returned (trace backward from the crash site).
-3. Fix at the producer first (normalize type/shape so callers always get the expected form).
-4. Add a minimal guard at the crash site as belt-and-suspenders.
-5. Do not implement **competing** alternative fixes (e.g., several different producer-side changes or unrelated strategies in one PR). Pick **one** coherent fix strategy; steps 3-4 are still one strategy (producer correction plus the minimal guard from step 4).
-6. Add **at most one** unit test targeting the exact failure case (wrong type, shape, or missing data) to prevent regression. Do not add tests for happy paths, related scenarios, or adjacent code. If a test covering the same input already exists, update it instead of creating a new one. Do not create a new test file — only add to an existing one.
-7. Run pre-push validation per `git-conventions.instructions.md` before opening the PR.
-8. When you open the PR, follow **`git-conventions.instructions.md`** → **Pull Requests** (title, branch, **Linking the PR to the issue**, and **Error-agent PR description**). Do that when the PR is first opened, not only in follow-up edits.
+2. **Dump the failing input** at that site (or the DB/API record the request loaded). Record the real type/shape. Do not skip this step and synthesize a null field.
+3. Identify where that value is produced (trace backward: handler → mapper → DB/raw payload → collector/script/serializer). Name the producer in the PR.
+4. Fix at the producer first (normalize type/shape so callers always get the expected form). If already-stored data is truncated, recover from an intact sibling representation in the same record when one exists.
+5. Add a minimal guard at the crash site only as belt-and-suspenders **after** the producer (and recovery) change.
+6. Do not implement **competing** alternative fixes (e.g., several different producer-side changes or unrelated strategies in one PR). Pick **one** coherent fix strategy; steps 4–5 are still one strategy (producer correction plus the optional guard). A guard-only PR is **not** that strategy.
+7. Add **at most one** unit test targeting the **exact production shape** of the failure (e.g. a type-name string in a nested array, not a convenient `{ name: undefined }`). Do not add tests for happy paths, related scenarios, or adjacent code. If a test covering the same input already exists, update it instead of creating a new one. Do not create a new test file — only add to an existing one.
+8. Run pre-push validation per `git-conventions.instructions.md` before opening the PR.
+9. When you open the PR, follow **`git-conventions.instructions.md`** → **Pull Requests** (title, branch, **Linking the PR to the issue**, and **Error-agent PR description**). Do that when the PR is first opened, not only in follow-up edits. The **Root Cause** section must name the producer, not only the throw.
 
 ## Mandatory Quality Gates (before finalizing)
 
@@ -74,25 +82,38 @@ You must complete all checks below before opening/updating a PR:
     - Normalize at boundaries when external/input representation differs from internal representation.
 4. **Silent-fallback check**
     - Ensure new guards/filters do not cause silent defaulting, skipped processing, or empty-result behavior for previously valid flows.
-5. **Test determinism check**
+    - Filtering out every nested entry so a list API returns `{ databases: [] }` (or omits a host) for a record that still has usable sibling data is a **behavior change**, not a fix. Reject that as the sole change.
+5. **Producer-vs-guard check**
+    - Before opening the PR, answer: “If this guard were removed, would new data still be well-formed?” If no, the producer is not fixed — keep working; do not ship the guard alone.
+    - The regression test fixture must match the inspected production payload, not a simplified undefined/null that only trips the throw.
+6. **Test determinism check**
     - Unit tests must not depend on live network/service calls or environment-specific credentials.
     - Use existing mocks/scopes/fixtures for regression tests.
-6. **Incidental file change check**
-    - Before creating or updating the PR, run `git diff --name-only HEAD` (or `git status`) and inspect every file listed.
-    - `package-lock.json` and `yarn.lock` changes caused by exploratory `npm install` or `npm ci` runs are **never** part of the fix. Revert them with `git checkout -- <path/to/package-lock.json>` before opening the PR.
-    - Do **not** include lockfiles in the PR even if they appear modified in `git status`. Revert all lockfile changes unless the fix explicitly adds or removes a package dependency.
-    - After reverting, re-run `git diff --name-only HEAD` and confirm no unrelated files remain staged or modified.
-7. **Review-thread closure check**
+7. **Lockfile check (blocking — enforced in CI)**
+    - Install dependencies with **`npm ci`**, never `npm install`. `npm ci` never writes to the lockfile; `npm install` rewrites it whenever your npm version differs from the one that generated it, producing a metadata-only diff (e.g. added/removed `"peer": true`) that has nothing to do with the fix.
+    - An error-agent fix **never** adds or removes a dependency, so **no error-agent PR may contain a lockfile change**. There is no exception. (Unconditional revert is correct here because `package.json` is never intentionally changed. General PRs that *do* change a `package.json` must keep the matching lockfile — see **Lockfiles** in `git-conventions.instructions.md`.)
+    - Inspect the full PR diff — not just uncommitted work — with `git diff --name-only origin/master...HEAD`. `git status` will look clean if the lockfile was already committed.
+    - Revert any lockfile in the diff against the base branch, which works whether or not it is already committed:
+      ```bash
+      git checkout origin/master -- server/package-lock.json   # repeat per lockfile
+      git commit -m "GH-<issue-number>: revert lockfile drift"
+      ```
+    - Check all four lockfiles: `package-lock.json`, `server/package-lock.json`, `ui/package-lock.json`, `logs-analyzer/package-lock.json`.
+    - Re-run `git diff --name-only origin/master...HEAD` and confirm the file list contains only the source and test files you intentionally changed.
+    - GitHub collapses lockfile diffs automatically, but collapsed is not absent — the file still shows in the PR's changed-files list. Revert it rather than relying on the collapse.
+8. **Review-thread closure check**
     - For every PR comment thread: either fix it in code or respond with a clear technical rationale.
     - Do not mark work complete while unresolved correctness comments remain.
-8. **Branch name check**
+9. **Branch name check**
     - Confirm the branch meets **Branch naming** (above) and **`git-conventions.instructions.md`** → **Branch Naming**; the issue number must match **`Fixes #…`** and the PR title. If not, rename or recreate the branch before opening or updating the PR.
 
 ## Scope and constraints (avoid)
 
 -   Only change code on the data path from producer to crash site. Do not refactor unrelated logic.
+-   Do not treat optional chaining, `.filter(x => x.name)`, or skipping malformed rows as the root-cause fix. Those hide the throw and can drop recoverable data.
+-   Do not stop at the first `toLowerCase` / null-deref that matches the error string. Confirm that call actually runs on the failing request and inspect its argument.
 -   Do not add new dependencies or change function signatures except as strictly needed for the fix.
--   Do not include incidental or unintended file changes in the PR. **Before opening the PR**, run `git diff --name-only HEAD`, review every file, and revert any that are not on the direct fix path (e.g., `git checkout -- server/package-lock.json` for lockfile drift caused by exploratory `npm install` runs). Confirm the staged set contains only the files you intentionally changed.
+-   Do not include incidental or unintended file changes in the PR. **Before opening the PR**, run `git diff --name-only origin/master...HEAD`, review every file, and revert any that are not on the direct fix path (`git checkout origin/master -- <path>`). Lockfiles are the most common offender — see **Lockfile check** above; that check is blocking and enforced in CI.
 -   Do not explore alternative architectures or "improve" surrounding code — minimal diff only.
 -   If the issue body includes an **Investigation hint** (e.g. Crash site: ... Trace where X is supplied), start there; do not search the entire codebase first.
 -   If the issue has no stack trace, search for the exact error message text (or the variable name in it) first; do not try to match every context log line to code — that leads to scope creep and wrong paths.
@@ -115,8 +136,8 @@ Only when you are opening a PR that includes an actual code fix, structure your 
 
 Fixes #<issue-number>
 
-1. **Root Cause** — what code path produces the wrong data and why
-2. **Fix Approach** — where you are fixing and why this location (not just "added a null check")
+1. **Root Cause** — what **producer** writes/serializes the wrong data, the exact shape observed (not the throw), and why (e.g. JSON depth, wrong mapper, sibling field unused). “`x` was undefined at line N” is a symptom, not a root cause.
+2. **Fix Approach** — producer change and, if needed, how stored rows are recovered. Do not justify a crash-site-only null check as the approach.
 3. **Changes** — list of files changed with a one-line explanation each
 4. **Alternative Approaches Considered** — briefly note what else you considered and why you chose this approach
 
