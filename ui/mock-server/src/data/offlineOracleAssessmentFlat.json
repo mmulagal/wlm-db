@@ -299,32 +299,64 @@
         },
         {
             "id": "tiering-tco-optimization",
-            "name": "Tiering / TCO optimization",
+            "name": "Cold data tiering",
             "type": "storage",
             "severity": "critical",
             "recommendation": "Workload Factory recommends enabling tiering for some Oracle database volumes on Amazon FSx for NetApp ONTAP where appropriate, to move cold data to lower-cost capacity storage and reduce overall storage costs, while keeping active database data on high-performance SSDs to preserve critical performance. Recommended policies are based on the data type in each volume, with tiering disabled (none) for data files and redo logs, and auto for archive logs. For archive/FRA volumes, it is also recommended to set an appropriate cooling period before data is tiered—typically 2 days for compressed backups and 14 days for uncompressed backups—to balance cost efficiency and performance.",
             "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
             "status": "not-optimized",
             "recommended": "",
+            "objectsInViolation": ["oracleredo2", "oraclearch2", "oracledata2"],
+            "totalObjectsAssessed": 3,
+            "totalObjectsInViolation": 3,
             "subType": "configuration",
             "resourceType": "Volume",
-            "objectsInViolation": ["oracledata2"],
             "violationDetails": [
+                {
+                    "objectName": "oracleredo2",
+                    "value": "",
+                    "objectType": "Volume",
+                    "dataCategory": "mixed",
+                    "violatedConfigs": [
+                        {
+                            "id": "tiering-policy",
+                            "current": "all",
+                            "recommended": "none"
+                        }
+                    ]
+                },
+                {
+                    "objectName": "oraclearch2",
+                    "value": "",
+                    "objectType": "Volume",
+                    "dataCategory": "archive-log-files",
+                    "violatedConfigs": [
+                        {
+                            "id": "tiering-policy",
+                            "current": "none",
+                            "recommended": "auto"
+                        },
+                        {
+                            "id": "tiering-min-cooling-days",
+                            "current": "4",
+                            "recommended": "2"
+                        }
+                    ]
+                },
                 {
                     "objectName": "oracledata2",
                     "value": "",
                     "objectType": "Volume",
-                    "dataCategory": "data-control-files",
+                    "dataCategory": "mixed",
                     "violatedConfigs": [
                         {
                             "id": "tiering-policy",
-                            "current": "all"
+                            "current": "all",
+                            "recommended": "none"
                         }
                     ]
                 }
             ],
-            "totalObjectsAssessed": 3,
-            "totalObjectsInViolation": 1,
             "focusWidgetName": "ONTAP",
             "configDetails": [
                 {
@@ -333,7 +365,7 @@
                     "objectType": "Volume",
                     "recommendedByDataCategory": {
                         "log-files": "none",
-                        "mixed": "varies",
+                        "mixed": "none",
                         "data-control-files": "none",
                         "archive-log-files": "auto"
                     }

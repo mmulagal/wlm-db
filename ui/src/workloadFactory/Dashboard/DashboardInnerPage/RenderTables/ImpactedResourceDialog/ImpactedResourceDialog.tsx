@@ -404,11 +404,16 @@ interface SubConfigDetail {
  * (storage-efficiencies, tiering-tco-optimization, block-device-space-management),
  * where each row's current/recommended is an aggregate of its violated sub-configs.
  */
-const mapSubConfigViolations = (data: AssessmentData, columns: string[], na: string): ImpactedResourcesResult => {
+const mapSubConfigViolations = (
+    data: AssessmentData,
+    columns: string[],
+    na: string,
+    configId?: string
+): ImpactedResourcesResult => {
     const details: ViolationDetail[] = data?.violationDetails || [];
     const configDetails = (data?.configItem?.configDetails as SubConfigDetail[] | undefined) ?? [];
     const rows = details.map(detail => {
-        const { current, recommended } = buildSubConfigValues(detail, configDetails);
+        const { current, recommended } = buildSubConfigValues(detail, configDetails, configId);
         return [detail?.objectName || na, current || na, recommended || na];
     });
     return ensureRows(columns, rows, na);
@@ -432,7 +437,7 @@ const mapGenericConfigFromRegistry = (
     // Handle sub-configs (storage-efficiencies, etc.)
     if (columnConfig.hasSubConfigs) {
         const columns = columnConfig.columns.map(col => t(col.label) || col.label);
-        return mapSubConfigViolations(data, columns, na);
+        return mapSubConfigViolations(data, columns, na, configId);
     }
 
     // Aggregate all violationDetails into a single row (e.g. heartbeat-settings, tcp-advanced-options)

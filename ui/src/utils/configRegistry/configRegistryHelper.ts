@@ -861,7 +861,8 @@ const getSubConfigKey = (entry: { id?: string; name?: string }): string => entry
 
 export const buildSubConfigValues = (
     row: any,
-    configDetails: Array<any> = []
+    configDetails: Array<any> = [],
+    configId: string = ''
 ): { current: string; recommended: string } => {
     const currentByName = new Map<string, string>(
         (row?.violatedConfigs || [])
@@ -869,6 +870,7 @@ export const buildSubConfigValues = (
             .filter(([key]: [string, unknown]) => key !== '')
     );
     const dataCategory: string | undefined = row?.dataCategory;
+    const isTieringConfig = configId === ASSESSMENT_CONFIG_IDS.TIERING_TCO_OPTIMIZATION;
 
     const entries = configDetails
         .map((cfg: any) => {
@@ -878,7 +880,16 @@ export const buildSubConfigValues = (
             const current = currentByName.get(subConfigKey) || recommended;
             return { name: subConfigKey, current, recommended };
         })
-        .filter(entry => entry.name !== '');
+        .filter(entry => {
+            // Filter out entries with empty names
+            if (entry.name === '') return false;
+
+            // Filter out entries where recommended is empty (only for cold data tiering config)
+            // This handles cases where recommendedByDataCategory has values for some data categories
+            // but not for the current row's dataCategory, resulting in an empty recommended value
+            if (isTieringConfig && entry.recommended === '') return false;
+            return true;
+        });
 
     return {
         current: entries.map(e => `${e.name}=${e.current}`).join(', '),

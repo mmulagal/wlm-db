@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { ASSESSMENT_CONFIG_IDS, DBType } from '../consts';
-import { getButtonText, getColumnConfig } from './configRegistryHelper';
+import { buildSubConfigValues, getButtonText, getColumnConfig } from './configRegistryHelper';
 
 vi.mock('i18next', () => ({
     t: (key: string) => key
@@ -102,5 +102,121 @@ describe('getColumnConfig', () => {
 
     it('returns undefined for an unknown configId without dbType', () => {
         expect(getColumnConfig('non-existent-config-xyz')).toBeUndefined();
+    });
+});
+
+describe('buildSubConfigValues', () => {
+    const configDetails = [
+        { name: 'tiering-policy', recommended: 'auto' },
+        { name: 'tiering-min-cooling-days', recommended: '31' }
+    ];
+
+    it('shows all sub-configs from configDetails', () => {
+        const row = {
+            violatedConfigs: [{ name: 'tiering-policy', current: 'none' }]
+        };
+        const result = buildSubConfigValues(row, configDetails);
+        // Shows all configDetails; uses current from violatedConfigs if present, otherwise uses recommended
+        expect(result.current).toBe('tiering-policy=none, tiering-min-cooling-days=31');
+        expect(result.recommended).toBe('tiering-policy=auto, tiering-min-cooling-days=31');
+    });
+
+    it('uses recommended value when sub-config is not in violatedConfigs', () => {
+        const row = {
+            violatedConfigs: [{ name: 'tiering-policy', current: 'none' }]
+        };
+        const result = buildSubConfigValues(row, configDetails);
+        expect(result.current).toContain('tiering-min-cooling-days=31');
+        expect(result.recommended).toContain('tiering-min-cooling-days=31');
+    });
+
+    it('uses current value when sub-config is in violatedConfigs', () => {
+        const row = {
+            violatedConfigs: [
+                { name: 'tiering-policy', current: 'none' },
+                { name: 'tiering-min-cooling-days', current: '10' }
+            ]
+        };
+        const result = buildSubConfigValues(row, configDetails);
+        expect(result.current).toBe('tiering-policy=none, tiering-min-cooling-days=10');
+        expect(result.recommended).toBe('tiering-policy=auto, tiering-min-cooling-days=31');
+    });
+
+    it('shows all configDetails with recommended values when violatedConfigs is empty', () => {
+        const row = { violatedConfigs: [] };
+        const result = buildSubConfigValues(row, configDetails);
+        expect(result.current).toBe('tiering-policy=auto, tiering-min-cooling-days=31');
+        expect(result.recommended).toBe('tiering-policy=auto, tiering-min-cooling-days=31');
+    });
+
+    it('shows all configDetails with recommended values when row has no violatedConfigs', () => {
+        const result = buildSubConfigValues({}, configDetails);
+        expect(result.current).toBe('tiering-policy=auto, tiering-min-cooling-days=31');
+        expect(result.recommended).toBe('tiering-policy=auto, tiering-min-cooling-days=31');
+    });
+
+    it('filters out empty recommended values only for cold data tiering config', () => {
+        const configDetailsWithEmpty = [
+            { name: 'tiering-policy', recommended: 'auto' },
+            { name: 'tiering-min-cooling-days', recommended: '' }
+        ];
+        const row = {
+            violatedConfigs: [{ name: 'tiering-policy', current: 'none' }]
+        };
+
+        // With cold data tiering config, empty recommended should be filtered out
+        const resultTiering = buildSubConfigValues(
+            row,
+            configDetailsWithEmpty,
+            ASSESSMENT_CONFIG_IDS.TIERING_TCO_OPTIMIZATION
+        );
+        expect(resultTiering.current).toBe('tiering-policy=none');
+        expect(resultTiering.recommended).toBe('tiering-policy=auto');
+        expect(resultTiering.current).not.toContain('tiering-min-cooling-days');
+
+        // For other configs, empty recommended should NOT be filtered out
+        const resultNonTiering = buildSubConfigValues(
+            row,
+            configDetailsWithEmpty,
+            ASSESSMENT_CONFIG_IDS.BLOCK_DEVICE_SPACE_MANAGEMENT
+        );
+        expect(resultNonTiering.current).toBe('tiering-policy=none, tiering-min-cooling-days=');
+        expect(resultNonTiering.recommended).toBe('tiering-policy=auto, tiering-min-cooling-days=');
+    });
+
+    it('includes all sub-configs for storage-efficiencies regardless of violatedConfigs', () => {
+        const configDetailsStorageEfficiencies = [
+            {
+                id: 'compression',
+                recommended: '',
+                recommendedByDataCategory: { 'non-log-files': 'adaptive', 'log-files': 'none' }
+            },
+            {
+                id: 'deduplication',
+                recommended: '',
+                recommendedByDataCategory: { 'non-log-files': 'inline', 'log-files': 'none' }
+            },
+            {
+                id: 'compaction',
+                recommended: '',
+                recommendedByDataCategory: { 'non-log-files': 'enabled', 'log-files': 'none' }
+            }
+        ];
+        const row = {
+            dataCategory: 'non-log-files',
+            violatedConfigs: [{ id: 'deduplication', current: 'background' }]
+        };
+
+        // For storage-efficiencies, all sub-configs should be shown even if not in violatedConfigs
+        const result = buildSubConfigValues(
+            row,
+            configDetailsStorageEfficiencies,
+            ASSESSMENT_CONFIG_IDS.STORAGE_EFFICIENCIES
+        );
+        expect(result.current).toBe('compression=adaptive, deduplication=background, compaction=enabled');
+        expect(result.recommended).toBe('compression=adaptive, deduplication=inline, compaction=enabled');
+        expect(result.current).toContain('compression');
+        expect(result.current).toContain('deduplication');
+        expect(result.current).toContain('compaction');
     });
 });

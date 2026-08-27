@@ -293,7 +293,7 @@ const DynamicInnerTable = ({
                         topCurrent !== undefined && { value: topCurrent, current: topCurrent }),
                     // Inject top-level recommended if the row itself doesn't have one
                     recommended: row.recommended ?? topRecommended,
-                    ...(columnConfig?.hasSubConfigs ? buildSubConfigValues(row, data?.configDetails) : {})
+                    ...(columnConfig?.hasSubConfigs ? buildSubConfigValues(row, data?.configDetails, configId) : {})
                 })
             );
         }

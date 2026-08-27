@@ -666,7 +666,7 @@
                             },
                             {
                                 "id": "tiering-tco-optimization",
-                                "name": "Tiering / TCO optimization",
+                                "name": "Cold data tiering",
                                 "type": "storage",
                                 "severity": "critical",
                                 "recommendation": "For optimal database performance and cost efficiency, Workload Factory recommends using the snapshot-only tiering policy, which moves only snapshot data to the capacity tier while keeping active data on the SSD tier. This approach preserves low-latency performance for SQL workloads while reducing storage costs. Workload Factory recommends tiering snapshot data after a 7-day cooling period.",
@@ -750,31 +750,86 @@
                                 "severity": "warning",
                                 "recommendation": "Workload Factory recommends enabling storage efficiencies—deduplication, adaptive compression, and compaction—on volumes used by Microsoft SQL Server to reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance.",
                                 "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
+                                "status": "not-optimized",
                                 "recommended": "",
+                                "objectsInViolation": [
+                                    "wlmdb_sqldata_1728552629461",
+                                    "wlmdb_sqltemp_1728552629461",
+                                    "wlmdb_sqldata_1728574994"
+                                ],
+                                "totalObjectsAssessed": 3,
+                                "totalObjectsInViolation": 3,
                                 "subType": "configuration",
                                 "resourceType": "Volume",
-                                "focusWidgetName": "ONTAP",
-                                "status": "not-optimized",
-                                "objectsInViolation": ["wlmdb_sqllog_1731987160"],
                                 "violationDetails": [
                                     {
-                                        "objectName": "wlmdb_sqllog_1731987160",
+                                        "objectName": "wlmdb_sqldata_1728552629461",
                                         "value": "",
                                         "objectType": "Volume",
                                         "violatedConfigs": [
                                             {
+                                                "id": "compression",
+                                                "current": "none",
+                                                "recommended": "adaptive"
+                                            },
+                                            {
                                                 "id": "deduplication",
-                                                "current": "none"
+                                                "current": "none",
+                                                "recommended": "inline/both"
                                             },
                                             {
                                                 "id": "compaction",
-                                                "current": "none"
+                                                "current": "none",
+                                                "recommended": "enabled/inline"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "objectName": "wlmdb_sqltemp_1728552629461",
+                                        "value": "",
+                                        "objectType": "Volume",
+                                        "violatedConfigs": [
+                                            {
+                                                "id": "compression",
+                                                "current": "none",
+                                                "recommended": "adaptive"
+                                            },
+                                            {
+                                                "id": "deduplication",
+                                                "current": "none",
+                                                "recommended": "inline/both"
+                                            },
+                                            {
+                                                "id": "compaction",
+                                                "current": "none",
+                                                "recommended": "enabled/inline"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "objectName": "wlmdb_sqldata_1728574994",
+                                        "value": "",
+                                        "objectType": "Volume",
+                                        "violatedConfigs": [
+                                            {
+                                                "id": "compression",
+                                                "current": "none",
+                                                "recommended": "adaptive"
+                                            },
+                                            {
+                                                "id": "deduplication",
+                                                "current": "none",
+                                                "recommended": "inline/both"
+                                            },
+                                            {
+                                                "id": "compaction",
+                                                "current": "none",
+                                                "recommended": "enabled/inline"
                                             }
                                         ]
                                     }
                                 ],
-                                "totalObjectsAssessed": 3,
-                                "totalObjectsInViolation": 1,
+                                "focusWidgetName": "ONTAP",
                                 "configDetails": [
                                     {
                                         "id": "compression",
@@ -3488,7 +3543,7 @@
                             },
                             {
                                 "id": "tiering-tco-optimization",
-                                "name": "Tiering / TCO optimization",
+                                "name": "Cold data tiering",
                                 "type": "storage",
                                 "severity": "critical",
                                 "recommendation": "For optimal database performance and cost efficiency, Workload Factory recommends using the snapshot-only tiering policy, which moves only snapshot data to the capacity tier while keeping active data on the SSD tier. This approach preserves low-latency performance for SQL workloads while reducing storage costs. Workload Factory recommends tiering snapshot data after a 7-day cooling period.",
@@ -3572,31 +3627,86 @@
                                 "severity": "warning",
                                 "recommendation": "Workload Factory recommends enabling storage efficiencies—deduplication, adaptive compression, and compaction—on volumes used by Microsoft SQL Server to reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance.",
                                 "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
+                                "status": "not-optimized",
                                 "recommended": "",
+                                "objectsInViolation": [
+                                    "wlmdb_sqldata_1728552629461",
+                                    "wlmdb_sqltemp_1728552629461",
+                                    "wlmdb_sqldata_1728574994"
+                                ],
+                                "totalObjectsAssessed": 3,
+                                "totalObjectsInViolation": 3,
                                 "subType": "configuration",
                                 "resourceType": "Volume",
-                                "focusWidgetName": "ONTAP",
-                                "status": "not-optimized",
-                                "objectsInViolation": ["wlmdb_sqllog_1731987160"],
                                 "violationDetails": [
                                     {
-                                        "objectName": "wlmdb_sqllog_1731987160",
+                                        "objectName": "wlmdb_sqldata_1728552629461",
                                         "value": "",
                                         "objectType": "Volume",
                                         "violatedConfigs": [
                                             {
+                                                "id": "compression",
+                                                "current": "none",
+                                                "recommended": "adaptive"
+                                            },
+                                            {
                                                 "id": "deduplication",
-                                                "current": "none"
+                                                "current": "none",
+                                                "recommended": "inline/both"
                                             },
                                             {
                                                 "id": "compaction",
-                                                "current": "none"
+                                                "current": "none",
+                                                "recommended": "enabled/inline"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "objectName": "wlmdb_sqltemp_1728552629461",
+                                        "value": "",
+                                        "objectType": "Volume",
+                                        "violatedConfigs": [
+                                            {
+                                                "id": "compression",
+                                                "current": "none",
+                                                "recommended": "adaptive"
+                                            },
+                                            {
+                                                "id": "deduplication",
+                                                "current": "none",
+                                                "recommended": "inline/both"
+                                            },
+                                            {
+                                                "id": "compaction",
+                                                "current": "none",
+                                                "recommended": "enabled/inline"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "objectName": "wlmdb_sqldata_1728574994",
+                                        "value": "",
+                                        "objectType": "Volume",
+                                        "violatedConfigs": [
+                                            {
+                                                "id": "compression",
+                                                "current": "none",
+                                                "recommended": "adaptive"
+                                            },
+                                            {
+                                                "id": "deduplication",
+                                                "current": "none",
+                                                "recommended": "inline/both"
+                                            },
+                                            {
+                                                "id": "compaction",
+                                                "current": "none",
+                                                "recommended": "enabled/inline"
                                             }
                                         ]
                                     }
                                 ],
-                                "totalObjectsAssessed": 3,
-                                "totalObjectsInViolation": 1,
+                                "focusWidgetName": "ONTAP",
                                 "configDetails": [
                                     {
                                         "id": "compression",
@@ -5503,7 +5613,7 @@
                             },
                             {
                                 "id": "tiering-tco-optimization",
-                                "name": "Tiering / TCO optimization",
+                                "name": "Cold data tiering",
                                 "type": "storage",
                                 "severity": "critical",
                                 "recommendation": "For optimal database performance and cost efficiency, Workload Factory recommends using the snapshot-only tiering policy, which moves only snapshot data to the capacity tier while keeping active data on the SSD tier. This approach preserves low-latency performance for SQL workloads while reducing storage costs. Workload Factory recommends tiering snapshot data after a 7-day cooling period.",
@@ -5587,31 +5697,86 @@
                                 "severity": "warning",
                                 "recommendation": "Workload Factory recommends enabling storage efficiencies—deduplication, adaptive compression, and compaction—on volumes used by Microsoft SQL Server to reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance.",
                                 "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
+                                "status": "not-optimized",
                                 "recommended": "",
+                                "objectsInViolation": [
+                                    "wlmdb_sqldata_1728552629461",
+                                    "wlmdb_sqltemp_1728552629461",
+                                    "wlmdb_sqldata_1728574994"
+                                ],
+                                "totalObjectsAssessed": 3,
+                                "totalObjectsInViolation": 3,
                                 "subType": "configuration",
                                 "resourceType": "Volume",
-                                "focusWidgetName": "ONTAP",
-                                "status": "not-optimized",
-                                "objectsInViolation": ["wlmdb_sqllog_1731987160"],
                                 "violationDetails": [
                                     {
-                                        "objectName": "wlmdb_sqllog_1731987160",
+                                        "objectName": "wlmdb_sqldata_1728552629461",
                                         "value": "",
                                         "objectType": "Volume",
                                         "violatedConfigs": [
                                             {
+                                                "id": "compression",
+                                                "current": "none",
+                                                "recommended": "adaptive"
+                                            },
+                                            {
                                                 "id": "deduplication",
-                                                "current": "none"
+                                                "current": "none",
+                                                "recommended": "inline/both"
                                             },
                                             {
                                                 "id": "compaction",
-                                                "current": "none"
+                                                "current": "none",
+                                                "recommended": "enabled/inline"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "objectName": "wlmdb_sqltemp_1728552629461",
+                                        "value": "",
+                                        "objectType": "Volume",
+                                        "violatedConfigs": [
+                                            {
+                                                "id": "compression",
+                                                "current": "none",
+                                                "recommended": "adaptive"
+                                            },
+                                            {
+                                                "id": "deduplication",
+                                                "current": "none",
+                                                "recommended": "inline/both"
+                                            },
+                                            {
+                                                "id": "compaction",
+                                                "current": "none",
+                                                "recommended": "enabled/inline"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "objectName": "wlmdb_sqldata_1728574994",
+                                        "value": "",
+                                        "objectType": "Volume",
+                                        "violatedConfigs": [
+                                            {
+                                                "id": "compression",
+                                                "current": "none",
+                                                "recommended": "adaptive"
+                                            },
+                                            {
+                                                "id": "deduplication",
+                                                "current": "none",
+                                                "recommended": "inline/both"
+                                            },
+                                            {
+                                                "id": "compaction",
+                                                "current": "none",
+                                                "recommended": "enabled/inline"
                                             }
                                         ]
                                     }
                                 ],
-                                "totalObjectsAssessed": 3,
-                                "totalObjectsInViolation": 1,
+                                "focusWidgetName": "ONTAP",
                                 "configDetails": [
                                     {
                                         "id": "compression",
@@ -7507,7 +7672,7 @@
                             },
                             {
                                 "id": "tiering-tco-optimization",
-                                "name": "Tiering / TCO optimization",
+                                "name": "Cold data tiering",
                                 "type": "storage",
                                 "severity": "critical",
                                 "recommendation": "For optimal database performance and cost efficiency, Workload Factory recommends using the snapshot-only tiering policy, which moves only snapshot data to the capacity tier while keeping active data on the SSD tier. This approach preserves low-latency performance for SQL workloads while reducing storage costs. Workload Factory recommends tiering snapshot data after a 7-day cooling period.",
@@ -7591,31 +7756,86 @@
                                 "severity": "warning",
                                 "recommendation": "Workload Factory recommends enabling storage efficiencies—deduplication, adaptive compression, and compaction—on volumes used by Microsoft SQL Server to reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance.",
                                 "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
+                                "status": "not-optimized",
                                 "recommended": "",
+                                "objectsInViolation": [
+                                    "wlmdb_sqldata_1728552629461",
+                                    "wlmdb_sqltemp_1728552629461",
+                                    "wlmdb_sqldata_1728574994"
+                                ],
+                                "totalObjectsAssessed": 3,
+                                "totalObjectsInViolation": 3,
                                 "subType": "configuration",
                                 "resourceType": "Volume",
-                                "focusWidgetName": "ONTAP",
-                                "status": "not-optimized",
-                                "objectsInViolation": ["wlmdb_sqllog_1731987160"],
                                 "violationDetails": [
                                     {
-                                        "objectName": "wlmdb_sqllog_1731987160",
+                                        "objectName": "wlmdb_sqldata_1728552629461",
                                         "value": "",
                                         "objectType": "Volume",
                                         "violatedConfigs": [
                                             {
+                                                "id": "compression",
+                                                "current": "none",
+                                                "recommended": "adaptive"
+                                            },
+                                            {
                                                 "id": "deduplication",
-                                                "current": "none"
+                                                "current": "none",
+                                                "recommended": "inline/both"
                                             },
                                             {
                                                 "id": "compaction",
-                                                "current": "none"
+                                                "current": "none",
+                                                "recommended": "enabled/inline"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "objectName": "wlmdb_sqltemp_1728552629461",
+                                        "value": "",
+                                        "objectType": "Volume",
+                                        "violatedConfigs": [
+                                            {
+                                                "id": "compression",
+                                                "current": "none",
+                                                "recommended": "adaptive"
+                                            },
+                                            {
+                                                "id": "deduplication",
+                                                "current": "none",
+                                                "recommended": "inline/both"
+                                            },
+                                            {
+                                                "id": "compaction",
+                                                "current": "none",
+                                                "recommended": "enabled/inline"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "objectName": "wlmdb_sqldata_1728574994",
+                                        "value": "",
+                                        "objectType": "Volume",
+                                        "violatedConfigs": [
+                                            {
+                                                "id": "compression",
+                                                "current": "none",
+                                                "recommended": "adaptive"
+                                            },
+                                            {
+                                                "id": "deduplication",
+                                                "current": "none",
+                                                "recommended": "inline/both"
+                                            },
+                                            {
+                                                "id": "compaction",
+                                                "current": "none",
+                                                "recommended": "enabled/inline"
                                             }
                                         ]
                                     }
                                 ],
-                                "totalObjectsAssessed": 3,
-                                "totalObjectsInViolation": 1,
+                                "focusWidgetName": "ONTAP",
                                 "configDetails": [
                                     {
                                         "id": "compression",
@@ -9511,7 +9731,7 @@
                             },
                             {
                                 "id": "tiering-tco-optimization",
-                                "name": "Tiering / TCO optimization",
+                                "name": "Cold data tiering",
                                 "type": "storage",
                                 "severity": "critical",
                                 "recommendation": "For optimal database performance and cost efficiency, Workload Factory recommends using the snapshot-only tiering policy, which moves only snapshot data to the capacity tier while keeping active data on the SSD tier. This approach preserves low-latency performance for SQL workloads while reducing storage costs. Workload Factory recommends tiering snapshot data after a 7-day cooling period.",
@@ -9595,31 +9815,86 @@
                                 "severity": "warning",
                                 "recommendation": "Workload Factory recommends enabling storage efficiencies—deduplication, adaptive compression, and compaction—on volumes used by Microsoft SQL Server to reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance.",
                                 "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
+                                "status": "not-optimized",
                                 "recommended": "",
+                                "objectsInViolation": [
+                                    "wlmdb_sqldata_1728552629461",
+                                    "wlmdb_sqltemp_1728552629461",
+                                    "wlmdb_sqldata_1728574994"
+                                ],
+                                "totalObjectsAssessed": 3,
+                                "totalObjectsInViolation": 3,
                                 "subType": "configuration",
                                 "resourceType": "Volume",
-                                "focusWidgetName": "ONTAP",
-                                "status": "not-optimized",
-                                "objectsInViolation": ["wlmdb_sqllog_1731987160"],
                                 "violationDetails": [
                                     {
-                                        "objectName": "wlmdb_sqllog_1731987160",
+                                        "objectName": "wlmdb_sqldata_1728552629461",
                                         "value": "",
                                         "objectType": "Volume",
                                         "violatedConfigs": [
                                             {
+                                                "id": "compression",
+                                                "current": "none",
+                                                "recommended": "adaptive"
+                                            },
+                                            {
                                                 "id": "deduplication",
-                                                "current": "none"
+                                                "current": "none",
+                                                "recommended": "inline/both"
                                             },
                                             {
                                                 "id": "compaction",
-                                                "current": "none"
+                                                "current": "none",
+                                                "recommended": "enabled/inline"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "objectName": "wlmdb_sqltemp_1728552629461",
+                                        "value": "",
+                                        "objectType": "Volume",
+                                        "violatedConfigs": [
+                                            {
+                                                "id": "compression",
+                                                "current": "none",
+                                                "recommended": "adaptive"
+                                            },
+                                            {
+                                                "id": "deduplication",
+                                                "current": "none",
+                                                "recommended": "inline/both"
+                                            },
+                                            {
+                                                "id": "compaction",
+                                                "current": "none",
+                                                "recommended": "enabled/inline"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "objectName": "wlmdb_sqldata_1728574994",
+                                        "value": "",
+                                        "objectType": "Volume",
+                                        "violatedConfigs": [
+                                            {
+                                                "id": "compression",
+                                                "current": "none",
+                                                "recommended": "adaptive"
+                                            },
+                                            {
+                                                "id": "deduplication",
+                                                "current": "none",
+                                                "recommended": "inline/both"
+                                            },
+                                            {
+                                                "id": "compaction",
+                                                "current": "none",
+                                                "recommended": "enabled/inline"
                                             }
                                         ]
                                     }
                                 ],
-                                "totalObjectsAssessed": 3,
-                                "totalObjectsInViolation": 1,
+                                "focusWidgetName": "ONTAP",
                                 "configDetails": [
                                     {
                                         "id": "compression",
@@ -11351,7 +11626,7 @@
                             },
                             {
                                 "id": "tiering-tco-optimization",
-                                "name": "Tiering / TCO optimization",
+                                "name": "Cold data tiering",
                                 "type": "storage",
                                 "severity": "critical",
                                 "recommendation": "For optimal database performance and cost efficiency, Workload Factory recommends using the snapshot-only tiering policy, which moves only snapshot data to the capacity tier while keeping active data on the SSD tier. This approach preserves low-latency performance for SQL workloads while reducing storage costs. Workload Factory recommends tiering snapshot data after a 7-day cooling period.",
@@ -11435,31 +11710,86 @@
                                 "severity": "warning",
                                 "recommendation": "Workload Factory recommends enabling storage efficiencies—deduplication, adaptive compression, and compaction—on volumes used by Microsoft SQL Server to reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance.",
                                 "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
+                                "status": "not-optimized",
                                 "recommended": "",
+                                "objectsInViolation": [
+                                    "wlmdb_sqldata_1728552629461",
+                                    "wlmdb_sqltemp_1728552629461",
+                                    "wlmdb_sqldata_1728574994"
+                                ],
+                                "totalObjectsAssessed": 3,
+                                "totalObjectsInViolation": 3,
                                 "subType": "configuration",
                                 "resourceType": "Volume",
-                                "focusWidgetName": "ONTAP",
-                                "status": "not-optimized",
-                                "objectsInViolation": ["wlmdb_sqllog_1731987160"],
                                 "violationDetails": [
                                     {
-                                        "objectName": "wlmdb_sqllog_1731987160",
+                                        "objectName": "wlmdb_sqldata_1728552629461",
                                         "value": "",
                                         "objectType": "Volume",
                                         "violatedConfigs": [
                                             {
+                                                "id": "compression",
+                                                "current": "none",
+                                                "recommended": "adaptive"
+                                            },
+                                            {
                                                 "id": "deduplication",
-                                                "current": "none"
+                                                "current": "none",
+                                                "recommended": "inline/both"
                                             },
                                             {
                                                 "id": "compaction",
-                                                "current": "none"
+                                                "current": "none",
+                                                "recommended": "enabled/inline"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "objectName": "wlmdb_sqltemp_1728552629461",
+                                        "value": "",
+                                        "objectType": "Volume",
+                                        "violatedConfigs": [
+                                            {
+                                                "id": "compression",
+                                                "current": "none",
+                                                "recommended": "adaptive"
+                                            },
+                                            {
+                                                "id": "deduplication",
+                                                "current": "none",
+                                                "recommended": "inline/both"
+                                            },
+                                            {
+                                                "id": "compaction",
+                                                "current": "none",
+                                                "recommended": "enabled/inline"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "objectName": "wlmdb_sqldata_1728574994",
+                                        "value": "",
+                                        "objectType": "Volume",
+                                        "violatedConfigs": [
+                                            {
+                                                "id": "compression",
+                                                "current": "none",
+                                                "recommended": "adaptive"
+                                            },
+                                            {
+                                                "id": "deduplication",
+                                                "current": "none",
+                                                "recommended": "inline/both"
+                                            },
+                                            {
+                                                "id": "compaction",
+                                                "current": "none",
+                                                "recommended": "enabled/inline"
                                             }
                                         ]
                                     }
                                 ],
-                                "totalObjectsAssessed": 3,
-                                "totalObjectsInViolation": 1,
+                                "focusWidgetName": "ONTAP",
                                 "configDetails": [
                                     {
                                         "id": "compression",
@@ -13242,7 +13572,7 @@
                             },
                             {
                                 "id": "tiering-tco-optimization",
-                                "name": "Tiering / TCO optimization",
+                                "name": "Cold data tiering",
                                 "type": "storage",
                                 "severity": "critical",
                                 "recommendation": "For optimal database performance and cost efficiency, Workload Factory recommends using the snapshot-only tiering policy, which moves only snapshot data to the capacity tier while keeping active data on the SSD tier. This approach preserves low-latency performance for SQL workloads while reducing storage costs. Workload Factory recommends tiering snapshot data after a 7-day cooling period.",
@@ -13326,31 +13656,86 @@
                                 "severity": "warning",
                                 "recommendation": "Workload Factory recommends enabling storage efficiencies—deduplication, adaptive compression, and compaction—on volumes used by Microsoft SQL Server to reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance.",
                                 "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
+                                "status": "not-optimized",
                                 "recommended": "",
+                                "objectsInViolation": [
+                                    "wlmdb_sqldata_1728552629461",
+                                    "wlmdb_sqltemp_1728552629461",
+                                    "wlmdb_sqldata_1728574994"
+                                ],
+                                "totalObjectsAssessed": 3,
+                                "totalObjectsInViolation": 3,
                                 "subType": "configuration",
                                 "resourceType": "Volume",
-                                "focusWidgetName": "ONTAP",
-                                "status": "not-optimized",
-                                "objectsInViolation": ["wlmdb_sqllog_1731987160"],
                                 "violationDetails": [
                                     {
-                                        "objectName": "wlmdb_sqllog_1731987160",
+                                        "objectName": "wlmdb_sqldata_1728552629461",
                                         "value": "",
                                         "objectType": "Volume",
                                         "violatedConfigs": [
                                             {
+                                                "id": "compression",
+                                                "current": "none",
+                                                "recommended": "adaptive"
+                                            },
+                                            {
                                                 "id": "deduplication",
-                                                "current": "none"
+                                                "current": "none",
+                                                "recommended": "inline/both"
                                             },
                                             {
                                                 "id": "compaction",
-                                                "current": "none"
+                                                "current": "none",
+                                                "recommended": "enabled/inline"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "objectName": "wlmdb_sqltemp_1728552629461",
+                                        "value": "",
+                                        "objectType": "Volume",
+                                        "violatedConfigs": [
+                                            {
+                                                "id": "compression",
+                                                "current": "none",
+                                                "recommended": "adaptive"
+                                            },
+                                            {
+                                                "id": "deduplication",
+                                                "current": "none",
+                                                "recommended": "inline/both"
+                                            },
+                                            {
+                                                "id": "compaction",
+                                                "current": "none",
+                                                "recommended": "enabled/inline"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "objectName": "wlmdb_sqldata_1728574994",
+                                        "value": "",
+                                        "objectType": "Volume",
+                                        "violatedConfigs": [
+                                            {
+                                                "id": "compression",
+                                                "current": "none",
+                                                "recommended": "adaptive"
+                                            },
+                                            {
+                                                "id": "deduplication",
+                                                "current": "none",
+                                                "recommended": "inline/both"
+                                            },
+                                            {
+                                                "id": "compaction",
+                                                "current": "none",
+                                                "recommended": "enabled/inline"
                                             }
                                         ]
                                     }
                                 ],
-                                "totalObjectsAssessed": 3,
-                                "totalObjectsInViolation": 1,
+                                "focusWidgetName": "ONTAP",
                                 "configDetails": [
                                     {
                                         "id": "compression",
