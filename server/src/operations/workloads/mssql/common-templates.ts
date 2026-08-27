@@ -3,7 +3,8 @@
 //  - $FSxID: FSx ID
 //  - $FSxRegion: FSx region
 const invokeOntapRequestTemplate = `
-        Add-Type @"
+        if (-not ('TrustAllCertsPolicy' -as [type])) {
+            Add-Type @"
             using System.Net;
             using System.Security.Cryptography.X509Certificates;
             public class TrustAllCertsPolicy : ICertificatePolicy {
@@ -14,6 +15,7 @@ const invokeOntapRequestTemplate = `
                 }
             }
 "@
+        }
         [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 

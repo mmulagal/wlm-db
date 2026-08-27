@@ -753,7 +753,7 @@ Function Write-JsonFile {
     )
     
     try {
-        $jsonContent = $Data | ConvertTo-Json -Depth 10 -Compress
+        $jsonContent = $Data | ConvertTo-Json -Depth 20 -Compress
         $jsonContent | Out-File -FilePath $FilePath -Encoding UTF8 -ErrorAction Stop
         Write-Log "File written to: $FilePath"
         return $true

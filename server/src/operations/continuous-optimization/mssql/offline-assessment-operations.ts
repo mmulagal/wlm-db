@@ -681,11 +681,9 @@ async function fetchMssqlOfflineAssessment(
         mtuAlignment,
         clone
     } = rawdata;
-    // For HA / maxDop we prefer the first entry of the array (instance-level data);
-    // fall back to the single-assessment shape for backward compat.
     const primaryAssessment =
-        (instanceLevelAssessments?.[0] as MSSQLInstanceLevelAssessment | undefined) ??
-        (instanceLevelAssessment as MSSQLInstanceLevelAssessment | undefined);
+        (instanceLevelAssessment as MSSQLInstanceLevelAssessment | undefined) ??
+        (instanceLevelAssessments?.[0] as MSSQLInstanceLevelAssessment | undefined);
     const { maxDop, highAvailability } = primaryAssessment || {};
 
     let maxDopData: MaxDOPAssesment | undefined;
@@ -1483,13 +1481,57 @@ type DbMapEntry = {
     logLuns: { name: string; driveLetter?: string }[];
 };
 
+function lunFileFromMappedRecord(lun: LunRecord | undefined) {
+    if (typeof lun?.name !== 'string' || lun.name.length === 0) {
+        return undefined;
+    }
+    return { name: lun.name, ...(lun.driveLetter && { driveLetter: lun.driveLetter }) };
+}
+
+function pushUniqueMappedLuns(
+    target: { name: string; driveLetter?: string }[],
+    uuids: string[] | undefined,
+    lunByUuid: Map<string, LunRecord>
+) {
+    const seen = new Set(target.map(lun => lun.name));
+    for (const uuid of uuids || []) {
+        const lun = lunFileFromMappedRecord(lunByUuid.get(uuid));
+        if (lun && !seen.has(lun.name)) {
+            seen.add(lun.name);
+            target.push(lun);
+        }
+    }
+}
+
+function accumulateMappedVolumeDatabases(dbMap: Map<string, DbMapEntry>, mapped: MSSQLOfflineMappedVolumes) {
+    const lunByUuid = new Map<string, LunRecord>();
+    for (const lun of mapped.luns || []) {
+        if (lun?.uuid) {
+            lunByUuid.set(lun.uuid, lun);
+        }
+    }
+    for (const entry of mapped.volumeDBMap || []) {
+        if (typeof entry?.databaseName === 'string' && entry.databaseName.length > 0) {
+            if (!dbMap.has(entry.databaseName)) {
+                dbMap.set(entry.databaseName, { totalSizeBytes: 0, dataLuns: [], logLuns: [] });
+            }
+            const rec = dbMap.get(entry.databaseName)!;
+            pushUniqueMappedLuns(rec.dataLuns, entry.dataLunUuids, lunByUuid);
+            pushUniqueMappedLuns(rec.logLuns, entry.logLunUuids, lunByUuid);
+        }
+    }
+}
+
 function accumulateLunEntries(
     dbMap: Map<string, DbMapEntry>,
     entries: UserDatabaseLayoutEntry[],
     lunKey: 'dataLuns' | 'logLuns'
 ) {
     for (const entry of entries) {
-        for (const db of entry.databaseDetails || []) {
+        const validDatabaseDetails = (entry.databaseDetails || []).filter(
+            database => typeof database?.name === 'string' && database.name.length > 0
+        );
+        for (const db of validDatabaseDetails) {
             if (!dbMap.has(db.name)) {
                 dbMap.set(db.name, { totalSizeBytes: 0, dataLuns: [], logLuns: [] });
             }
@@ -1504,14 +1546,15 @@ function accumulateLunEntries(
 }
 
 function mapOfflineAssessmentRecord(record: OfflineAssessmentDBSchema) {
-    const { instanceLevelAssessment = {}, instanceLevelAssessments } =
+    const { instanceLevelAssessment, instanceLevelAssessments } =
         (record.rawdata as MSSQLOfflineAssessmentRawData) || {};
     const { databaseInstanceName, fsxId, storageEndpoint, deploymentType, baseDeploymentType, agName, hostname } =
         (record.metadata as unknown as MSSQLOfflineAssessmentMetadataType) || {};
 
     const primaryAssessmentForMap =
+        (instanceLevelAssessment as MSSQLInstanceLevelAssessment | undefined) ??
         (instanceLevelAssessments?.[0] as MSSQLInstanceLevelAssessment | undefined) ??
-        (instanceLevelAssessment as MSSQLInstanceLevelAssessment);
+        {};
 
     const fileSystemId = primaryAssessmentForMap.filesystemId || fsxId || storageEndpoint;
     const { data = [], log = [] } = (primaryAssessmentForMap.layout?.['user-database-layout'] ??
@@ -1520,6 +1563,9 @@ function mapOfflineAssessmentRecord(record: OfflineAssessmentDBSchema) {
     const dbMap = new Map<string, DbMapEntry>();
     accumulateLunEntries(dbMap, data, 'dataLuns');
     accumulateLunEntries(dbMap, log, 'logLuns');
+    if (dbMap.size === 0) {
+        accumulateMappedVolumeDatabases(dbMap, (record.mapped_ontap_volumes as MSSQLOfflineMappedVolumes) || {});
+    }
 
     const databases = Array.from(dbMap.entries()).map(
         ([name, { totalSizeBytes, collationName, dataLuns, logLuns }]) => ({

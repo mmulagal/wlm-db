@@ -277,7 +277,12 @@ function expandVolumeDataPerDatabaseForLayoutAssessment(data: DatabaseVolumeReco
     const expandedData: DatabaseVolumeRecord[] = [];
     data.forEach((volume: DatabaseVolumeRecord) => {
         if (volume.databaseDetails && volume.databaseDetails.length > 0) {
-            volume.databaseDetails.forEach((db: DatabaseRecord) => {
+            // Entries without a usable name would compare equal to each other and produce
+            // undefined database names in the layout verdict, so they are dropped.
+            const namedDatabases = volume.databaseDetails.filter(
+                (db: DatabaseRecord) => typeof db?.name === 'string' && db.name.length > 0
+            );
+            namedDatabases.forEach((db: DatabaseRecord) => {
                 const dbVolume = { ...volume };
                 dbVolume.name = db.name;
                 dbVolume.sizeInMb = db.sizeInMb;

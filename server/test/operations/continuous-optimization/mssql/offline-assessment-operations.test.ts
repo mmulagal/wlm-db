@@ -973,7 +973,8 @@ describe('MSSQL Offline Assessment Operations', () => {
                                             driveLetter: 'E',
                                             databaseDetails: [
                                                 { name: 'AdventureWorks', sizeInMb: 512 },
-                                                { name: 'master', sizeInMb: 8 }
+                                                { name: 'master', sizeInMb: 8 },
+                                                'System.Collections.Hashtable'
                                             ]
                                         }
                                     ],
@@ -986,7 +987,23 @@ describe('MSSQL Offline Assessment Operations', () => {
                                     ]
                                 }
                             }
-                        }
+                        },
+                        instanceLevelAssessments: [
+                            {
+                                filesystemId: 'fs-databases-test',
+                                layout: {
+                                    'user-database-layout': {
+                                        data: [
+                                            {
+                                                lunPath: '/vol/data_lun',
+                                                databaseDetails: ['System.Collections.Hashtable']
+                                            }
+                                        ],
+                                        log: []
+                                    }
+                                }
+                            }
+                        ]
                     },
                     metadata: {
                         databaseInstanceName: 'MSSQLSERVER',
