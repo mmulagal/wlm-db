@@ -5,6 +5,7 @@
 /* eslint-disable */
 
 import {
+    ConnectionStatus,
     GetCommandInvocationCommand,
     SendCommandCommand,
     SSMClient,
@@ -2108,6 +2109,14 @@ ssmMock.on(GetParametersByPathCommand).callsFake(input => {
     return Promise.resolve(listFsxOntapRegionsResponse);
 });
 ssmMock.on(GetConnectionStatusCommand).resolves(getConnectionStatusResponse);
+// Restricted-permission hosts stay unreachable over SSM so that no active database node can be
+// resolved for them and callers must fall back to the AWS-only data they already hold.
+const NOT_CONNECTED_INSTANCE_IDS = ['i-restricted-ebs', 'i-restricted-oracle-ebs'];
+NOT_CONNECTED_INSTANCE_IDS.forEach(instanceId => {
+    ssmMock
+        .on(GetConnectionStatusCommand, { Target: instanceId })
+        .resolves({ ...getConnectionStatusResponse, Status: ConnectionStatus.NOT_CONNECTED, Target: instanceId });
+});
 ssmMock.on(PutParameterCommand).resolves(putParameterResponse);
 ssmMock.on(GetParameterCommand).resolves(getParameerResponse);
 ssmMock.on(DeleteParametersCommand).resolves(deleteParametersResponse);

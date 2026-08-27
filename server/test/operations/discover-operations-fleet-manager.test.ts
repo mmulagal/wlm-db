@@ -4,7 +4,8 @@ import { DatabaseTypes } from '../../src/utils/consts';
 import {
     discoverEc2Instances,
     getTaggingServiceStorageForInstance,
-    applyTaggingServiceStorageEnrichment
+    applyTaggingServiceStorage,
+    applyTaggingServiceSqlServerStorage
 } from '../../src/operations/discover-operations';
 import { checkFsxLinkExists } from '../../src/lib/cloud-manager/fsx-core';
 import {
@@ -195,9 +196,9 @@ describe('getTaggingServiceStorageForInstance', () => {
     });
 });
 
-// ─── applyTaggingServiceStorageEnrichment ────────────────────────────────────
+// ─── applyTaggingServiceStorage ────────────────────────────────────
 
-describe('applyTaggingServiceStorageEnrichment', () => {
+describe('applyTaggingServiceStorage', () => {
     const storage: NonNullable<SqlServerInstanceInfoType['storage']> = [{ type: 'EBS', id: 'vol-0abc123' }];
 
     it('fills in storage for sqlServerInstances entries missing it', () => {
@@ -206,7 +207,7 @@ describe('applyTaggingServiceStorageEnrichment', () => {
             sqlServerInstances: [{ sqlServerInstance: 'MSSQLSERVER' } as SqlServerInstanceInfoType]
         } as DiscoverResponseInfoType;
 
-        applyTaggingServiceStorageEnrichment(item.ec2InstanceId, item.sqlServerInstances, storage);
+        applyTaggingServiceStorage(item.ec2InstanceId, item.sqlServerInstances, storage);
 
         expect(item.sqlServerInstances?.[0].storage).toEqual(storage);
     });
@@ -222,20 +223,46 @@ describe('applyTaggingServiceStorageEnrichment', () => {
             ]
         } as DiscoverResponseInfoType;
 
-        applyTaggingServiceStorageEnrichment(item.ec2InstanceId, item.sqlServerInstances, storage);
+        applyTaggingServiceStorage(item.ec2InstanceId, item.sqlServerInstances, storage);
 
         expect(item.sqlServerInstances?.[0].storage).toEqual(existingStorage);
     });
 
-    it('is a no-op when the enrichment storage array is empty', () => {
+    it('is a no-op when the storage array is empty', () => {
         const item = {
             ec2InstanceId: CONNECTED_INSTANCE_ID,
             sqlServerInstances: [{ sqlServerInstance: 'MSSQLSERVER' } as SqlServerInstanceInfoType]
         } as DiscoverResponseInfoType;
 
-        applyTaggingServiceStorageEnrichment(item.ec2InstanceId, item.sqlServerInstances, []);
+        applyTaggingServiceStorage(item.ec2InstanceId, item.sqlServerInstances, []);
 
         expect(item.sqlServerInstances?.[0].storage).toBeUndefined();
+    });
+
+    it('should set storage on a restricted tagging-service host from its EC2 block device mappings', () => {
+        const item = {
+            ec2InstanceId: CONNECTED_INSTANCE_ID,
+            source: DiscoverySource.TAGGING_SERVICE,
+            hostManageReadiness: { extensiveRunPermission: false, canReadAWSSSMDocuments: true },
+            sqlServerInstances: [{ sqlServerInstance: 'MSSQLSERVER' } as SqlServerInstanceInfoType]
+        } as DiscoverResponseInfoType;
+        const ssmTarget = {
+            ec2InstanceId: CONNECTED_INSTANCE_ID,
+            ebsVolumeIDs: ['vol-0restricted1', 'vol-0restricted2']
+        } as SsmTargetsInfo;
+        const scriptDiscoveredItem = {
+            ec2InstanceId: CONNECTED_INSTANCE_ID,
+            source: DiscoverySource.DISCOVER,
+            sqlServerInstances: [{ sqlServerInstance: 'MSSQLSERVER' } as SqlServerInstanceInfoType]
+        } as DiscoverResponseInfoType;
+
+        applyTaggingServiceSqlServerStorage([item, scriptDiscoveredItem], [ssmTarget], [], new Map(), new Map());
+
+        expect(item.sqlServerInstances?.[0].storage).toEqual([
+            { type: 'EBS', id: 'vol-0restricted1' },
+            { type: 'EBS', id: 'vol-0restricted2' }
+        ]);
+        expect(scriptDiscoveredItem.sqlServerInstances?.[0].storage).toBeUndefined();
     });
 });
 

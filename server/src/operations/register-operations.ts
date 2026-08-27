@@ -36,9 +36,12 @@ import {
     RESOURCESTYPE,
     SqlServerDeploymentModel,
     GOV_ACCOUNT,
+    AWS_SSM_PARAMETER,
+    SSM_COMMAND_CACHE_TYPE,
     SSM_PARAM_PREFIX,
     SSM_PARAMETERS_BASE_PATH
 } from '../utils/consts';
+import { deleteFromCache, resetCache } from '../utils/cache';
 import { callSsmExecution, getEc2SqlParameters, getSSMConnectionStatus, ssmPutParameters } from './aws/ssm-operations';
 import { describeInstance, paginateDescribeEbsVolumes } from '../lib/aws/ec2';
 import { discoverOracleResources, getHostAndSqlServerInfo } from './discover-operations';
@@ -127,6 +130,23 @@ const NEW_SSM_PARAMETERS = 'NEW_SSM_PARAMETERS';
 const TEMP = '_temp';
 const WINDOWS_LOCAL_USER_ACCESS_ERROR =
     'Authenticating with Windows local/domain credentials require enable CredSSP on the system for delegating credentials within domain computers. If this is blocked on the system with domain group policies, feature will not work.';
+
+async function invalidateCachesAfterHostCredentialChange(credentialsId: string, region: string, instanceIds: string[]) {
+    const uniqueInstanceIds = [...new Set(compact(instanceIds))];
+
+    uniqueInstanceIds.forEach(instanceId => {
+        deleteFromCache(AWS_SSM_PARAMETER, `${SSM_PARAM_PREFIX}${instanceId}`);
+    });
+    resetCache(SSM_COMMAND_CACHE_TYPE);
+
+    const redisClient = getRedisConnection();
+    if (isRedisConnected(redisClient) && uniqueInstanceIds.length > 0) {
+        const cacheKeys = uniqueInstanceIds.map(instance =>
+            generateHash(stringify({ instance, region, credentialsId }))
+        );
+        await redisClient.del(...cacheKeys);
+    }
+}
 
 interface FsxConnectivityTarget {
     accountId: string;
@@ -2160,20 +2180,6 @@ async function registerResourceCredentials(
         )
     );
 
-    // Reset the redis cache with cache key instanceid, region and credentialsId
-    const redisClient = getRedisConnection();
-    if (isRedisConnected(redisClient)) {
-        const cacheKeys = compact(
-            response.items.map(({ ec2InstanceId, region, credentialsId }) => {
-                if (ec2InstanceId && region && credentialsId) {
-                    return generateHash(stringify({ instance: ec2InstanceId, region, credentialsId }));
-                }
-                return undefined;
-            })
-        );
-        await redisClient.del(...cacheKeys);
-    }
-
     return response;
 }
 
@@ -2196,6 +2202,8 @@ async function validateAndStoreDiscoveredParameters(
         checkManageReadiness,
         isReplicaInfoRequired
     });
+
+    let instanceIds = [instanceId];
 
     if (IS_DEMO_FLOW) {
         const response: SingleRegisterCredentialsResponseType[] = [];
@@ -2240,6 +2248,7 @@ async function validateAndStoreDiscoveredParameters(
         };
 
         credentials.forEach(processCredential);
+        await invalidateCachesAfterHostCredentialChange(credentialsId, region, [instanceId]);
         return { response, replicaInfoObject: [] };
     }
 
@@ -2265,7 +2274,6 @@ async function validateAndStoreDiscoveredParameters(
             throw new Error('Credentials cannot be empty');
         }
 
-        let instanceIds = [instanceId];
         if (clusterNodesIpAddress && !isEmpty(clusterNodesIpAddress)) {
             try {
                 const clusterNodeDetails =
@@ -2277,6 +2285,7 @@ async function validateAndStoreDiscoveredParameters(
                 logger.error('Error while generating resource id for SSM parameter: ', error);
             }
         }
+        resetCache(SSM_COMMAND_CACHE_TYPE);
 
         const isGovAccount = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT);
         if (isGovAccount) {
@@ -2297,6 +2306,7 @@ async function validateAndStoreDiscoveredParameters(
             checkManageReadiness,
             isReplicaInfoRequired
         );
+        await invalidateCachesAfterHostCredentialChange(credentialsId, region, instanceIds);
 
         // resource-credentials support until UI makes changes to use register-credentials API across
 
@@ -2326,6 +2336,16 @@ async function validateAndStoreDiscoveredParameters(
         return { response: detectResponse, replicaInfoObject };
     } catch (error: any) {
         logger.error('Failed to validate credentials', error);
+        try {
+            await invalidateCachesAfterHostCredentialChange(credentialsId, region, instanceIds);
+        } catch (cacheInvalidationError) {
+            logger.error('Failed to invalidate caches after credential validation failure', {
+                credentialsId,
+                region,
+                instanceIds,
+                error: cacheInvalidationError
+            });
+        }
         throw createError(error?.statusCode || HttpErrorCodes.BAD_REQUEST, error.message);
     }
 }

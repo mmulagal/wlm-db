@@ -387,7 +387,7 @@ describe('MSSQL Offline Assessment Operations', () => {
                             ssdStorageCapacityInBytes: 1099511627776, // 1 TiB
                             storageUsedInBytes: 659706976666, // ~60% used
                             storageAvailableInBytes: 439804651110, // ~40% available
-                            headroomPercent: 40, // Under MIN_OPTIMIZED_HEADROOM_PERCENTAGE and below the 50% mark
+                            headroomPercent: 40, // At/above MIN_OPTIMIZED_HEADROOM_PERCENTAGE and below the 50% mark
                             aggregateCount: 1
                         },
                         hostLevelHighAvailability: {}

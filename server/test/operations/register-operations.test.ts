@@ -10,7 +10,8 @@ import {
     validateWindowsCredentials,
     unmanageDatabaseInstance
 } from '../../src/operations/register-operations';
-import { DatabaseTypes } from '../../src/utils/consts';
+import { AWS_SSM_PARAMETER, DatabaseTypes, SSM_COMMAND_CACHE_TYPE, SSM_PARAM_PREFIX } from '../../src/utils/consts';
+import { hasCache, writeToCache } from '../../src/utils/cache';
 import {
     createResource,
     deleteDatabaseInstance,
@@ -84,8 +85,10 @@ describe('Manage operations', () => {
         expect(jobId).toBeDefined();
     });
 
-    it('Store discovered resource credentials', async () => {
+    it('should store discovered resource credentials and clear stale caches', async () => {
         const credentialsId = `${faker.string.alpha(20)}`;
+        const instanceId = 'i-0e5af83448e1b83ef';
+        const commandCacheKey = `stale-mssql-discovery-${credentialsId}`;
 
         const params = [
             {
@@ -95,14 +98,19 @@ describe('Manage operations', () => {
                 password: 'password'
             }
         ];
+        writeToCache(AWS_SSM_PARAMETER, `${SSM_PARAM_PREFIX}${instanceId}`, '{"sql":[]}');
+        writeToCache(SSM_COMMAND_CACHE_TYPE, commandCacheKey, 'stale discovery');
+
         const { response } = await validateAndStoreDiscoveredParameters(
             ACCOUNT_ID,
             credentialsId,
             'us-east-1',
-            'i-0e5af83448e1b83ef',
+            instanceId,
             params
         );
         expect(response).toBeDefined();
+        expect(hasCache(AWS_SSM_PARAMETER, `${SSM_PARAM_PREFIX}${instanceId}`)).toBe(false);
+        expect(hasCache(SSM_COMMAND_CACHE_TYPE, commandCacheKey)).toBe(false);
     });
 
     it('Validate Oracle discovered resource credentials', async () => {

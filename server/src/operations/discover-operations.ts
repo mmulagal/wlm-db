@@ -439,11 +439,10 @@ async function getHostAndSqlServerInfo(
                 item.sqlServerInstances?.some(({ storage }) => !storage?.length)
         );
         if (taggingServiceItemsNeedingStorage.length) {
-            const ssmConnectedNodesById = new Map(ssmConnectedNodes.map(node => [node.ec2InstanceId, node]));
             const { ec2s: ec2FsxRelationships } = await buildEc2FsxRelationship(accountId, credentialsId, region, {
                 useCache: true
             }).catch((error): { ec2s: Ec2WithStorage[] } => {
-                logger.warn('Failed to build EC2-FSx relationship for storage enrichment', { region, error });
+                logger.warn('Failed to build EC2-FSx relationship for tagging-service storage', { region, error });
                 return { ec2s: [] };
             });
             const fsxNameById = new Map(
@@ -456,16 +455,13 @@ async function getHostAndSqlServerInfo(
                 ])
             );
 
-            for (const item of taggingServiceItemsNeedingStorage) {
-                const storage = getTaggingServiceStorageForInstance(
-                    item.ec2InstanceId,
-                    ec2FsxRelationships,
-                    fsxNameById,
-                    svmIdByFsxId,
-                    ssmConnectedNodesById.get(item.ec2InstanceId)?.ebsVolumeIDs
-                );
-                applyTaggingServiceStorageEnrichment(item.ec2InstanceId, item.sqlServerInstances, storage);
-            }
+            applyTaggingServiceSqlServerStorage(
+                ssmConnectedEc2ResponseInfo,
+                ssmConnectedNodes,
+                ec2FsxRelationships,
+                fsxNameById,
+                svmIdByFsxId
+            );
         }
 
         const itemsWithFsxId = ssmConnectedEc2ResponseInfo.flatMap(item => {
@@ -542,12 +538,12 @@ function getTaggingServiceStorageForInstance(
     return storage;
 }
 
-function applyTaggingServiceStorageEnrichment(
+function applyTaggingServiceStorage(
     ec2InstanceId: string,
     instances: Array<{ storage?: TaggingServiceStorageEntry[] }> | undefined,
     storage: TaggingServiceStorageEntry[]
 ) {
-    logger.info('Applying tagging-service storage enrichment', { ec2InstanceId });
+    logger.info('Applying tagging-service storage', { ec2InstanceId });
 
     if (storage.length) {
         instances?.forEach(instance => {
@@ -557,9 +553,36 @@ function applyTaggingServiceStorageEnrichment(
         });
     }
 
-    logger.info('Applied tagging-service storage enrichment', {
+    logger.info('Applied tagging-service storage', {
         ec2InstanceId
     });
+}
+
+function applyTaggingServiceSqlServerStorage(
+    items: DiscoverResponseInfoType[],
+    ssmConnectedNodes: SsmTargetsInfo[],
+    ec2FsxRelationships: Ec2WithStorage[],
+    fsxNameById: Map<string | undefined, string | undefined>,
+    svmIdByFsxId: Map<string | undefined, string | undefined>
+) {
+    const ssmConnectedNodesById = new Map(ssmConnectedNodes.map(node => [node.ec2InstanceId, node]));
+
+    items
+        .filter(
+            item =>
+                item.source === DiscoverySource.TAGGING_SERVICE &&
+                item.sqlServerInstances?.some(({ storage }) => !storage?.length)
+        )
+        .forEach(item => {
+            const storage = getTaggingServiceStorageForInstance(
+                item.ec2InstanceId,
+                ec2FsxRelationships,
+                fsxNameById,
+                svmIdByFsxId,
+                ssmConnectedNodesById.get(item.ec2InstanceId)?.ebsVolumeIDs
+            );
+            applyTaggingServiceStorage(item.ec2InstanceId, item.sqlServerInstances, storage);
+        });
 }
 
 async function getHostAndSqlInfoFromPsOutput(
@@ -2470,7 +2493,7 @@ async function discoverOracleResources(
                 svmIdByFsxId,
                 ssmConnectedNodesById.get(item.ec2InstanceId)?.ebsVolumeIDs
             );
-            applyTaggingServiceStorageEnrichment(item.ec2InstanceId, item.databaseInstanceDetails, storage);
+            applyTaggingServiceStorage(item.ec2InstanceId, item.databaseInstanceDetails, storage);
         }
     }
 
@@ -2727,6 +2750,7 @@ export {
     getOracleResourceDetails,
     discoverEc2Instances,
     getTaggingServiceStorageForInstance,
-    applyTaggingServiceStorageEnrichment,
+    applyTaggingServiceStorage,
+    applyTaggingServiceSqlServerStorage,
     checkFsxLinkExists
 };

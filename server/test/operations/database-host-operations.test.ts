@@ -9,7 +9,7 @@ import {
 import { ACCOUNT_ID, SECRETS } from '../../src/utils/consts';
 import { createResource, deleteResource } from '../../src/lib/database/db';
 import { initializeDatabase } from '../../src/utils/prisma-utils';
-import { MappedOnTapVolumeResponse } from '../../src/utils/common-types';
+import { DatabaseInstance, MappedOnTapVolumeResponse, ResourceDetails } from '../../src/utils/common-types';
 
 SECRETS.AUTH_CLIENT_ID = `${faker.string.alphanumeric(20)}`;
 SECRETS.SIGNURL_ACCESS_KEY = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -69,6 +69,122 @@ describe('Database host operations', () => {
             false
         );
         expect(resp).toBeDefined();
+    });
+
+    it('should return EBS details for a restricted unmanaged MSSQL host without an active SQL node', async () => {
+        const ebsVolumeId = 'vol-restricted-ebs';
+        const resourceDetails: ResourceDetails = {
+            id: null,
+            account_id: ACCOUNT_ID,
+            resource_id: 'i-restricted-ebs',
+            resource_name: 'restricted-ebs-host',
+            resource_type: 'MSSQL',
+            co_relation_id: null,
+            cloud_provider_account_id: null,
+            cloud_provider_name: 'AWS',
+            region: 'ap-southeast-1',
+            credentials_id: 'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+            metadata: {
+                node1InstanceId: 'i-restricted-ebs',
+                sqlDeploymentType: 'Standalone'
+            },
+            ebsVolumeIds: [ebsVolumeId],
+            database_instances: []
+        };
+        const databaseInstance: DatabaseInstance = {
+            database_instance_id: '',
+            database_instance_name: 'MSSQLSERVER',
+            database_type: 'MSSQL',
+            is_default: true,
+            instanceState: 'RUNNING',
+            region: 'ap-southeast-1',
+            credentials_id: 'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+            metadata: { userDatabase: [] },
+            fsxn_ids: '',
+            ebsVolumeIds: [ebsVolumeId],
+            database_deployment_type: 'Standalone',
+            storage_type: 'EBS',
+            resource: resourceDetails
+        };
+        resourceDetails.database_instances = [databaseInstance];
+        const resp = await getDatabaseHostSummaryV2(
+            ACCOUNT_ID,
+            'i-restricted-ebs',
+            'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+            'ap-southeast-1',
+            'usageEstimation',
+            resourceDetails,
+            [databaseInstance],
+            false
+        );
+
+        expect(resp.ebsResourceInfo).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    id: ebsVolumeId,
+                    size: expect.any(Number),
+                    volumeType: expect.any(String)
+                })
+            ])
+        );
+        expect(resp.storageAllocation?.ebs).toBeGreaterThan(0);
+    });
+
+    it('should return EBS details for a restricted unmanaged Oracle host without an active node', async () => {
+        const instanceId = 'i-restricted-oracle-ebs';
+        const ebsVolumeId = 'vol-restricted-oracle-ebs';
+        const resourceDetails: ResourceDetails = {
+            id: null,
+            account_id: ACCOUNT_ID,
+            resource_id: instanceId,
+            resource_name: 'restricted-oracle-ebs-host',
+            resource_type: 'ORACLE',
+            co_relation_id: null,
+            cloud_provider_account_id: null,
+            cloud_provider_name: 'AWS',
+            region: 'ap-southeast-1',
+            credentials_id: 'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+            metadata: { node1InstanceId: instanceId },
+            ebsVolumeIds: [ebsVolumeId],
+            database_instances: []
+        };
+        const databaseInstance: DatabaseInstance = {
+            database_instance_id: 'ORCL',
+            database_instance_name: 'ORCL',
+            database_type: 'ORACLE',
+            is_default: true,
+            instanceState: 'RUNNING',
+            region: 'ap-southeast-1',
+            credentials_id: 'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+            metadata: {},
+            fsxn_ids: '',
+            ebsVolumeIds: [ebsVolumeId],
+            storage_type: 'EBS',
+            resource: resourceDetails
+        };
+        resourceDetails.database_instances = [databaseInstance];
+
+        const response = await getDatabaseHostSummaryV2(
+            ACCOUNT_ID,
+            instanceId,
+            'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+            'ap-southeast-1',
+            'usageEstimation',
+            resourceDetails,
+            [databaseInstance],
+            false
+        );
+
+        expect(response.ebsResourceInfo).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    id: ebsVolumeId,
+                    size: expect.any(Number),
+                    volumeType: expect.any(String)
+                })
+            ])
+        );
+        expect(response.storageAllocation?.ebs).toBeGreaterThan(0);
     });
 
     it('Get all cluster node details', async () => {

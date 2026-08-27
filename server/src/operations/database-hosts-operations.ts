@@ -314,31 +314,20 @@ async function getBillingOrPriceEstimation(
         activeNodeInstanceId,
         isManagedResource
     });
-    const promises = [];
-    if (isManagedResource) {
-        promises.push(
-            getBilling(resourceDetail).catch(error => {
-                logger.error('Failed to get billing data for resource: :', JSON.stringify(error));
-            })
-        );
-    }
-    if (activeNodeInstanceId) {
-        promises.push(
-            getUsageEstimationData(resourceDetail, activeNodeInstanceId).catch(error => {
-                logger.error('Failed to get pricing estimation data for resource:', JSON.stringify(error));
-            })
-        );
-    } else {
-        promises.push(Promise.resolve());
-    }
+    const billingPromise = isManagedResource
+        ? getBilling(resourceDetail).catch(error => {
+              logger.error('Failed to get billing data for resource: :', JSON.stringify(error));
+          })
+        : Promise.resolve();
+    const pricingPromise = activeNodeInstanceId
+        ? getUsageEstimationData(resourceDetail, activeNodeInstanceId).catch(error => {
+              logger.error('Failed to get pricing estimation data for resource:', JSON.stringify(error));
+          })
+        : Promise.resolve();
 
-    const [billingResponse, pricingResponse] = await Promise.allSettled(promises);
+    const [billingResponse, pricingResponse] = await Promise.all([billingPromise, pricingPromise]);
 
-    return billingResponse.status === 'fulfilled' && billingResponse.value
-        ? billingResponse.value
-        : pricingResponse.status === 'fulfilled' && pricingResponse.value
-        ? pricingResponse.value
-        : undefined;
+    return billingResponse || pricingResponse;
 }
 
 async function getBilling(resourceDetail: ResourceDetails) {
@@ -955,9 +944,16 @@ async function getDatabaseHostSummaryV2(
                 promises.push(Promise.resolve());
             }
             resourceDetail.database_instances = instancesManaged;
-            if (getUsageEstimation && activeNodeInstanceId) {
+            const usageEstimationInstanceId =
+                activeNodeInstanceId ||
+                (!isManagedResource &&
+                (resourceType === DatabaseTypes.MS_SQL_SERVER || resourceType === DatabaseTypes.ORACLE) &&
+                !isEmpty(resourceDetail.ebsVolumeIds)
+                    ? node1InstanceId
+                    : undefined);
+            if (getUsageEstimation && usageEstimationInstanceId) {
                 promises.push(
-                    getBillingOrPriceEstimation(resourceDetail, activeNodeInstanceId, isManagedResource).catch(
+                    getBillingOrPriceEstimation(resourceDetail, usageEstimationInstanceId, isManagedResource).catch(
                         error => {
                             logger.error(`Error while fetching data: ${error}.`);
                             if (DATABASE_HOSTS_INDEX_MAPPING_V2[promises.length - 1]) {
