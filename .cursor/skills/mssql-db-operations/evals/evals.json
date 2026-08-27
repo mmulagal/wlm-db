@@ -1,0 +1,147 @@
+{
+  "skill_name": "mssql-db-operations",
+  "evals": [
+    {
+      "id": 0,
+      "name": "list-mssql-hosts",
+      "prompt": "Show me the SQL Server hosts in this account and region.",
+      "expected_output": "Lists managed MSSQL hosts via database-hosts GET with id, name, ssmStatus.",
+      "files": [],
+      "expectations": [
+        "Uses GET .../mssql/credentials/.../regions/.../database-hosts for inventory",
+        "Summarizes host id, name, and ssmStatus",
+        "Does not fabricate databaseHostId values"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "ontap-snapshot-routing",
+      "prompt": "Create an ONTAP snapshot for MSSQL data volume wlmdb_sqldata on FSx fs-0123456789abcdef0 in us-east-1.",
+      "expected_output": "Routes to ONTAP proxy snapshot path with confirmation gate.",
+      "files": [],
+      "expectations": [
+        "Uses WF proxy path with fsxId and x-endpoint header",
+        "POST api/storage/volumes/{uuid}/snapshots or resolves volume UUID first",
+        "Asks for explicit confirmation before mutating POST",
+        "Polls ONTAP job after snapshot create"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "create-database-routing",
+      "prompt": "Create a new MSSQL database AdventureWorks on host host-prod-sql-01.",
+      "expected_output": "WLMDB create database API with drive and collation pre-reads when SSM connected.",
+      "files": [],
+      "expectations": [
+        "Resolves databaseHostId via GET .../database-hosts before POST",
+        "Checks ssmStatus or reads drive-information/collation pre-reads",
+        "Uses POST .../database-hosts/{hostId}/database for create",
+        "Asks for explicit confirmation before POST",
+        "Polls GET .../jobs/{jobId} after 202 response"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "clone-with-ssm-routing",
+      "prompt": "Clone ProductionDB to a dev sandbox named ProductionDB_Dev on the same host.",
+      "expected_output": "WLMDB sandbox POST with full body.",
+      "files": [],
+      "expectations": [
+        "Uses POST .../sandboxes with source, destination, mountPoints, and tag",
+        "Pre-reads sandboxes or mount-points before POST",
+        "Asks for explicit confirmation before POST",
+        "Polls job after 202 response"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "sandbox-delete-confirmation",
+      "prompt": "Delete sandbox ProductionDB_Dev on host host-prod-sql-01 instance MSSQLSERVER.",
+      "expected_output": "DELETE sandbox with confirmation gate and job poll.",
+      "files": [],
+      "expectations": [
+        "Treats delete as destructive and asks for confirmation",
+        "Uses DELETE .../sandboxes/{sandboxName}",
+        "Polls GET .../jobs/{jobId} after 202 response"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "sandbox-refresh-routing",
+      "prompt": "Refresh sandbox ProductionDB_Dev from source on host host-prod-sql-01.",
+      "expected_output": "PATCH sandbox with action REFRESH.",
+      "files": [],
+      "expectations": [
+        "Uses PATCH .../sandboxes/{sandboxName} with action REFRESH",
+        "Asks for explicit confirmation before PATCH",
+        "Polls job after 202 response"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "sandbox-rebaseline-snapshots",
+      "prompt": "Re-baseline sandbox ProductionDB_Dev to snapshot netapp_wf_clone_1717000000.",
+      "expected_output": "GET snapshots pre-read then PATCH RE-BASELINE, then poll job.",
+      "files": [],
+      "expectations": [
+        "Reads GET .../sandboxes/{sandboxName}/snapshots before or alongside PATCH",
+        "Uses PATCH with action RE-BASELINE and snapshot name",
+        "Asks for explicit confirmation before PATCH",
+        "Polls job after 202 response"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "sandbox-split-confirmation",
+      "prompt": "Split sandbox ProductionDB_Dev on host host-prod-sql-01.",
+      "expected_output": "GET split-estimate, confirm irreversibility, POST split.",
+      "files": [],
+      "expectations": [
+        "Reads GET .../split-estimate before split",
+        "States split is irreversible in confirmation prompt",
+        "Uses POST .../sandboxes/{sandboxName}/split",
+        "Polls job after response"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "clone-without-ssm-routing",
+      "prompt": "Clone this database without SSM — give me the ONTAP steps for ProductionDB on FSx fs-0123456789abcdef0.",
+      "expected_output": "Numbered ONTAP CLI (show only, not executed); no WLMDB sandboxes POST; no /proxy/v1 REST.",
+      "files": [],
+      "expectations": [
+        "Does not POST .../sandboxes WLMDB API",
+        "Does not use Workload Factory /proxy/v1 REST curls for storage steps",
+        "Provides numbered ONTAP CLI including volume snapshot create and volume clone create (FlexClone); does not execute them",
+        "Lists remaining manual host/SQL steps after ONTAP steps, including Standalone vs FCI",
+        "Does not claim SQL sandbox is fully ready after storage-only steps"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "refuse-wad",
+      "prompt": "Show drift assessment clone dimension findings for my MSSQL instance.",
+      "expected_output": "Refuses WAD scope and redirects to databases-wad.",
+      "files": [],
+      "expectations": [
+        "States registered drift assessment is out of scope for this skill",
+        "Redirects to databases-wad skill",
+        "Does not call assessment endpoints as substitute"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "ssm-not-connected-manual-ontap",
+      "prompt": "Create database AdventureWorks on host host-prod-sql-01. The host ssmStatus is NotConnected.",
+      "expected_output": "No WLMDB POST; numbered ONTAP CLI volume/LUN/map instructions shown, not executed.",
+      "files": [],
+      "expectations": [
+        "Does not POST .../database-hosts/{hostId}/database",
+        "Does not use Workload Factory /proxy/v1 REST curls for storage provisioning",
+        "Provides numbered ONTAP CLI for volume create, lun create, and lun mapping; does not execute them",
+        "Lists manual Windows/SQL steps for CREATE DATABASE on the host",
+        "Notes SSM is NotConnected and WLMDB create-db is not available"
+      ]
+    }
+  ]
+}

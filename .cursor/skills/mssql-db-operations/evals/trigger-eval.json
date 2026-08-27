@@ -1,0 +1,46 @@
+[
+  {
+    "query": "create a new mssql database on my sql server host",
+    "should_trigger": true
+  },
+  {
+    "query": "clone productiondb to a dev sandbox",
+    "should_trigger": true
+  },
+  {
+    "query": "refresh sandbox productiondb_dev from source",
+    "should_trigger": true
+  },
+  {
+    "query": "split sandbox and promote flexclone to full volume",
+    "should_trigger": true
+  },
+  {
+    "query": "create ontap snapshot for mssql data volume on fsx",
+    "should_trigger": true
+  },
+  {
+    "query": "list sql server hosts in this account and region",
+    "should_trigger": true
+  },
+  {
+    "query": "clone database without ssm give me ontap steps",
+    "should_trigger": true
+  },
+  {
+    "query": "show registered drift assessment for mssql",
+    "should_trigger": false
+  },
+  {
+    "query": "run explore savings tco for sql server",
+    "should_trigger": false
+  },
+  {
+    "query": "trigger logs analysis for mssql instance",
+    "should_trigger": false
+  },
+  {
+    "query": "optimize storage configuration and apply now",
+    "should_trigger": false
+  }
+]
