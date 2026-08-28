@@ -151,6 +151,7 @@ const GetWell = () => {
     const showMissingLinkBanner = !isWadFromStore && !cardData?.isWad && !isUnregistered && fsxLinkExists === false;
     const [isAccordionOpen, setsAccordionOpen] = useState(false);
     const [optimizePrintState, setOptimizePrintState] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
     const [filteredCardData, setFilteredCardData] = useState<any>({});
     const [instanceDeploymentType, setInstanceDeploymentType] = useState<string>('');
     const [configCount, setConfigCount] = useState(0);
@@ -236,6 +237,13 @@ const GetWell = () => {
     };
 
     const printDocument = async () => {
+        setIsExporting(true);
+        dispatch(
+            addNotification({
+                notificationType: NOTIFICATION_TYPES.INFO,
+                message: t('databases.well-architect.export-report-in-progress')
+            })
+        );
         try {
             const patchConfigs = [
                 { id: ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH, field: PATCH_SCAN_FIELD.HOST_OS_PATCH },
@@ -269,6 +277,8 @@ const GetWell = () => {
                     message: `${GENERAL.REPORT_DOWNLOAD_FAIL}: ${String(error)}`
                 })
             );
+        } finally {
+            setIsExporting(false);
         }
     };
 
@@ -561,7 +571,7 @@ const GetWell = () => {
                                 {!optimizePrintState && (
                                     <div
                                         className={
-                                            loading || !isAssessmentAvailable
+                                            loading || !isAssessmentAvailable || isExporting
                                                 ? styles.downloadSectionDisable
                                                 : styles.downloadSection
                                         }
@@ -574,26 +584,56 @@ const GetWell = () => {
                                             </DsTypography>
                                         </div>
                                         <div className={styles.rightSection}>
-                                            <div
-                                                id="assessment-export-pdf"
-                                                className={styles.buttonStyle}
-                                                onClick={loading || !isAssessmentAvailable ? () => {} : printDocument}
-                                            >
-                                                <div>
-                                                    <Download />
-                                                </div>
-                                                <DsTypography
-                                                    style={{
-                                                        color:
-                                                            loading || !isAssessmentAvailable
-                                                                ? 'var(--text-disabled)'
-                                                                : 'var(--text-button-primary)'
-                                                    }}
-                                                    variant="Semibold_14"
+                                            {isExporting ? (
+                                                <DsPopover
+                                                    trigger="hover"
+                                                    title={t('databases.well-architect.export-report-in-progress')}
+                                                    monitorPosition="all"
+                                                    placement="bottom"
                                                 >
-                                                    {t('databases.well-architect.export-report')}
-                                                </DsTypography>
-                                            </div>
+                                                    <div
+                                                        id="assessment-export-pdf"
+                                                        role="button"
+                                                        tabIndex={-1}
+                                                        className={styles.buttonStyle}
+                                                        onClick={() => {}}
+                                                        onKeyDown={() => {}}
+                                                    >
+                                                        <div>
+                                                            <Download />
+                                                        </div>
+                                                        <DsTypography
+                                                            style={{ color: 'var(--text-disabled)' }}
+                                                            variant="Semibold_14"
+                                                        >
+                                                            {t('databases.well-architect.export-report')}
+                                                        </DsTypography>
+                                                    </div>
+                                                </DsPopover>
+                                            ) : (
+                                                <div
+                                                    id="assessment-export-pdf"
+                                                    className={styles.buttonStyle}
+                                                    onClick={
+                                                        loading || !isAssessmentAvailable ? () => {} : printDocument
+                                                    }
+                                                >
+                                                    <div>
+                                                        <Download />
+                                                    </div>
+                                                    <DsTypography
+                                                        style={{
+                                                            color:
+                                                                loading || !isAssessmentAvailable
+                                                                    ? 'var(--text-disabled)'
+                                                                    : 'var(--text-button-primary)'
+                                                        }}
+                                                        variant="Semibold_14"
+                                                    >
+                                                        {t('databases.well-architect.export-report')}
+                                                    </DsTypography>
+                                                </div>
+                                            )}
                                             <div>
                                                 {isWadFromStore ? (
                                                     <DsPopover

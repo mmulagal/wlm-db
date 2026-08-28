@@ -35,7 +35,7 @@ import {
 const OracleWellArchitectDashboard = () => {
     const { t } = useTranslation();
     const dispatch = useAppDispatch();
-    const [optimizePrintState, setOptimizePrintState] = useState(false);
+    const [optimizePrintState] = useState(false);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     const [expandedAccordionId, setExpandedAccordionId] = useState<string | undefined>(undefined);
     const [filteredCardData, setFilteredCardData] = useState<any>({});
@@ -345,7 +345,6 @@ const OracleWellArchitectDashboard = () => {
                                         <div className={styles.rightSection}>
                                             <OracleExportPDF
                                                 optimizePrintState={optimizePrintState}
-                                                setOptimizePrintState={setOptimizePrintState}
                                                 loading={loading}
                                                 isAssessmentAvailable={isAssessmentAvailable}
                                             />
