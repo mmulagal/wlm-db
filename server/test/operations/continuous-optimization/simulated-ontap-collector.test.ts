@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import nock from 'nock';
 import { collectSimulatedOntapAssessmentData } from '../../../src/operations/continuous-optimization/simulated-ontap-collector';
+import { assignSimulatedWorkloadOwner } from '../../../src/operations/continuous-optimization/simulated-volume-ownership';
 import { mapDriftToWadScanRecords } from '../../../src/operations/continuous-optimization/wad-storage-scan-mapper';
 import { StorageAssessment as MssqlStorageAssessment } from '../../../src/utils/common-types';
+import { StorageAssessment as OracleStorageAssessment } from '../../../src/operations/continuous-optimization/oracle/common-types';
 import { AssessmentStatus } from '../../../src/utils/continous-optimization-consts';
 import { SECRETS, WORKLOAD_FACTORY_ENDPOINT } from '../../../src/utils/consts';
 import '../../simulator/scopes/cloud-manager/fsx-core-scope';
@@ -86,16 +88,22 @@ describe('collectSimulatedOntapAssessmentData', () => {
             .reply(200, { records: [], num_records: 0 });
 
         const results = await collectSimulatedOntapAssessmentData('acct-1', 'creds-1', 'us-east-1');
+        const owner = assignSimulatedWorkloadOwner('volume-uuid-from-api');
+        const assessedVolumes =
+            results[0].workloadType === 'mssql'
+                ? (results[0].storageAssessment as MssqlStorageAssessment).volumes
+                : (results[0].storageAssessment as OracleStorageAssessment).volumes.data;
 
         expect(scope.isDone()).toBe(true);
-        expect(results).toHaveLength(2);
-        expect(results.map(result => result.workloadType).sort()).toEqual(['mssql', 'oracle']);
-        expect(results.every(result => result.instanceId === '')).toBe(true);
-        expect(results[0].fileSystemId).toBe('fs-sim');
-        expect((results[0].storageAssessment as MssqlStorageAssessment).volumes).toEqual([
+        expect(results).toHaveLength(1);
+        expect(results[0].workloadType).toBe(owner);
+        expect(assessedVolumes).toEqual([
             expect.objectContaining({ uuid: 'volume-uuid-from-api', name: 'sim-volume' })
         ]);
+        expect(results.every(result => result.instanceId === '')).toBe(true);
+        expect(results[0].fileSystemId).toBe('fs-sim');
         expect(results[0].fsxVolumeIdByUuid).toEqual({ 'volume-uuid-from-api': 'fsvol-sim' });
+        expect(results.filter(result => result.headroomData)).toHaveLength(1);
         expect(results[0].headroomData?.headroomPercent).toBe(40);
 
         const { configurations } = await mapDriftToWadScanRecords(

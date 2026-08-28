@@ -111,6 +111,7 @@ interface OntapVolumeRecord {
         dedupe?: string;
         storage_efficiency_mode?: string;
     };
+    is_svm_root?: boolean;
 }
 
 interface OntapLunRecord {
@@ -118,6 +119,7 @@ interface OntapLunRecord {
     uuid: string;
     os_type?: string;
     space?: { guarantee?: { requested?: boolean }; scsi_thin_provisioning_support_enabled?: boolean };
+    location?: { volume?: { uuid?: string; name?: string } };
 }
 
 interface OntapIgroupRecord {

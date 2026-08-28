@@ -26,8 +26,15 @@ import {
     type OntapAggregateRecord,
     type OntapSnapshotRecord
 } from './ontap-storage-assessment';
+import {
+    assignSimulatedWorkloadOwner,
+    partitionSimulatedWorkloadInventory,
+    type SimulatedWorkload
+} from './simulated-volume-ownership';
 
 const logger = getLogger();
+const SIMULATED_VOLUME_FIELDS = `${VOLUME_FIELDS},is_svm_root`;
+const SIMULATED_LUN_FIELDS = `${LUN_FIELDS},location.volume.uuid`;
 
 interface OntapSimulatorCredentials {
     /** Management LIF the ONTAP simulator is addressed by, when the registered credentials carry one. */
@@ -117,7 +124,7 @@ async function fetchSimulatedOntapInventory(
                   fileSystemId,
                   credentials,
                   'api/storage/volumes',
-                  { fields: VOLUME_FIELDS }
+                  { fields: SIMULATED_VOLUME_FIELDS }
               )
             : collectFilteredOntapSimulatorRecords<OntapVolumeRecord>(
                   managementHost,
@@ -125,7 +132,7 @@ async function fetchSimulatedOntapInventory(
                   credentials,
                   'api/storage/volumes',
                   volumeUuids,
-                  VOLUME_FIELDS
+                  SIMULATED_VOLUME_FIELDS
               ),
         lunUuids.length === 0
             ? fetchOntapSimulatorRecords<OntapLunRecord>(
@@ -133,7 +140,7 @@ async function fetchSimulatedOntapInventory(
                   fileSystemId,
                   credentials,
                   'api/storage/luns',
-                  { fields: LUN_FIELDS }
+                  { fields: SIMULATED_LUN_FIELDS }
               )
             : collectFilteredOntapSimulatorRecords<OntapLunRecord>(
                   managementHost,
@@ -141,7 +148,7 @@ async function fetchSimulatedOntapInventory(
                   credentials,
                   'api/storage/luns',
                   lunUuids,
-                  LUN_FIELDS
+                  SIMULATED_LUN_FIELDS
               ),
         fetchOntapSimulatorRecords<OntapAggregateRecord>(
             managementHost,
@@ -218,36 +225,62 @@ function buildSimulatedStorageCollectionResults(
     fsxName: string | undefined,
     inventory: FsxOntapInventory,
     scopedVolumes: Array<{ volumeUuid: string; volumeName: string; luns: Array<{ lunUuid: string; lunName: string }> }>,
-    volumeUuids: string[],
-    lunUuids: string[],
     fsxVolumeIdByUuid: Record<string, string>
 ): FsxStorageCollectionResult[] {
-    const volumeUuidSet = new Set(volumeUuids);
-    const lunUuidSet = lunUuids.length > 0 ? new Set(lunUuids) : new Set(Object.keys(inventory.lunsByUuid));
-    const volumeRecords: OracleVolumeRecord[] = scopedVolumes.flatMap(({ volumeUuid, volumeName, luns }) => {
-        const { svm } = inventory.volumesByUuid[volumeUuid] ?? {};
-        const base = {
-            volumeId: volumeUuid,
-            volumeName: volumeName || inventory.volumesByUuid[volumeUuid]?.name,
-            svmId: svm?.uuid,
-            svmName: svm?.name
-        };
-        return luns.length > 0 ? luns.map(({ lunUuid: lunId, lunName }) => ({ ...base, lunId, lunName })) : [base];
-    });
+    const partitions = partitionSimulatedWorkloadInventory(
+        scopedVolumes,
+        inventory.volumesByUuid,
+        inventory.lunsByUuid
+    );
+    const presentWorkloads = ([DATABASE_TYPE.mssql, DATABASE_TYPE.oracle] as SimulatedWorkload[]).filter(
+        workloadType => partitions[workloadType].volumeUuids.length > 0
+    );
+    const pinnedHeadroomOwner = assignSimulatedWorkloadOwner(fileSystemId);
+    const headroomOwner = presentWorkloads.includes(pinnedHeadroomOwner) ? pinnedHeadroomOwner : presentWorkloads[0];
 
-    return [DATABASE_TYPE.mssql, DATABASE_TYPE.oracle].map(workloadType => ({
-        instanceId: '',
-        fileSystemId,
-        fsxName,
-        workloadType,
-        storageAssessment:
-            workloadType === DATABASE_TYPE.mssql
-                ? toMssqlStorageAssessmentFromUuids(fileSystemId, inventory, volumeUuidSet, lunUuidSet)
-                : toOracleStorageAssessmentFromUuids(fileSystemId, inventory, volumeUuidSet, lunUuidSet, volumeRecords),
-        headroomData: inventory.headroomData,
-        snapcenterData: buildWadSnapcenterDataFromUuids(volumeUuids, inventory),
-        fsxVolumeIdByUuid
-    }));
+    return presentWorkloads.map(workloadType => {
+        const partition = partitions[workloadType];
+        const volumeUuidSet = new Set(partition.volumeUuids);
+        const lunUuidSet = new Set(partition.lunUuids);
+        let storageAssessment: FsxStorageCollectionResult['storageAssessment'];
+
+        if (workloadType === DATABASE_TYPE.mssql) {
+            storageAssessment = toMssqlStorageAssessmentFromUuids(fileSystemId, inventory, volumeUuidSet, lunUuidSet);
+        } else {
+            const volumeRecords: OracleVolumeRecord[] = partition.scopedVolumes.flatMap(
+                ({ volumeUuid, volumeName, luns }) => {
+                    const { svm } = inventory.volumesByUuid[volumeUuid] ?? {};
+                    const base = {
+                        volumeId: volumeUuid,
+                        volumeName: volumeName || inventory.volumesByUuid[volumeUuid]?.name,
+                        svmId: svm?.uuid,
+                        svmName: svm?.name
+                    };
+                    return luns.length > 0
+                        ? luns.map(({ lunUuid: lunId, lunName }) => ({ ...base, lunId, lunName }))
+                        : [base];
+                }
+            );
+            storageAssessment = toOracleStorageAssessmentFromUuids(
+                fileSystemId,
+                inventory,
+                volumeUuidSet,
+                lunUuidSet,
+                volumeRecords
+            );
+        }
+
+        return {
+            instanceId: '',
+            fileSystemId,
+            fsxName,
+            workloadType,
+            storageAssessment,
+            headroomData: headroomOwner === workloadType ? inventory.headroomData : undefined,
+            snapcenterData: buildWadSnapcenterDataFromUuids(partition.volumeUuids, inventory),
+            fsxVolumeIdByUuid
+        };
+    });
 }
 
 async function collectSimulatedOntapAssessmentData(
@@ -313,8 +346,6 @@ async function collectSimulatedOntapAssessmentData(
                             fileSystem.name,
                             inventory,
                             resolvedScopedVolumes,
-                            resolvedVolumeUuids,
-                            lunUuids,
                             fsxVolumeIdByUuid
                         );
                     };

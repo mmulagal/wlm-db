@@ -179,7 +179,7 @@ async function callWlmHostsGraphql<T>(
         logger.error('wlm-hosts graphql request failed', { accountId, credentialsId, region, statusCode, error });
         throw createError(
             statusCode ?? HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `wlm-hosts graphql listing for credentials ${credentialsId} in ${region} failed`
+            `Unable to fetch compute and storage resource details in region ${region} and credentials ${credentialsId}.`
         );
     }
 }
