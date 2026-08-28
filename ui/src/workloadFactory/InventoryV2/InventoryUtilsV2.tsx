@@ -982,7 +982,9 @@ export const formatOfflineAssessmentToInventoryData = (offlineData: any[]): { [k
 
 /**
  * Merges on-demand unregistered assessment results onto matching discovered inventory hosts.
- * Matches by ec2InstanceId + databaseInstanceName (case-insensitive).
+ * Matches by ec2InstanceId + databaseInstanceName (case-insensitive) + credentialsId + region, since
+ * the same EC2 host can be discovered under several credentials and the assessment belongs only to
+ * the credential it was run with. Credential and region are skipped when either side omits them.
  */
 export const mergeUnregisteredAssessmentIntoInventory = (
     inventoryTableData: { [key: string]: InventoryTableData },
@@ -999,6 +1001,8 @@ export const mergeUnregisteredAssessmentIntoInventory = (
     unregisteredData.forEach((assessmentItem: any) => {
         const ec2Id = assessmentItem?.vmInstanceId || assessmentItem?.resourceId;
         const instanceName = assessmentItem?.databaseInstanceName?.toLowerCase();
+        const assessmentCredId = assessmentItem?.credentialId || assessmentItem?.credentialsId;
+        const assessmentRegionId = assessmentItem?.regionId || assessmentItem?.region;
         if (!ec2Id || !instanceName) {
             return;
         }
@@ -1010,6 +1014,12 @@ export const mergeUnregisteredAssessmentIntoInventory = (
             }
             const hostEc2Id = host?.ec2InstanceId || host?.resourceId;
             if (hostEc2Id !== ec2Id) {
+                return;
+            }
+            if (assessmentCredId && host?.credentialId && host.credentialId !== assessmentCredId) {
+                return;
+            }
+            if (assessmentRegionId && host?.regionId && host.regionId !== assessmentRegionId) {
                 return;
             }
 

@@ -84,9 +84,12 @@ export const getInstanceColDefs = ({
             if (loading) {
                 return <DsFlashingDotsLoader />;
             }
+            // Only explain a missing value with the permission tooltip; a known edition is real data
+            const hasNoValue = !rowData.value || rowData.value === t('databases.general.not-available');
             if (
                 rowData.detailKey === INSTANCE_INFORMATION_DETAIL.SQL_EDITION &&
-                rowData.showSqlLicensePermissionTooltip
+                rowData.showSqlLicensePermissionTooltip &&
+                hasNoValue
             ) {
                 return (
                     <div className={styles.tooltips}>

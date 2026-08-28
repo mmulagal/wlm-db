@@ -39,7 +39,11 @@ vi.mock('@netapp/design-system', () => ({
     Table: ({ tableProps, variant }: any) => (
         <div data-testid="table" data-variant={variant}>
             {tableProps?.rows?.map((row: any, i: number) => (
-                <div key={i} data-testid={`row-${i}`}>
+                <div
+                    key={i}
+                    data-testid={`row-${i}`}
+                    data-show-sql-license-tooltip={!!row.showSqlLicensePermissionTooltip}
+                >
                     {row.details}: {row.value}
                 </div>
             ))}
@@ -160,6 +164,21 @@ describe('InstanceInformation', () => {
         expect(screen.getByTestId('row-1').textContent).toContain('SQL Edition');
         expect(screen.getByTestId('row-1').textContent).toContain('Enterprise');
         expect(screen.getByTestId('row-2').textContent).toContain('Deployment model');
+    });
+
+    it('flags SQL license permission tooltip in Findings when the license response array is empty', () => {
+        // hasInsufficientSqlLicensePermissions is mocked to always return false here, simulating
+        // a host whose edition is known (masking the discovery-time heuristic) but whose pricing
+        // response came back with no license entries at all.
+        const store = makeStore({
+            storageSavingsResponse: { compute: [], license: [] }
+        });
+        render(
+            <Provider store={store}>
+                <InstanceInformation />
+            </Provider>
+        );
+        expect(screen.getByTestId('row-1').getAttribute('data-show-sql-license-tooltip')).toBe('true');
     });
 
     it('shows n/a when no ec2Details', () => {

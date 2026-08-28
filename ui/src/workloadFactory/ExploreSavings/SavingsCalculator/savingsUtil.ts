@@ -90,7 +90,14 @@ export const comparisonData = (calculatedResponse: any) => {
         ? false
         : checkIfByolFieldRequired(selectedHostDetails, false, savingsCalculatorFrom);
 
-    const insufficientSqlLicensePermissions = !isOracle && hasInsufficientSqlLicensePermissions(selectedHostDetails);
+    // The API drops a host entirely from license/compute when its pricing couldn't be calculated
+    // (e.g. SQL Server authentication failed server-side), even if a partial SQL edition was
+    // discovered elsewhere. An empty response array is a more reliable "can't trust this cost" signal
+    // than the discovery-time readiness heuristic below, which a known edition string can mask.
+    const licenseDataUnavailable =
+        isArrayMode && Array.isArray(calculatedResponse?.license) && !calculatedResponse.license.length;
+    const insufficientSqlLicensePermissions =
+        !isOracle && (hasInsufficientSqlLicensePermissions(selectedHostDetails) || licenseDataUnavailable);
     const permissionTooltip = i18next.t('databases.explore-savings.insufficient-sql-license-permissions-tooltip');
 
     const licenseLabel = isOracle ? 'Oracle License' : 'SQL license';

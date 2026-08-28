@@ -6,7 +6,9 @@ import {
     shouldDisableUnregisteredDatabasesAndPassword,
     shouldRestrictWellArchitectTabs,
     mergeUnregisteredAssessmentIntoInventory,
-    resolveInventoryRowForAssessmentInstance
+    resolveInventoryRowForAssessmentInstance,
+    getWadOptimizationStatus,
+    getOracleWadOptimizationStatus
 } from './InventoryUtilsV2';
 import { DBType, INVENTORY_STATUS } from '../../utils/consts';
 
@@ -268,6 +270,96 @@ describe('mergeUnregisteredAssessmentIntoInventory', () => {
 
         expect(merged.host_key.sqlServerInstances[0].wadAssessmentData).toBeDefined();
         expect(merged.host_key.sqlServerInstances[0].isUnregistered).toBe(true);
+    });
+
+    /**
+     * adwlmcom / MSSQLSERVER is discovered under several credentials, but only one of them holds the
+     * on-demand assessment. Asserts both the merge and the value the Instances table column renders.
+     */
+    const ASSESSMENT_CRED = '50fd20e2-cf2a-4841-be06-5f76e933f662';
+    const OTHER_CRED = '92978933-14fe-4c1c-9cd0-85364b5c380f';
+
+    const buildHost = (hostType: string, credentialId: string, regionId: string, instanceName: string) => ({
+        hostType,
+        ec2InstanceId: 'i-07a29eb681ba37679',
+        credentialId,
+        regionId,
+        sqlServerInstances: [
+            {
+                databaseInstanceName: instanceName,
+                statusColText: INVENTORY_STATUS.UNMANAGED,
+                isUnregistered: false
+            }
+        ]
+    });
+
+    const buildAssessment = (instanceName: string) => ({
+        vmInstanceId: 'i-07a29eb681ba37679',
+        databaseInstanceName: instanceName,
+        credentialsId: ASSESSMENT_CRED,
+        region: 'ap-southeast-1',
+        assessments: { metadata: { source: 'unregistered', lastAssessmentTimestamp: 1787894836414 } }
+    });
+
+    const firstInstance = (host: any) => host?.sqlServerInstances?.[0];
+
+    it('shows MSSQL status only on the host discovered with the assessment credential and region', () => {
+        const inventory = {
+            assessment_cred_host: buildHost(DBType.MSSQL, ASSESSMENT_CRED, 'ap-southeast-1', 'MSSQLSERVER'),
+            other_cred_host: buildHost(DBType.MSSQL, OTHER_CRED, 'us-east-1', 'MSSQLSERVER')
+        };
+
+        const merged = mergeUnregisteredAssessmentIntoInventory(
+            inventory,
+            [buildAssessment('MSSQLSERVER')],
+            DBType.MSSQL
+        );
+        const matchedInstance = firstInstance(merged.assessment_cred_host);
+        const unmatchedInstance = firstInstance(merged.other_cred_host);
+
+        expect(matchedInstance.isUnregistered).toBe(true);
+        expect(getWadOptimizationStatus(matchedInstance.wadAssessmentData)).not.toBe('');
+
+        expect(unmatchedInstance.isUnregistered).toBe(false);
+        expect(unmatchedInstance.wadAssessmentData).toBeUndefined();
+        expect(getWadOptimizationStatus(unmatchedInstance.wadAssessmentData)).toBe('');
+    });
+
+    it('shows Oracle status only on the host discovered with the assessment credential and region', () => {
+        const inventory = {
+            assessment_cred_host: buildHost(DBType.ORACLE, ASSESSMENT_CRED, 'ap-southeast-1', 'oracleasm'),
+            other_cred_host: buildHost(DBType.ORACLE, OTHER_CRED, 'us-east-1', 'oracleasm')
+        };
+
+        const merged = mergeUnregisteredAssessmentIntoInventory(
+            inventory,
+            [buildAssessment('oracleasm')],
+            DBType.ORACLE
+        );
+        const matchedInstance = firstInstance(merged.assessment_cred_host);
+        const unmatchedInstance = firstInstance(merged.other_cred_host);
+
+        expect(matchedInstance.isUnregistered).toBe(true);
+        expect(getOracleWadOptimizationStatus(matchedInstance.wadAssessmentData)).not.toBe('');
+
+        expect(unmatchedInstance.isUnregistered).toBe(false);
+        expect(unmatchedInstance.wadAssessmentData).toBeUndefined();
+        expect(getOracleWadOptimizationStatus(unmatchedInstance.wadAssessmentData)).toBe('');
+    });
+
+    it('does not merge when only the region differs', () => {
+        const inventory = {
+            other_region_host: buildHost(DBType.MSSQL, ASSESSMENT_CRED, 'us-east-1', 'MSSQLSERVER')
+        };
+
+        const merged = mergeUnregisteredAssessmentIntoInventory(
+            inventory,
+            [buildAssessment('MSSQLSERVER')],
+            DBType.MSSQL
+        );
+
+        expect(merged).toBe(inventory);
+        expect(firstInstance(merged.other_region_host).wadAssessmentData).toBeUndefined();
     });
 });
 

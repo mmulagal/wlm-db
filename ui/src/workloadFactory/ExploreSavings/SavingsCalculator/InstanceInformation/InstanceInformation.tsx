@@ -164,9 +164,15 @@ const InstanceInformation = ({ host }: { host?: any }) => {
             const findingsDbModel = hasExploreSavingsAoagDeployment(currentHost)
                 ? FINDINGS.NOT_OPTIMIZED
                 : FINDINGS.OPTIMIZED;
+            // Same signal as savingsUtil.ts's comparisonData: an empty license array in the response
+            // means pricing couldn't be calculated for this host, even if a partial edition was
+            // discovered elsewhere (which would otherwise mask this via hasInsufficientSqlLicensePermissions).
+            const licenseDataUnavailable =
+                isArrayMode && Array.isArray(storageSavingsResponse?.license) && !storageSavingsResponse.license.length;
             const showSqlLicensePermissionTooltip =
                 hasInsufficientSqlLicensePermissions(currentHost) ||
-                findingsLicenseData === FINDINGS.INSUFFICIENT_PERMISSIONS;
+                findingsLicenseData === FINDINGS.INSUFFICIENT_PERMISSIONS ||
+                licenseDataUnavailable;
 
             setNoOfInstances(
                 isOracleEbs ? currentHost?.databaseInstanceDetails?.length || 0 : currentHost?.totalInstance || 0
@@ -241,7 +247,11 @@ const InstanceInformation = ({ host }: { host?: any }) => {
                 // SQL Server: Multiple instances → aggregate unique editions, multiple deployment models possible
                 const serverEdition: any = [];
                 currentHost?.sqlServerInstances?.map((perRow: any) => {
-                    const edition = perRow?.databaseServer?.serverEdition || perRow?.serverEdition;
+                    const edition =
+                        perRow?.databaseServer?.serverEdition ||
+                        perRow?.serverEdition ||
+                        perRow?.sqlEdition ||
+                        perRow?.sqlServerEdition;
                     if (edition && !serverEdition.includes(edition)) {
                         serverEdition.push(edition);
                     }
