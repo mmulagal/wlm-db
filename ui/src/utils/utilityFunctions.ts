@@ -789,7 +789,7 @@ export const requiredFieldError = (inputString: string) => {
 
 export const errorMessagesToBlock = (errorMsg: string) => {
     for (const msg of ERR_MSG_TO_CHECK) {
-        if (errorMsg.includes(msg)) {
+        if (errorMsg && errorMsg.includes(msg)) {
             return true;
         }
     }
