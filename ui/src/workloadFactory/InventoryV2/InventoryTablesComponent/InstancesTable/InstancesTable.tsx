@@ -765,7 +765,7 @@ const InstancesTable = () => {
                     // hostManageReadiness is only populated by the discover flow; a host that was
                     // just deregistered from fully-managed has none yet (unknown, not denied) until
                     // rediscovered, so only block on an explicit false.
-                    const fsxLinkMissing = rowData?.hostManageReadiness?.fsxLinkExists === false;
+                    const fsxLinkMissing = getInstanceFsxLinkExists(rowData) === false;
                     const lacksPermission =
                         rowData?.hostManageReadiness != null && !hasFullPermission(rowData?.hostManageReadiness);
 

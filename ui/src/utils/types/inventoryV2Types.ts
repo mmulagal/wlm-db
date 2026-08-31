@@ -287,6 +287,8 @@ export interface InventoryTableInstanceDatInterface {
     fileSystemName?: string;
     fsxLinkExists?: boolean;
     fsxLinksCount?: number;
+    /** Carried from discover so unregistered instances on a partially registered host keep their readiness */
+    hostManageReadiness?: HostManageReadiness;
     statusColText?: string;
     storageSavingsText?: string;
     protection?: {

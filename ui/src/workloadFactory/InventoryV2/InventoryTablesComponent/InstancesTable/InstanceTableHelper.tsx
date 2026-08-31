@@ -51,7 +51,8 @@ import {
     getFsxLinkRequiredMessageKey,
     getRegistrationRequiresFullPermissionMessageKey,
     getInstanceFsxLinkExists,
-    isRegisteredInstanceMissingFsxLinkFromRow
+    isRegisteredInstanceMissingFsxLinkFromRow,
+    isRegisteredInstanceRow
 } from '../../InventoryUtilsV2';
 import { formatOfflineDataToAssessmentFormat } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import store from '../../../../store/store';
@@ -829,7 +830,7 @@ export const isInstanceActionDisabled = (
     if (
         (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
             rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) &&
-        rowData?.hostManageReadiness?.fsxLinkExists === false
+        getInstanceFsxLinkExists(rowData) === false
     ) {
         return {
             isDisabled: true,
@@ -850,13 +851,11 @@ export const shouldUseOfflineWadHandler = (rowData: any): boolean =>
     !!rowData?.isWad && rowData?.statusColText !== INVENTORY_STATUS.MANAGED && !rowData?.isManaged;
 
 export const getCanViewAndFix = (rowData: any): boolean => {
-    const isRegisteredOrManaged = rowData?.statusColText === INVENTORY_STATUS.MANAGED || rowData?.resourceId;
-
-    if (rowData?.isWad || isRegisteredOrManaged) {
+    if (rowData?.isWad || isRegisteredInstanceRow(rowData)) {
         return true;
     }
 
-    if (rowData?.hostManageReadiness?.fsxLinkExists === false) {
+    if (getInstanceFsxLinkExists(rowData) === false) {
         return false;
     }
 
@@ -884,8 +883,7 @@ export const getViewAndFixDisableMsg = (rowData: any, canViewAndFix: boolean, t:
         return rowData.detectOptionDisableMsg;
     }
 
-    const isRegisteredOrManaged = rowData?.statusColText === INVENTORY_STATUS.MANAGED || rowData?.resourceId;
-    if (!isRegisteredOrManaged && !rowData?.isWad && rowData?.hostManageReadiness?.fsxLinkExists === false) {
+    if (!isRegisteredInstanceRow(rowData) && !rowData?.isWad && getInstanceFsxLinkExists(rowData) === false) {
         return t('databases.register-flow.fsx-link-required-view-and-fix');
     }
 

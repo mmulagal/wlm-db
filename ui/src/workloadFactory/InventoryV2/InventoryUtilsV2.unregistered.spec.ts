@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
     canTriggerUnregisteredAssessment,
+    isRegisteredInstanceRow,
     isUnregisteredInventoryRow,
     hasPartialRunPermission,
     shouldDisableUnregisteredDatabasesAndPassword,
@@ -360,6 +361,34 @@ describe('mergeUnregisteredAssessmentIntoInventory', () => {
 
         expect(merged).toBe(inventory);
         expect(firstInstance(merged.other_region_host).wadAssessmentData).toBeUndefined();
+    });
+});
+
+describe('isRegisteredInstanceRow', () => {
+    // Mixed host: every instance row inherits the registered host resourceId.
+    const hostResourceId = 'b4684a50b73111b0';
+
+    it('is registered only for the managed instances of a partially registered host', () => {
+        expect(isRegisteredInstanceRow({ statusColText: INVENTORY_STATUS.MANAGED, resourceId: hostResourceId })).toBe(
+            true
+        );
+        expect(isRegisteredInstanceRow({ statusColText: INVENTORY_STATUS.UNMANAGED, resourceId: hostResourceId })).toBe(
+            false
+        );
+        // Unregistered instance that still reports a database instance id (MSSQLSERVER on a mixed host).
+        expect(
+            isRegisteredInstanceRow({
+                statusColText: INVENTORY_STATUS.UNDETECTED,
+                resourceId: hostResourceId,
+                databaseInstanceId: '632DA740-B8F6-4D08-8D84-F9197E47AAA3'
+            })
+        ).toBe(false);
+    });
+
+    it('keeps resourceId as the signal for rows without an instance status', () => {
+        expect(isRegisteredInstanceRow({ resourceId: 'res-1' })).toBe(true);
+        expect(isRegisteredInstanceRow({ isManaged: true, statusColText: INVENTORY_STATUS.UNMANAGED })).toBe(true);
+        expect(isRegisteredInstanceRow({})).toBe(false);
     });
 });
 

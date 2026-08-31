@@ -47,6 +47,7 @@ import {
     getFsxIdsForTooltip,
     getInstanceFsxLinkExists,
     getInstanceFsxLinksCount,
+    isRegisteredInstanceRow,
     isUnregisteredInventoryRow
 } from '../../InventoryUtilsV2';
 
@@ -593,8 +594,7 @@ export function getMssqlInstanceTableColumns({
                 const isDisabledByBulkSelection = isBulkSelectionActive;
 
                 // View and Fix is available for WAD, registered/managed, or unregistered rows with FSx link + permissions
-                const isRegisteredOrManaged =
-                    rowData?.statusColText === INVENTORY_STATUS.MANAGED || rowData?.resourceId;
+                const isRegisteredOrManaged = isRegisteredInstanceRow(rowData);
                 const hasUnregisteredPermissions =
                     !isRegisteredOrManaged && getCanViewAndFix(rowData) && !rowData?.isWad;
                 const canViewAndFix = getCanViewAndFix(rowData);

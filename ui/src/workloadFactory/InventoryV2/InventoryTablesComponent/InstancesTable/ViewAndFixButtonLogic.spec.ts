@@ -80,6 +80,19 @@ describe('View and Fix Button Logic', () => {
             );
         });
 
+        it('disables with fsx link message when only the instance topology reports no link', () => {
+            const rowData = {
+                statusColText: INVENTORY_STATUS.UNMANAGED,
+                resourceId: 'b4684a50b73111b0',
+                databaseInstanceTopology: { fsxLinkExists: false }
+            };
+
+            expect(getCanViewAndFix(rowData)).toBe(false);
+            expect(getViewAndFixDisableMsg(rowData, false, t)).toBe(
+                'databases.register-flow.fsx-link-required-view-and-fix'
+            );
+        });
+
         it('allows unregistered rows with permissions when fsxLinkExists is true', () => {
             const rowData = {
                 statusColText: INVENTORY_STATUS.UNMANAGED,
@@ -176,6 +189,24 @@ describe('View and Fix Button Logic', () => {
 
         it('disables for instances without any valid state', () => {
             expect(getCanViewAndFix({})).toBe(false);
+        });
+
+        it('does not treat an unregistered instance of a partially registered host as registered', () => {
+            const hostResourceId = 'b4684a50b73111b0';
+
+            expect(getCanViewAndFix({ statusColText: INVENTORY_STATUS.UNMANAGED, resourceId: hostResourceId })).toBe(
+                false
+            );
+            expect(
+                getCanViewAndFix({
+                    statusColText: INVENTORY_STATUS.UNMANAGED,
+                    resourceId: hostResourceId,
+                    hostManageReadiness: { extensiveRunPermission: true, fsxLinkExists: true }
+                })
+            ).toBe(true);
+            expect(getCanViewAndFix({ statusColText: INVENTORY_STATUS.MANAGED, resourceId: hostResourceId })).toBe(
+                true
+            );
         });
     });
 

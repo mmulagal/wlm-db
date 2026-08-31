@@ -428,9 +428,19 @@ export const resolveInstanceFsxLinkExists = ({
     return getInstanceFsxLinkExists({ hostManageReadiness: host?.hostManageReadiness });
 };
 
+/**
+ * Registration state of a single instance row. Instance rows inherit the host `resourceId`, so on a
+ * partially registered host it is shared by registered and unregistered instances alike; it is only a
+ * registration signal for row shapes that carry no instance status (Well-architected resource rows).
+ */
+export const isRegisteredInstanceRow = (rowData: any): boolean =>
+    rowData?.statusColText === INVENTORY_STATUS.MANAGED ||
+    rowData?.isManaged === true ||
+    (!!rowData?.resourceId && !rowData?.statusColText);
+
 /** Discover/unmerged rows: permissions + not managed + no registered resource id. */
 export const isUnregisteredInventoryRow = (rowData: any, managedDbInstance?: { resourceId?: string }): boolean => {
-    if (rowData?.statusColText === INVENTORY_STATUS.MANAGED || managedDbInstance?.resourceId) {
+    if (isRegisteredInstanceRow(rowData) || managedDbInstance?.resourceId) {
         return false;
     }
     return (
@@ -451,10 +461,10 @@ export const isEligibleUnregisteredForWellArch = (rowData: any): boolean => {
     if (!rowData || rowData?.isWad) {
         return false;
     }
-    if (rowData?.resourceId || rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
+    if (isRegisteredInstanceRow(rowData)) {
         return false;
     }
-    if (rowData?.hostManageReadiness?.fsxLinkExists === false) {
+    if (getInstanceFsxLinkExists(rowData) === false) {
         return false;
     }
     if (rowData?.detectOption === DETECT_HOST_VAR.DISABLE || rowData?.detectOption === DETECT_HOST_VAR.HIDE) {
@@ -671,9 +681,7 @@ export const resolveWellArchAssessmentFlow = ({
         return WELL_ARCH_ASSESSMENT_FLOW.UNREGISTERED;
     }
 
-    return rowData?.resourceId || rowData?.statusColText === INVENTORY_STATUS.MANAGED
-        ? WELL_ARCH_ASSESSMENT_FLOW.REGISTERED
-        : WELL_ARCH_ASSESSMENT_FLOW.NONE;
+    return isRegisteredInstanceRow(rowData) ? WELL_ARCH_ASSESSMENT_FLOW.REGISTERED : WELL_ARCH_ASSESSMENT_FLOW.NONE;
 };
 
 /**
@@ -1328,9 +1336,12 @@ export const getInstanceStatusForMixedCase = (managedHostRow: any, engineType: s
     return [];
 };
 
-const getMappedDiscoveredData = (managedHostRow: any) => {
+const getMappedDiscoveredData = (managedHostRow: any, engineType?: string) => {
     const state = store.getState();
-    const discoveredHostData = state?.inventoryV2?.discoveredOracleHosts?.discoveredOracleHostData;
+    const discoveredHostData =
+        engineType === DBType.ORACLE
+            ? state?.inventoryV2?.discoveredOracleHosts?.discoveredOracleHostData
+            : state?.inventoryV2?.discoveredHosts?.discoveredHostData;
     const ec2Id = managedHostRow?.nodeTopology?.ec2Details?.[0]?.id || managedHostRow?.ec2InstanceId;
 
     if (ec2Id && discoveredHostData) {
@@ -1349,7 +1360,7 @@ export const getPlatformForManagedHost = (managedHostRow: any, engineType: strin
 
     // try to get platform from discovered data
     if (engineType === DBType.ORACLE) {
-        return getMappedDiscoveredData(managedHostRow)?.platform;
+        return getMappedDiscoveredData(managedHostRow, DBType.ORACLE)?.platform;
     }
 
     return undefined;
@@ -1567,8 +1578,12 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
     const isAllManaged = row?.databaseInstanceDetails?.every(perRow => !!perRow?.isManaged);
 
     let nonManagedStatus: any = [];
+    // A registered host carries no readiness of its own; its unregistered instances need the discover
+    // permissions/FSx link to qualify for on-demand unregistered assessments.
+    let discoveredHostManageReadiness: HostManageReadiness | undefined;
     if (!isAllManaged) {
         nonManagedStatus = getInstanceStatusForMixedCase(row, row?.hostType);
+        discoveredHostManageReadiness = getMappedDiscoveredData(row, row?.hostType)?.hostManageReadiness;
     }
 
     let instanceRows;
@@ -1641,7 +1656,7 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                 dataguardDetails: perRow?.dataguardDetails || statusObj?.[0]?.discoverInstanceData?.dataguardDetails,
                 ...authAndDetectFields,
                 // Copy host-level permission data to instance (for registered/managed hosts)
-                hostManageReadiness: row?.hostManageReadiness,
+                hostManageReadiness: row?.hostManageReadiness ?? discoveredHostManageReadiness,
                 source: row?.source
             };
         });
@@ -1706,6 +1721,7 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                     allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
                     manageReadiness: statusObj?.[0]?.manageReadiness,
                     isFsxRegistered: statusObj?.[0]?.isFsxRegistered,
+                    hostManageReadiness: instRow?.hostManageReadiness,
                     ...authFields
                 };
                 if (row?.hostType === DBType.ORACLE) {
@@ -3830,11 +3846,17 @@ export const updateSqlServerInstancesForUnmanaged = (
     if (instanceData?.databaseInstancesSummary && instanceData?.databaseInstancesSummary?.length > 0) {
         // To check if manage/unmanage/undetected mixed case
         let nonManagedStatus: any = [];
+        // The host list response has no nodeTopology, so discover could not be matched at format time.
+        let discoveredHostManageReadiness: HostManageReadiness | undefined;
         if (isManagedHost) {
             const isAllManaged = instanceData?.databaseInstanceDetails?.every(perRow => !!perRow?.isManaged);
             if (!isAllManaged) {
                 nonManagedStatus = getInstanceStatusForMixedCase(instanceData, existingInstanceRow?.hostType);
                 // to call data for mixed case. use in statusColText for unmanaged case
+                discoveredHostManageReadiness = getMappedDiscoveredData(
+                    instanceData,
+                    existingInstanceRow?.hostType
+                )?.hostManageReadiness;
             }
         }
         instanceRows = instanceRows?.map((instRow: InventoryTableInstanceDatInterface) => {
@@ -3911,6 +3933,7 @@ export const updateSqlServerInstancesForUnmanaged = (
                     dataguardDetails:
                         instRow?.dataguardDetails || statusObj?.[0]?.discoverInstanceData?.dataguardDetails,
                     isFsxRegistered: instRow?.isFsxRegistered || statusObj?.[0]?.isFsxRegistered,
+                    hostManageReadiness: instRow?.hostManageReadiness ?? discoveredHostManageReadiness,
                     ...authFields
                 };
             }
