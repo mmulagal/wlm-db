@@ -709,11 +709,12 @@ function getDatabaseInstancesDetails(
         instancesManagedLength: instancesManaged.length,
         resourceId
     });
+    // Preserve discovery-provided managed state; instances without one are WLMDB records and therefore managed.
     const managedInstancesName = instancesManaged.map((item: DatabaseInstance) => ({
         instanceName: item.database_instance_name,
         isDefault: item.is_default,
         instanceState: ServerState.DOWN,
-        isManaged: true,
+        isManaged: item.isManaged ?? true,
         databaseInstanceId: item.database_instance_id
     }));
 
@@ -723,7 +724,7 @@ function getDatabaseInstancesDetails(
             const managedInstance = managedInstancesName.find(
                 ({ instanceName: managedInstanceName }) => managedInstanceName === instanceName
             );
-            const isManaged = Boolean(managedInstance);
+            const isManaged = managedInstance?.isManaged ?? false;
             const updatedInstanceState =
                 instanceState === SQL_SERVICE_STATE.RUNNING ? ServerState.UP : ServerState.DOWN;
             const databaseInstanceId = managedInstance?.databaseInstanceId;

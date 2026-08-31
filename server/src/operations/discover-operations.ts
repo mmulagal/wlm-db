@@ -26,6 +26,7 @@ import {
     coerceBooleanFromLooseTrue,
     decompressSSMResponse,
     generateHash,
+    generateSqlResourceId,
     getArtifactsRegionBucketName,
     getArtifactsBucketRegion,
     getEc2Hostname,
@@ -90,6 +91,7 @@ import {
     SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
 } from './workloads/mssql/const';
 import {
+    DatabaseInstance,
     NodeDetails,
     ResourceDetails,
     MultipleCommandSsmResponse,
@@ -122,6 +124,7 @@ import { OracleDataguardDiscoveryDetailsType } from './workloads/oracle/common-t
 import { buildEc2FsxRelationship, Ec2WithStorage } from './cloud-manager/tagging-service-operations';
 import { checkFsxLinkExists } from '../lib/cloud-manager/fsx-core';
 import { getFsxLinkReadinessByFsId } from './aws/fsx-operations';
+import { getPaginatedDatabaseInstances } from './database/database-operations';
 
 const { getPreSignedUrl } = preSignedUrl;
 const logger = getLogger();
@@ -1187,6 +1190,50 @@ async function makeSsmCall(
     return commandId;
 }
 
+// WLMDB stores resource_id as a hash of the host's EC2 instance ids, while discovery knows only the raw
+// ids, so a host's managed records can sit under any of these values. The raw id covers the demo flow.
+function deriveManagedResourceIds(ec2InstanceId: string, clusterNodeDetails: NodeDetails[] = []): string[] {
+    const partnerNodeIds = compact(clusterNodeDetails.map(({ ec2InstanceId: nodeId }) => nodeId)).filter(
+        nodeId => nodeId !== ec2InstanceId
+    );
+
+    return [
+        ec2InstanceId,
+        generateSqlResourceId(ec2InstanceId),
+        ...partnerNodeIds.map(partnerNodeId => generateSqlResourceId(ec2InstanceId, partnerNodeId))
+    ];
+}
+
+function markManagedSqlInstances(
+    discoveredInstances: DatabaseInstance[],
+    managedInstances: DatabaseInstance[],
+    hostResourceIds: string[] = []
+): DatabaseInstance[] {
+    const mssqlManagedInstances = managedInstances.filter(
+        ({ database_type: databaseType }) => !databaseType || databaseType === DatabaseTypes.MS_SQL_SERVER
+    );
+    const managedIds = new Set(compact(mssqlManagedInstances.map(({ database_instance_id: id }) => id?.toLowerCase())));
+    // Instance names repeat across hosts (MSSQLSERVER), so the fallback only trusts this host's records.
+    const managedHostNames = new Set(
+        compact(
+            mssqlManagedInstances
+                .filter(({ resource_id: resourceId }) => resourceId && hostResourceIds.includes(resourceId))
+                .map(({ database_instance_name: name }) => name?.toLowerCase())
+        )
+    );
+
+    return discoveredInstances.map(instance => {
+        const instanceId = instance.database_instance_id?.toLowerCase();
+        const instanceName = instance.database_instance_name?.toLowerCase();
+        return {
+            ...instance,
+            isManaged: instanceId
+                ? managedIds.has(instanceId)
+                : Boolean(instanceName && managedHostNames.has(instanceName))
+        };
+    });
+}
+
 async function fetchUnmanagedHostsInformationV2(
     accountId: string,
     credentialsId: string,
@@ -1198,14 +1245,15 @@ async function fetchUnmanagedHostsInformationV2(
 
     // Modified implementation to fetch SQL Server instance details for EC2 instances with underlying storage details. The code now accepts instances ID array instead of object with ec2InstanceId and storageType. If there are multiple sql instances in an ec2 instance, the code will return multiple resource details for the same ec2 instance. Every item in resourceDetailsList is an ec2 instance - sql instance pair with storage type.
 
-    const { items: ec2HostDetails } = await getHostAndSqlServerInfo(
-        accountId,
-        credentialsId,
-        region,
-        undefined,
-        undefined,
-        instances
-    );
+    const [{ items: ec2HostDetails }, { items: managedDatabaseInstances }] = await Promise.all([
+        getHostAndSqlServerInfo(accountId, credentialsId, region, undefined, undefined, instances),
+        getPaginatedDatabaseInstances(accountId, {
+            credentialsId,
+            region,
+            databaseType: [DatabaseTypes.MS_SQL_SERVER],
+            selectKeys: ['account_id', 'resource_id', 'database_instance_id', 'database_instance_name', 'database_type']
+        })
+    ]);
     const resourceDetailsList: ResourceDetails[] = [];
 
     const errorInstances: DatabaseHostSummaryForMultiInstanceResponseType[] = [];
@@ -1288,6 +1336,12 @@ async function fetchUnmanagedHostsInformationV2(
                         resource: clonedResourceDetails
                     });
                 });
+
+                resourceDetails.database_instances = markManagedSqlInstances(
+                    resourceDetails.database_instances ?? [],
+                    managedDatabaseInstances,
+                    deriveManagedResourceIds(ec2Instance.ec2InstanceId, clusterNodeDetails)
+                );
                 resourceDetailsList.push(resourceDetails);
             } else {
                 errorInstances.push({
@@ -2752,5 +2806,6 @@ export {
     getTaggingServiceStorageForInstance,
     applyTaggingServiceStorage,
     applyTaggingServiceSqlServerStorage,
-    checkFsxLinkExists
+    checkFsxLinkExists,
+    markManagedSqlInstances
 };

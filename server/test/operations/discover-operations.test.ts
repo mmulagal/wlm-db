@@ -1,9 +1,27 @@
 import {
     getHostAndSqlServerInfo,
     discoverPgSqlResources,
-    discoverOracleResources
+    discoverOracleResources,
+    markManagedSqlInstances
 } from '../../src/operations/discover-operations';
 import { ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../utils/consts';
+
+type SqlInstanceFixture = Pick<
+    Parameters<typeof markManagedSqlInstances>[0][number],
+    'database_instance_id' | 'database_instance_name'
+> &
+    Partial<Pick<Parameters<typeof markManagedSqlInstances>[0][number], 'database_type' | 'resource_id'>>;
+
+const markManaged = (
+    discovered: SqlInstanceFixture[],
+    managed: SqlInstanceFixture[],
+    hostResourceIds?: string[]
+): Array<boolean | undefined> =>
+    markManagedSqlInstances(
+        discovered as unknown as Parameters<typeof markManagedSqlInstances>[0],
+        managed as unknown as Parameters<typeof markManagedSqlInstances>[1],
+        hostResourceIds
+    ).map(instance => instance.isManaged);
 
 describe('Discover operations', () => {
     it('Get host and SQL Server instance details', async () => {
@@ -21,6 +39,64 @@ describe('Discover operations', () => {
     //         );
     //     }
     // });
+});
+
+describe('Discover operations: managed state of discovered SQL instances', () => {
+    const discoveredInstances: SqlInstanceFixture[] = [
+        { database_instance_id: 'guid-1', database_instance_name: 'MSSQLSERVER' },
+        { database_instance_id: 'guid-2', database_instance_name: 'REPORTING' }
+    ];
+    const managedInstances: SqlInstanceFixture[] = [
+        { database_instance_id: 'guid-1', database_instance_name: 'MSSQLSERVER', resource_id: 'wlmdb-host-1' },
+        { database_instance_id: 'guid-2', database_instance_name: 'REPORTING', resource_id: 'wlmdb-host-2' }
+    ];
+    const withoutGuid: SqlInstanceFixture[] = [{ database_instance_id: '', database_instance_name: 'mssqlserver' }];
+
+    const managedStates = (managedRecords: SqlInstanceFixture[]) => markManaged(discoveredInstances, managedRecords);
+
+    it('reports every instance as unmanaged when there are no wlmdb records', () => {
+        expect(managedStates([])).toEqual([false, false]);
+    });
+
+    it('reports only the registered instance as managed', () => {
+        expect(managedStates([managedInstances[0]])).toEqual([true, false]);
+    });
+
+    it('reports every instance as managed when all of them are registered', () => {
+        expect(managedStates(managedInstances)).toEqual([true, true]);
+    });
+
+    it('matches on instance name when the server GUID is unavailable', () => {
+        expect(markManaged(withoutGuid, managedInstances, ['wlmdb-host-1'])).toEqual([true]);
+    });
+
+    it('does not match an instance name from another host when the server GUID is unavailable', () => {
+        expect(markManaged(withoutGuid, managedInstances, ['wlmdb-host-2'])).toEqual([false]);
+    });
+
+    it('does not match on instance name when the host has no wlmdb record', () => {
+        expect(markManaged(withoutGuid, managedInstances)).toEqual([false]);
+    });
+
+    it('ignores managed records belonging to another database type', () => {
+        const oracleRecords = managedInstances.map(instance => ({ ...instance, database_type: 'ORACLE' }));
+
+        expect(managedStates(oracleRecords)).toEqual([false, false]);
+    });
+
+    it('considers records typed as MSSQL and records registered without a type', () => {
+        const [mssqlRecord, untypedRecord] = [{ ...managedInstances[0], database_type: 'MSSQL' }, managedInstances[1]];
+
+        expect(managedStates([mssqlRecord, untypedRecord])).toEqual([true, true]);
+    });
+
+    it('matches server GUIDs regardless of casing', () => {
+        const upperCaseGuid: SqlInstanceFixture[] = [
+            { database_instance_id: 'GUID-1', database_instance_name: 'MSSQLSERVER' }
+        ];
+
+        expect(markManaged(upperCaseGuid, managedInstances)).toEqual([true]);
+    });
 });
 
 describe('Discover operations: AOAG Standalone', () => {
