@@ -425,6 +425,38 @@ describe('DynamicDialogContent', () => {
             // no section rendered — no error
             expect(screen.queryByTestId('section')).toBeNull();
         });
+
+        it('renders textList section with multiple paragraphs under one heading', () => {
+            mockGetDialogContentConfig.mockReturnValue({
+                sections: [
+                    {
+                        type: 'textList',
+                        heading: 'databases.well-architect.action-summary',
+                        items: [
+                            'databases.well-architect.failover-cluster-action-summary',
+                            'databases.well-architect.cluster-quorum-action-summary'
+                        ]
+                    }
+                ],
+                features: {}
+            });
+            render(<DynamicDialogContent {...defaultProps} />);
+            expect(screen.getByText(/databases\.well-architect\.action-summary/)).toBeTruthy();
+            expect(screen.getByText(/databases\.well-architect\.failover-cluster-action-summary/)).toBeTruthy();
+            expect(screen.getByText(/databases\.well-architect\.cluster-quorum-action-summary/)).toBeTruthy();
+        });
+
+        it('renders textList items when heading is empty string', () => {
+            mockGetDialogContentConfig.mockReturnValue({
+                sections: [{ type: 'textList', heading: '', items: ['item-a', 'item-b'] }],
+                features: {}
+            });
+            render(<DynamicDialogContent {...defaultProps} />);
+            expect(screen.getByText(/item-a/)).toBeTruthy();
+            expect(screen.getByText(/item-b/)).toBeTruthy();
+            // No heading DsTypography element rendered when heading is empty
+            expect(screen.queryAllByText(/^item-/).length).toBe(2);
+        });
     });
 
     // ── renderNotes ───────────────────────────────────────────────────────────

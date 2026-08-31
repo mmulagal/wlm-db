@@ -855,6 +855,46 @@ describe('DynamicInnerTable', () => {
             expect(invokeAllRenderCells()).toContain('databases.general.unavailable');
         });
 
+        it('wraps cell content in ellipsis div with title when col.ellipsis=true (string value)', () => {
+            const config = {
+                columns: [{ key: 'value', label: 'Value', accessor: 'value', ellipsis: true }],
+                resourceTypeLabel: 'Volume'
+            };
+            const data = { violationDetails: [{ objectName: 'vol-1', value: 'long-value-text' }] };
+            render(<DynamicInnerTable {...defaultProps} data={data} columnConfig={config as any} />);
+            const results = invokeAllRenderCells();
+            const el = results[0];
+            expect(el).toBeTruthy();
+            expect(typeof el).toBe('object'); // React element, not plain string
+            expect(el.props.title).toBe('long-value-text');
+        });
+
+        it('wraps object cell (ontapVolumeName) in ellipsis div with title when col.ellipsis=true', () => {
+            const config = {
+                columns: [{ key: 'someObj', label: 'Obj', accessor: 'someObj', ellipsis: true }],
+                resourceTypeLabel: 'Item'
+            };
+            const data = {
+                violationDetails: [{ objectName: 'v1', someObj: { ontapVolumeName: 'vol-a' } }]
+            };
+            render(<DynamicInnerTable {...defaultProps} data={data} columnConfig={config as any} />);
+            const results = invokeAllRenderCells();
+            const el = results[0];
+            expect(el).toBeTruthy();
+            expect(typeof el).toBe('object');
+            expect(el.props.title).toBe('vol-a');
+        });
+
+        it('renders plain string (no div wrapper) for string value when col.ellipsis is not set', () => {
+            const config = {
+                columns: [{ key: 'value', label: 'Value', accessor: 'value' }],
+                resourceTypeLabel: 'Volume'
+            };
+            const data = { violationDetails: [{ objectName: 'vol-1', value: 'plain-value' }] };
+            render(<DynamicInnerTable {...defaultProps} data={data} columnConfig={config as any} />);
+            expect(invokeAllRenderCells()).toContain('plain-value');
+        });
+
         it('renders action column fix button for a normal fixable row', () => {
             render(<DynamicInnerTable {...defaultProps} canOptimize handleRowFix={vi.fn()} data={normalData} />);
             const actionCol = capturedTableCols.find((c: any) => c.accessor === 'action');

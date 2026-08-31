@@ -44,6 +44,10 @@
         flex-direction: column;
         gap: 32px;
 
+        &.wad-spacing {
+            gap: 16px;
+        }
+
         .noticeSection {
             background-color: var(--hover-background);
             padding: 16px 24px;

@@ -137,6 +137,15 @@
         text-overflow: ellipsis;
     }
 
+    .ellipsisCell {
+        display: block;
+        max-width: 100%;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
     .cellList {
         display: flex;
         flex-direction: column;

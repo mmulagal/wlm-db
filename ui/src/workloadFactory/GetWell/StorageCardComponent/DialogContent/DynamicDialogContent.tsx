@@ -253,6 +253,21 @@ const DynamicDialogContent = ({
                 const items = (section.items || []).map(key => t(key, translationParams));
                 return createSection(heading, createContentWithBullets(items), section.style);
             }
+            case 'textList': {
+                const textItems = (section.items || []).map(key => t(key, translationParams));
+                return (
+                    <div key={index} className={styles['first-section']}>
+                        {heading && <DsTypography variant="Semibold_14">{heading}</DsTypography>}
+                        <div className={styles.content}>
+                            {textItems.map((text, i) => (
+                                <DsTypography key={i} variant="Regular_14">
+                                    {text}
+                                </DsTypography>
+                            ))}
+                        </div>
+                    </div>
+                );
+            }
             case 'numberedList': {
                 const steps = (section.items || []).map(key => t(key, translationParams));
                 return (
@@ -423,7 +438,7 @@ const DynamicDialogContent = ({
     }
 
     return (
-        <div className={styles['storage-tier-block']}>
+        <div className={`${styles['storage-tier-block']} ${isWad ? styles['wad-spacing'] : ''}`}>
             {/* Linked Config Banner (Oracle ONTAP) */}
             {showDependencyWarning && (
                 <div className={styles.dependencyWarningSection}>

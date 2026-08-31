@@ -2870,12 +2870,14 @@
                 {
                     "key": "value",
                     "label": "Current value",
-                    "accessor": "value"
+                    "accessor": "value",
+                    "ellipsis": true
                 },
                 {
                     "key": "recommended",
                     "label": "Recommended value",
-                    "accessor": "recommended"
+                    "accessor": "recommended",
+                    "ellipsis": true
                 }
             ],
             "resourceTypeLabel": "Host",

@@ -614,6 +614,9 @@ function translateSectionField(value?: string): string {
 
 function formatSectionContent(section: DialogSectionDef): string {
     const content = translateSectionField(section.content);
+    if (section.type === 'textList' && section.items?.length) {
+        return section.items.map(item => translateSectionField(item)).join('\n\n');
+    }
     if (section.type === 'bullets' && section.items?.length) {
         return section.items.map(item => `• ${translateSectionField(item)}`).join('\n');
     }

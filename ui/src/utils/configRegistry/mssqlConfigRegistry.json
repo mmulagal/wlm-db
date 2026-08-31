@@ -2206,13 +2206,11 @@
             "sections": [
                 {
                     "heading": "databases.well-architect.action-summary",
-                    "type": "text",
-                    "content": "databases.well-architect.failover-cluster-action-summary"
-                },
-                {
-                    "heading": "",
-                    "type": "text",
-                    "content": "databases.well-architect.cluster-quorum-action-summary"
+                    "type": "textList",
+                    "items": [
+                        "databases.well-architect.failover-cluster-action-summary",
+                        "databases.well-architect.cluster-quorum-action-summary"
+                    ]
                 },
                 {
                     "heading": "databases.well-architect.what-will-happen",
@@ -2260,18 +2258,12 @@
             "sections": [
                 {
                     "heading": "databases.well-architect.action-summary",
-                    "type": "text",
-                    "content": "databases.well-architect.failover-cluster-action-summary"
-                },
-                {
-                    "heading": "databases.well-architect.action-summary",
-                    "type": "text",
-                    "content": "databases.well-architect.drive-letter-action-summary1"
-                },
-                {
-                    "heading": "",
-                    "type": "text",
-                    "content": "databases.well-architect.drive-letter-action-summary2"
+                    "type": "textList",
+                    "items": [
+                        "databases.well-architect.failover-cluster-action-summary",
+                        "databases.well-architect.drive-letter-action-summary1",
+                        "databases.well-architect.drive-letter-action-summary2"
+                    ]
                 }
             ],
             "features": {
@@ -2303,23 +2295,13 @@
             "sections": [
                 {
                     "heading": "databases.well-architect.action-summary",
-                    "type": "text",
-                    "content": "databases.well-architect.failover-cluster-action-summary"
-                },
-                {
-                    "heading": "",
-                    "type": "text",
-                    "content": "databases.well-architect.heartbeat-setting-action-summary1"
-                },
-                {
-                    "heading": "",
-                    "type": "text",
-                    "content": "databases.well-architect.heartbeat-setting-action-summary2"
-                },
-                {
-                    "heading": "",
-                    "type": "text",
-                    "content": "databases.well-architect.heartbeat-setting-action-summary3"
+                    "type": "textList",
+                    "items": [
+                        "databases.well-architect.failover-cluster-action-summary",
+                        "databases.well-architect.heartbeat-setting-action-summary1",
+                        "databases.well-architect.heartbeat-setting-action-summary2",
+                        "databases.well-architect.heartbeat-setting-action-summary3"
+                    ]
                 },
                 {
                     "heading": "databases.well-architect.what-will-happen",
@@ -2410,13 +2392,11 @@
             "sections": [
                 {
                     "heading": "databases.well-architect.action-summary",
-                    "type": "text",
-                    "content": "databases.well-architect.failover-cluster-action-summary"
-                },
-                {
-                    "heading": "",
-                    "type": "text",
-                    "content": "databases.well-architect.shared-storage-action-summary"
+                    "type": "textList",
+                    "items": [
+                        "databases.well-architect.failover-cluster-action-summary",
+                        "databases.well-architect.shared-storage-action-summary"
+                    ]
                 },
                 {
                     "heading": "databases.well-architect.what-will-happen",
@@ -2471,13 +2451,11 @@
             "sections": [
                 {
                     "heading": "databases.well-architect.action-summary",
-                    "type": "text",
-                    "content": "databases.well-architect.sql-server-configuration-action-summary1"
-                },
-                {
-                    "heading": "",
-                    "type": "text",
-                    "content": "databases.well-architect.sql-server-configuration-action-summary2"
+                    "type": "textList",
+                    "items": [
+                        "databases.well-architect.sql-server-configuration-action-summary1",
+                        "databases.well-architect.sql-server-configuration-action-summary2"
+                    ]
                 },
                 {
                     "heading": "databases.well-architect.what-will-happen",

@@ -454,10 +454,24 @@ const DynamicInnerTable = ({
 
                 // Handle objects (convert to string) - prevents React "invalid object type" errors
                 if (cellData && typeof cellData === 'object' && !Array.isArray(cellData)) {
-                    return cellData.ontapVolumeName || JSON.stringify(cellData);
+                    const content = cellData.ontapVolumeName || JSON.stringify(cellData);
+                    return col.ellipsis ? (
+                        <div className={styles.ellipsisCell} title={content}>
+                            {content}
+                        </div>
+                    ) : (
+                        content
+                    );
                 }
 
-                return cellData || t('databases.general.unavailable');
+                const finalCellData = cellData || t('databases.general.unavailable');
+                return col.ellipsis ? (
+                    <div className={styles.ellipsisCell} title={String(finalCellData)}>
+                        {finalCellData}
+                    </div>
+                ) : (
+                    finalCellData
+                );
             }
         }));
 

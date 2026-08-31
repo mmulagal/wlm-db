@@ -119,6 +119,8 @@ export interface ColumnConfig {
         accessor?: string;
         /** CSS width value for the column (e.g., "200px", "30%") */
         width?: string;
+        /** Whether to truncate long text with ellipsis (default: false) */
+        ellipsis?: boolean;
     }>;
 
     /**
@@ -326,6 +328,7 @@ export interface OptimizeApiConfig {
  */
 export type DialogSectionType =
     | 'text' // Simple paragraph text
+    | 'textList' // Multiple text paragraphs under one heading
     | 'bullets' // Bulleted list
     | 'numberedSteps' // Numbered steps (1., 2., 3.)
     | 'numberedStepsWithCode' // Numbered steps with inline code snippets
@@ -362,7 +365,7 @@ export interface DialogSectionDef {
 
     /**
      * Array of items for list-based section types.
-     * Used by 'bullets', 'numberedSteps', 'numberedList', 'permissions'.
+     * Used by 'textList', 'bullets', 'numberedSteps', 'numberedList', 'permissions'.
      * Each item should be a string or translation key.
      */
     items?: string[];
