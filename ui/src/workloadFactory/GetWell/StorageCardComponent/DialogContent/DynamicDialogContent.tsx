@@ -300,28 +300,50 @@ const DynamicDialogContent = ({
                         {heading && <DsTypography variant="Semibold_14">{heading}</DsTypography>}
                         <div className={styles.content}>
                             {steps.map((step: string, i: number) => {
-                                // Simple check: if step contains a command starting with $, split it out
-                                const commandRegex = /(\$\S+[^\s]*(?:\s+[^\s]+)*)/;
-                                const match = step.match(commandRegex);
+                                // Improved regex: stops at double spaces to allow text after commands
+                                // Matches $ followed by characters, stopping at two consecutive spaces
+                                const commandRegex = /(\$(?:[^\s]|\s(?!\s))+)/g;
+                                const matches = step.match(commandRegex);
 
-                                if (match) {
-                                    const parts = step.split(commandRegex);
+                                if (matches) {
+                                    // Split by all commands and render parts
+                                    const parts: (string | { type: 'command'; text: string })[] = [];
+                                    let lastIndex = 0;
+
+                                    matches.forEach(match => {
+                                        const matchIndex = step.indexOf(match, lastIndex);
+                                        // Add text before command
+                                        if (matchIndex > lastIndex) {
+                                            parts.push(step.substring(lastIndex, matchIndex));
+                                        }
+                                        // Add command
+                                        parts.push({ type: 'command', text: match });
+                                        lastIndex = matchIndex + match.length;
+                                    });
+
+                                    // Add remaining text after last command
+                                    if (lastIndex < step.length) {
+                                        parts.push(step.substring(lastIndex));
+                                    }
+
                                     return (
                                         <div key={i} className={styles.row}>
                                             <DsTypography variant="Semibold_14">{i + 1}|</DsTypography>
                                             <div style={{ flex: 1 }}>
-                                                {parts.map((part: string, partIdx: number) => {
-                                                    if (part && part.startsWith('$')) {
+                                                {parts.map((part, partIdx: number) => {
+                                                    if (typeof part === 'object' && part.type === 'command') {
                                                         return (
                                                             <div key={partIdx} style={{ margin: '8px 0' }}>
                                                                 {createCodeBoxWithCopy(
-                                                                    part.trim(),
+                                                                    section.copyWithoutPrefix
+                                                                        ? part.text.replace(/^\$/, '').trim()
+                                                                        : part.text.trim(),
                                                                     t('databases.general.copied-to-clipboard')
                                                                 )}
                                                             </div>
                                                         );
                                                     }
-                                                    if (part && part.trim()) {
+                                                    if (part && typeof part === 'string' && part.trim()) {
                                                         return (
                                                             <DsTypography key={partIdx} variant="Regular_14">
                                                                 {part.trim()}

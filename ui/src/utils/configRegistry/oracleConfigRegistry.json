@@ -1770,7 +1770,35 @@
             "combineRows": true
         },
         "storagePriority": 35,
-        "viewLink": true
+        "viewLink": true,
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-nfsv4-domain-name-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.optimization-steps",
+                    "type": "numberedStepsWithCode",
+                    "copyWithoutPrefix": true,
+                    "items": [
+                        "databases.well-architect.oracle-nfsv4-domain-name-steps-1",
+                        "databases.well-architect.oracle-nfsv4-domain-name-steps-2",
+                        "databases.well-architect.oracle-nfsv4-domain-name-steps-3",
+                        "databases.well-architect.oracle-nfsv4-domain-name-steps-4",
+                        "databases.well-architect.oracle-nfsv4-domain-name-steps-5",
+                        "databases.well-architect.oracle-nfsv4-domain-name-steps-6",
+                        "databases.well-architect.oracle-nfsv4-domain-name-steps-7"
+                    ]
+                },
+                {
+                    "heading": "databases.well-architect.oracle-nfsv4-domain-name-expected-result-heading",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-nfsv4-domain-name-expected-result"
+                }
+            ]
+        }
     },
     "nfs-caching-options": {
         "hasInnerPage": true,

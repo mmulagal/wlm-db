@@ -394,7 +394,104 @@ describe('DynamicDialogContent', () => {
                 features: {}
             });
             render(<DynamicDialogContent {...defaultProps} />);
-            expect(screen.getByTestId('code-box-copy')).toBeTruthy();
+            const codeBox = screen.getByTestId('code-box-copy');
+            expect(codeBox).toBeTruthy();
+            // copyWithoutPrefix not set — $ is preserved in the copy text
+            expect(codeBox.textContent).toContain('$some-cmd --flag');
+        });
+
+        it('renders numberedStepsWithCode — copyWithoutPrefix:true strips $ from clipboard text', () => {
+            mockGetDialogContentConfig.mockReturnValue({
+                sections: [
+                    { type: 'numberedStepsWithCode', copyWithoutPrefix: true, items: ['Execute $some-cmd --flag'] }
+                ],
+                features: {}
+            });
+            render(<DynamicDialogContent {...defaultProps} />);
+            const codeBox = screen.getByTestId('code-box-copy');
+            expect(codeBox.textContent).not.toMatch(/^\$/);
+            expect(codeBox.textContent).toContain('some-cmd --flag');
+        });
+
+        it('renders numberedStepsWithCode — text before $ command renders both text and code box', () => {
+            mockGetDialogContentConfig.mockReturnValue({
+                sections: [
+                    {
+                        type: 'numberedStepsWithCode',
+                        copyWithoutPrefix: true,
+                        items: ['Check the SVM. $vserver nfs show -vserver svm1  Then review output.']
+                    }
+                ],
+                features: {}
+            });
+            render(<DynamicDialogContent {...defaultProps} />);
+            const codeBox = screen.getByTestId('code-box-copy');
+            expect(codeBox).toBeTruthy();
+            // $ stripped: copied text is the bare ONTAP command
+            expect(codeBox.textContent).toBe('vserver nfs show -vserver svm1');
+            expect(screen.getByText(/Check the SVM/)).toBeTruthy();
+        });
+
+        it('renders numberedStepsWithCode — step with two $ commands produces two code boxes', () => {
+            mockGetDialogContentConfig.mockReturnValue({
+                sections: [
+                    {
+                        type: 'numberedStepsWithCode',
+                        items: ['Verify client: $cat /etc/idmapd.conf  Alternatively: $hostname -d']
+                    }
+                ],
+                features: {}
+            });
+            render(<DynamicDialogContent {...defaultProps} />);
+            expect(screen.getAllByTestId('code-box-copy')).toHaveLength(2);
+        });
+
+        it('renders numberedStepsWithCode — plain step (no $) renders without code box', () => {
+            mockGetDialogContentConfig.mockReturnValue({
+                sections: [
+                    {
+                        type: 'numberedStepsWithCode',
+                        items: ['Compare the client and ONTAP domains. Ensure they match exactly.']
+                    }
+                ],
+                features: {}
+            });
+            render(<DynamicDialogContent {...defaultProps} />);
+            expect(screen.queryByTestId('code-box-copy')).toBeNull();
+            expect(screen.getByText(/Compare the client/)).toBeTruthy();
+        });
+
+        it('renders full nfsv4-domain-name dialog structure: text + numberedStepsWithCode + text', () => {
+            mockGetDialogContentConfig.mockReturnValue({
+                sections: [
+                    {
+                        type: 'text',
+                        heading: 'databases.well-architect.action-summary',
+                        content: 'databases.well-architect.oracle-nfsv4-domain-name-action-summary'
+                    },
+                    {
+                        type: 'numberedStepsWithCode',
+                        heading: 'databases.well-architect.optimization-steps',
+                        copyWithoutPrefix: true,
+                        items: [
+                            'Check the SVM. $vserver nfs show -vserver svm1 -fields v4-id-domain  If not configured, ONTAP uses DNS.',
+                            'Compare the client and ONTAP domains. Ensure they match exactly.',
+                            'Update the domain. $vserver nfs modify -vserver svm1 -v4-id-domain example.com'
+                        ]
+                    },
+                    {
+                        type: 'text',
+                        heading: 'databases.well-architect.oracle-nfsv4-domain-name-expected-result-heading',
+                        content: 'databases.well-architect.oracle-nfsv4-domain-name-expected-result'
+                    }
+                ],
+                features: {}
+            });
+            render(<DynamicDialogContent {...defaultProps} engineType="oracle" />);
+            // Two text sections rendered via createSection mock
+            expect(screen.getAllByTestId('section')).toHaveLength(2);
+            // Steps with $ commands produce code boxes; step without $ does not
+            expect(screen.getAllByTestId('code-box-copy')).toHaveLength(2);
         });
 
         it('renders permissions section when missingPermissions provided', () => {

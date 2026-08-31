@@ -390,6 +390,19 @@ export interface DialogSectionDef {
      * Optional inline styles for the section container.
      */
     style?: { width?: string };
+
+    /**
+     * When true, the leading $ parser marker is stripped from command text
+     * before it is passed to the copy button. Use this for configs where $
+     * is only a renderer cue and must not appear in the clipboard text
+     * (e.g. nfsv4-domain-name ONTAP/Linux commands).
+     *
+     * Leave unset (default false) when the $ is intentional visible content
+     * (e.g. oracle-critical-patch).
+     *
+     * @default false
+     */
+    copyWithoutPrefix?: boolean;
 }
 
 /**

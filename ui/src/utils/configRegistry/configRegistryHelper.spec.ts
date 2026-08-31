@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { ASSESSMENT_CONFIG_IDS, DBType } from '../consts';
-import { buildSubConfigValues, getButtonText, getColumnConfig } from './configRegistryHelper';
+import { buildSubConfigValues, getButtonText, getColumnConfig, getDialogContentConfig } from './configRegistryHelper';
 
 vi.mock('i18next', () => ({
     t: (key: string) => key
@@ -184,7 +184,7 @@ describe('buildSubConfigValues', () => {
         expect(resultNonTiering.recommended).toBe('tiering-policy=auto, tiering-min-cooling-days=');
     });
 
-    it('includes all sub-configs for storage-efficiencies regardless of violatedConfigs', () => {
+    it('includes all sub-configs for storage-efficiencies regardless of violatedConfigs (existing test)', () => {
         const configDetailsStorageEfficiencies = [
             {
                 id: 'compression',
@@ -218,5 +218,59 @@ describe('buildSubConfigValues', () => {
         expect(result.current).toContain('compression');
         expect(result.current).toContain('deduplication');
         expect(result.current).toContain('compaction');
+    });
+});
+
+describe('getDialogContentConfig — nfsv4-domain-name', () => {
+    it('returns a defined config for nfsv4-domain-name with Oracle engine', () => {
+        const config = getDialogContentConfig('nfsv4-domain-name', DBType.ORACLE);
+        expect(config).toBeDefined();
+    });
+
+    it('returns undefined for nfsv4-domain-name with MSSQL engine', () => {
+        const config = getDialogContentConfig('nfsv4-domain-name', DBType.MSSQL);
+        expect(config).toBeUndefined();
+    });
+
+    it('has exactly 3 sections', () => {
+        const config = getDialogContentConfig('nfsv4-domain-name', DBType.ORACLE);
+        expect(config?.sections).toHaveLength(3);
+    });
+
+    it('first section is text type with action-summary heading and correct content key', () => {
+        const config = getDialogContentConfig('nfsv4-domain-name', DBType.ORACLE);
+        const section = config?.sections[0];
+        expect(section?.type).toBe('text');
+        expect(section?.heading).toBe('databases.well-architect.action-summary');
+        expect(section?.content).toBe('databases.well-architect.oracle-nfsv4-domain-name-action-summary');
+    });
+
+    it('second section is numberedStepsWithCode type with optimization-steps heading and stripCommandPrefix:true', () => {
+        const config = getDialogContentConfig('nfsv4-domain-name', DBType.ORACLE);
+        const section = config?.sections[1];
+        expect(section?.type).toBe('numberedStepsWithCode');
+        expect(section?.heading).toBe('databases.well-architect.optimization-steps');
+        expect(section?.copyWithoutPrefix).toBe(true);
+    });
+
+    it('second section has exactly 7 step items', () => {
+        const config = getDialogContentConfig('nfsv4-domain-name', DBType.ORACLE);
+        expect(config?.sections[1].items).toHaveLength(7);
+    });
+
+    it('step items include all 7 nfsv4 i18n keys in order', () => {
+        const config = getDialogContentConfig('nfsv4-domain-name', DBType.ORACLE);
+        const items = config?.sections[1].items ?? [];
+        for (let i = 1; i <= 7; i++) {
+            expect(items).toContain(`databases.well-architect.oracle-nfsv4-domain-name-steps-${i}`);
+        }
+    });
+
+    it('third section is text type with expected-result heading and content keys', () => {
+        const config = getDialogContentConfig('nfsv4-domain-name', DBType.ORACLE);
+        const section = config?.sections[2];
+        expect(section?.type).toBe('text');
+        expect(section?.heading).toBe('databases.well-architect.oracle-nfsv4-domain-name-expected-result-heading');
+        expect(section?.content).toBe('databases.well-architect.oracle-nfsv4-domain-name-expected-result');
     });
 });
