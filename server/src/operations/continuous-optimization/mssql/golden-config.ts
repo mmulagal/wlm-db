@@ -125,7 +125,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'Workload Factory recommends disabling snapshots for FSx for ONTAP volumes for MS SQL Server instances to save space and lower costs. MS SQL Server snapshots should be managed externally via tools like SnapCenter, which creates application-consistent snapshots, preventing corruption during restoration.',
         configLevel: 'database',
-        globalWadApplicable: true,
+        globalWadApplicable: false,
         metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true },
         disabled: process.env.NODE_ENV === 'production'
     },
@@ -160,7 +160,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             { parameter: 'tiering-min-cooling-days', value: 7, source: 'volume' }
         ],
         configLevel: 'database',
-        globalWadApplicable: true,
+        globalWadApplicable: false,
         metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true },
         disabled: process.env.NODE_ENV === 'production'
     },
@@ -200,7 +200,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             }
         ],
         configLevel: 'database',
-        globalWadApplicable: true,
+        globalWadApplicable: false,
         metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true },
         disabled: process.env.NODE_ENV === 'production'
     },
@@ -410,7 +410,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
         resourceType: ASSESSMENT_RESOURCE_TYPE.FILE_SYSTEM,
         configLevel: 'database',
-        globalWadApplicable: true,
+        globalWadApplicable: false,
         metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true },
         disabled: process.env.NODE_ENV === 'production'
     },

@@ -85,7 +85,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         ],
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
         configLevel: 'database',
-        globalWadApplicable: true,
+        globalWadApplicable: false,
         metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true },
         disabled: process.env.NODE_ENV === 'production'
     },
@@ -182,7 +182,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             }
         ],
         configLevel: 'database',
-        globalWadApplicable: true,
+        globalWadApplicable: false,
         metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true },
         disabled: process.env.NODE_ENV === 'production'
     },
@@ -216,7 +216,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             }
         ],
         configLevel: 'database',
-        globalWadApplicable: true,
+        globalWadApplicable: false,
         metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true },
         disabled: process.env.NODE_ENV === 'production'
     },
@@ -887,7 +887,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
         resourceType: ASSESSMENT_RESOURCE_TYPE.FILE_SYSTEM,
         configLevel: 'database',
-        globalWadApplicable: true,
+        globalWadApplicable: false,
         metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true },
         disabled: process.env.NODE_ENV === 'production'
     },
