@@ -119,7 +119,7 @@
         "max-emails-per-day": 20
     },
     "clone-age-in-days": 0,
-    "well-architected-assessment-notification": "0 * * * *",
+    "well-architected-assessment-notification": "0 5 * * *",
     "postpone-age-in-days": 1,
     "aws-sdk": {
         "cache": {
