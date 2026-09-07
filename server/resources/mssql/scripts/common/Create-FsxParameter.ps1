@@ -8,7 +8,17 @@ param(
     [string]$Parentstackname
 )
 
-Import-Module -Name AWSPowerShell
+$awsToolsModule = 'AWS.Tools.SimpleSystemsManagement' 
+if (Get-Module -ListAvailable -Name $awsToolsModule) {
+    Import-Module -Name $awsToolsModule
+}
+elseif (Get-Module -ListAvailable -Name AWSPowerShell) {
+    Import-Module -Name AWSPowerShell
+}
+else {
+    throw "Neither $awsToolsModule nor AWSPowerShell is available."
+} 
+
 try {
     $ScriptsPath =  Split-Path -Path (Split-Path -Path $MyInvocation.MyCommand.Path -Parent) 
     . "$ScriptsPath\common\InvokeRetryCommand.ps1" 

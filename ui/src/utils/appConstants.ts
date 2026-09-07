@@ -232,9 +232,11 @@ export const GENERAL = {
     WIN_SERVER_2016: 'Windows server 2016',
     WIN_SERVER_2019: 'Windows server 2019',
     WIN_SERVER_2022: 'Windows server 2022',
+    WIN_SERVER_2025: 'Windows server 2025',
     WIN_SERVER_2016_VERSION: '2016',
     WIN_SERVER_2019_VERSION: '2019',
     WIN_SERVER_2022_VERSION: '2022',
+    WIN_SERVER_2025_VERSION: '2025',
     OP_SYS_TEXT: 'Choose the operating system on which to install SQL Server.',
     // Constants for DB Deployment
     FAILOVER_CLUSTER: 'Failover cluster instance (FCI)',
@@ -263,9 +265,11 @@ export const GENERAL = {
     SQL_SERVER_2019: 'SQL Server 2019',
     SQL_SERVER_2016: 'SQL Server 2016',
     SQL_SERVER_2022: 'SQL Server 2022',
+    SQL_SERVER_2025: 'SQL Server 2025',
     SQL_SERVER_2019_VERSION: '2019',
     SQL_SERVER_2016_VERSION: '2016',
     SQL_SERVER_2022_VERSION: '2022',
+    SQL_SERVER_2025_VERSION: '2025',
     VERSION: 'Version',
     // Constants for License accordion
     LICENSE_TEXT:

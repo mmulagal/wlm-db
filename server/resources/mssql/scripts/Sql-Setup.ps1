@@ -224,7 +224,15 @@ else {
         if (-not (Test-Path $agentCtl)) {
             Write-Output "AmazonCloudWatchAgent not found. Installing via AWS-ConfigureAWSPackage..."
             if (-not (Get-Command Send-SSMCommand -ErrorAction SilentlyContinue)) {
-                Import-Module AWSPowerShell -ErrorAction SilentlyContinue
+                if (Get-Module -ListAvailable -Name AWS.Tools.SimpleSystemsManagement) {
+                    Import-Module -Name AWS.Tools.SimpleSystemsManagement -ErrorAction SilentlyContinue
+                }
+                elseif (Get-Module -ListAvailable -Name AWSPowerShell) {
+                    Import-Module AWSPowerShell -ErrorAction SilentlyContinue 
+                }
+                else {
+                    throw "Neither AWS.Tools.SimpleSystemsManagement nor AWSPowerShell is available; cannot install AmazonCloudWatchAgent via Send-SSMCommand."
+                }
             }
             $commandId = (Send-SSMCommand -DocumentName 'AWS-ConfigureAWSPackage' -InstanceId $InstanceId -Region $Region -Parameter @{ action = 'Install'; name = 'AmazonCloudWatchAgent' }).CommandId
             # ponytail: bounded 5-minute poll instead of an SSM waiter; if the install runs

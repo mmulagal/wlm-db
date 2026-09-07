@@ -39,7 +39,7 @@ import {
 
 import { API_NAME, AWS_ASSUME_ROLE, DATABASE_TYPE, OS_TYPE, VPC_API_FIELDS } from '../../../utils/consts';
 import { formatKmsData } from '../../../utils/utilityFunctions';
-import { SELECT_CONFIG } from '../../../utils/appConstants';
+import { GENERAL, SELECT_CONFIG } from '../../../utils/appConstants';
 import { setRefetchApiCountRan } from '../../../store/mssql/msSqlActionSlice';
 import {
     selectDefaultCollation,
@@ -177,7 +177,12 @@ const MssqlApis = () => {
             filterAmis: !isShowChatbot
         },
         {
-            skip: osVersion?.value === '2022' && dbVersion?.value === '2016' ? true : licenseAmiSkip
+            skip:
+                (osVersion?.value === '2022' && dbVersion?.value === '2016') ||
+                (osVersion?.value === GENERAL.WIN_SERVER_2025_VERSION &&
+                    dbVersion?.value !== GENERAL.SQL_SERVER_2025_VERSION)
+                    ? true
+                    : licenseAmiSkip
         }
     );
 
@@ -319,7 +324,11 @@ const MssqlApis = () => {
             osVersion?.value &&
             dbEdition?.value &&
             dbVersion?.value &&
-            !(osVersion?.value === '2022' && dbVersion?.value === '2016')
+            !(osVersion?.value === '2022' && dbVersion?.value === '2016') &&
+            !(
+                osVersion?.value === GENERAL.WIN_SERVER_2025_VERSION &&
+                dbVersion?.value !== GENERAL.SQL_SERVER_2025_VERSION
+            )
         ) {
             setLicenseAmiSkip(false);
         } else {

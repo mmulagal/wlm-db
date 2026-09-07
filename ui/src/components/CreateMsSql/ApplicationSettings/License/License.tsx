@@ -21,6 +21,7 @@ import {
     DB_VERSIONS,
     DB_VERSIONS_EXCLUDING_2016,
     DB_VERSIONS_EXCLUDING_2022,
+    DB_VERSIONS_ONLY_2025,
     FORM_OPTIONS,
     LICENSE_URL,
     OS_VERSIONS_LIST
@@ -62,9 +63,11 @@ const License = () => {
 
     // Set DB versions
     useEffect(() => {
-        if (operatingSystem?.value === '2022') {
+        if (operatingSystem?.value === GENERAL.WIN_SERVER_2025_VERSION) {
+            setVersionArray(DB_VERSIONS_ONLY_2025);
+        } else if (operatingSystem?.value === GENERAL.WIN_SERVER_2022_VERSION) {
             setVersionArray(DB_VERSIONS_EXCLUDING_2016);
-        } else if (operatingSystem?.value === '2016') {
+        } else if (operatingSystem?.value === GENERAL.WIN_SERVER_2016_VERSION) {
             setVersionArray(DB_VERSIONS_EXCLUDING_2022);
         } else {
             setVersionArray(DB_VERSIONS);

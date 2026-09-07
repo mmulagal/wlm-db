@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
-import { SELECT_CONFIG } from '../../../utils/appConstants';
+import { GENERAL, SELECT_CONFIG } from '../../../utils/appConstants';
 
 import MssqlApis from './MssqlApis';
 
@@ -149,6 +149,27 @@ describe('MssqlApis', () => {
             </Provider>
         );
         expect(selectDefaultLicense).toHaveBeenCalled();
+    });
+
+    it('skips the AMI list call when Windows 2025 is paired with a stale non-2025 SQL version', async () => {
+        const { useGetAmiListQuery } = await import('../../../utils/apiService');
+        (useGetAmiListQuery as any).mockReturnValue({ data: undefined, isFetching: false, isError: false });
+        const store = makeStore({
+            mssqlForm: {
+                awsAccount: { selectedCredential: { data: { credentialsId: 'cred-1' } } },
+                regionAndVpc: { selectedRegion: { data: { regionCode: 'us-east-1' } }, selectedVPC: null },
+                operatingSystem: { value: GENERAL.WIN_SERVER_2025_VERSION },
+                dbEdition: { value: 'Enterprise' },
+                dbVersion: { value: GENERAL.SQL_SERVER_2022_VERSION }
+            }
+        });
+        render(
+            <Provider store={store}>
+                <MssqlApis />
+            </Provider>
+        );
+        const lastCallArgs = (useGetAmiListQuery as any).mock.calls.at(-1);
+        expect(lastCallArgs[1].skip).toBe(true);
     });
 
     it('dispatches addGetCollationList and calls selectDefaultCollation in easy create', async () => {

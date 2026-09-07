@@ -325,7 +325,9 @@ const SQL_AMI_NAMES = [
     'Windows_Server-2016-English-Full-SQL_2016_SP*_Standard*',
     'Windows_Server-2019-English-Full-SQL_2016_SP*_Standard*',
     'Windows_Server-2019-English-Full-SQL_2017_Standard*',
-    'Windows_Server-2016-English-Full-SQL_2019_Enterprise*'
+    'Windows_Server-2016-English-Full-SQL_2019_Enterprise*',
+    'Windows_Server-2025-English-Full-SQL_2025_Enterprise*',
+    'Windows_Server-2025-English-Full-SQL_2025_Standard*'
 ];
 
 enum AWSQueryFields {

@@ -761,6 +761,7 @@ function getCollationForMSSQLVersion(mssqlVersion: string, defaultCollation: str
             };
         case '2019':
         case '2022':
+        case '2025':
             return {
                 collationList: MS_SQL_2022,
                 defaultCollation

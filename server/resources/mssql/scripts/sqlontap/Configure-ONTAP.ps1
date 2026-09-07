@@ -132,8 +132,19 @@ function callGetOrDeleteApi {
         }
     }
     catch {
+        $ontapError = $_.ErrorDetails.Message
+        if (-not $ontapError) {
+            $ontapError = $_.Exception.Message
+        }
+        if ($ontapError -match 'no entries matching|entry doesn.?t exist|There are no entries') {
+            Write-Output "No matching ONTAP records for $method; continuing. $ontapError"
+            return
+        }
+        if ($ontapError -match '1254197|LUN is currently mapped') {
+            throw $ontapError
+        }
         if ($IsTerraform) {
-            throw $_.Exception.Message
+            throw $ontapError
         }
         Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $instanceId
         $_ | Write-AWSLaunchWizardException
@@ -190,13 +201,17 @@ $DATALUN = 'sqldata'
 $TLUN = 'tempdb'
 $QLUN = 'quorum'
 
-# delete lun mapping if exist
-$lunmapsUriDynamicPart = 'private/cli/lun/mapping'
-$URI = "https://$($MgmtDNS)/api/$($lunmapsUriDynamicPart)?vserver=$($SQLVMName)&igroup=$($IGROUP)"
-$lunmappingdata = (callGetOrDeleteApi -uri $URI -region $region -creds $base64 -method "GET").records
+if ($FSxQuorumVolumeName -ne "") {
+    $lunPathList = @("/vol/$FSxQuorumVolumeName/$QLUN", "/vol/$FSxTempDBVolumeName/$TLUN", "/vol/$FSxLogVolumeName/$LOGLUN", "/vol/$FSxDataVolumeName/$DATALUN")
+}
+else {
+    $lunPathList = @("/vol/$FSxTempDBVolumeName/$TLUN", "/vol/$FSxLogVolumeName/$LOGLUN", "/vol/$FSxDataVolumeName/$DATALUN")
+}
 
-foreach ($perlunmap in $lunmappingdata) {
-    $DeleteURI = "https://$($MgmtDNS)/api/$($lunmapsUriDynamicPart)?vserver=$($perlunmap.vserver)&path=$($perlunmap.path)&igroup=$($perlunmap.igroup)"
+# Unmap known LUN paths for this igroup before LUN delete (ONTAP 1254197 if still mapped).
+$lunmapsUriDynamicPart = 'private/cli/lun/mapping'
+foreach ($lunPath in $lunPathList) {
+    $DeleteURI = "https://$($MgmtDNS)/api/$($lunmapsUriDynamicPart)?vserver=$($SQLVMName)&path=$lunPath&igroup=$($IGROUP)"
     callGetOrDeleteApi -uri $DeleteURI -region $region -creds $base64 -method "DELETE"
 }
 Start-Sleep 5
@@ -205,17 +220,24 @@ Start-Sleep 5
 $lunUriDynamicPart = 'private/cli/lun'
 $URI = "https://$($MgmtDNS)/api/$($lunUriDynamicPart)?vserver=$($SQLVMName)"
 $lunlist = (callGetOrDeleteApi -uri $URI -region $region -creds $base64 -method "GET").records
-if ($FSxQuorumVolumeName -ne "") {
-    $lunPathList = @("/vol/$FSxQuorumVolumeName/$QLUN", "/vol/$FSxTempDBVolumeName/$TLUN", "/vol/$FSxLogVolumeName/$LOGLUN", "/vol/$FSxDataVolumeName/$DATALUN")
-}
-else {
-    $lunPathList = @("/vol/$FSxTempDBVolumeName/$TLUN", "/vol/$FSxLogVolumeName/$LOGLUN", "/vol/$FSxDataVolumeName/$DATALUN")
-}
 
 foreach ($perlun in $lunlist) {
     if ($lunPathList -contains $perlun.path) {
         $DeleteURI = "https://$($MgmtDNS)/api/$($lunUriDynamicPart)?vserver=$($perlun.vserver)&path=$($perlun.path)"
-        callGetOrDeleteApi -uri $DeleteURI -region $region -creds $base64 -method "DELETE"
+        try {
+            callGetOrDeleteApi -uri $DeleteURI -region $region -creds $base64 -method "DELETE"
+        }
+        catch {
+            $ontapError = $_.Exception.Message
+            if ($ontapError -notmatch '1254197|LUN is currently mapped') {
+                throw
+            }
+            Write-Output "LUN $($perlun.path) is still mapped; removing remaining mappings and retrying delete."
+            $UnmapURI = "https://$($MgmtDNS)/api/$($lunmapsUriDynamicPart)?vserver=$($perlun.vserver)&path=$($perlun.path)&igroup=$($IGROUP)"
+            callGetOrDeleteApi -uri $UnmapURI -region $region -creds $base64 -method "DELETE"
+            Start-Sleep 5
+            callGetOrDeleteApi -uri $DeleteURI -region $region -creds $base64 -method "DELETE"
+        }
     }
 }
 

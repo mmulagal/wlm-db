@@ -689,6 +689,8 @@ export const DB_VERSIONS_EXCLUDING_2016 = [
 
 export const DB_VERSIONS_EXCLUDING_2022 = [{ label: GENERAL.SQL_SERVER_2019, value: GENERAL.SQL_SERVER_2019_VERSION }];
 
+export const DB_VERSIONS_ONLY_2025 = [{ label: GENERAL.SQL_SERVER_2025, value: GENERAL.SQL_SERVER_2025_VERSION }];
+
 export const DB_EDITIONS = [
     {
         label: GENERAL.SQL_SERVER_STANDARD_EDITION,
@@ -784,6 +786,10 @@ export const OS_VERSIONS_LIST = [
     {
         label: GENERAL.WIN_SERVER_2022,
         value: GENERAL.WIN_SERVER_2022_VERSION
+    },
+    {
+        label: GENERAL.WIN_SERVER_2025,
+        value: GENERAL.WIN_SERVER_2025_VERSION
     }
 ];
 
