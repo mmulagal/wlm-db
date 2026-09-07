@@ -18,6 +18,7 @@ import {
     OracleDeploymentTenacyType,
     OracleDeploymentType
 } from '../../operations/workloads/oracle/common-types';
+import { ORACLE_ADMIN_SCRIPT_IDS } from '../../operations/workloads/oracle/oracle-admin-scripts';
 
 const allowedFields = Object.values(DatabaseHostsQueryFields);
 const DatabaseHostObjectParams = Type.Object({
@@ -707,6 +708,32 @@ type DatabaseHostSummaryForMultiInstanceListResponseType = Static<
     typeof DatabaseHostSummaryForMultiInstanceListResponse
 >;
 
+const RunOracleScriptBody = Type.Object({
+    ec2InstanceId: Type.Optional(
+        Type.String({
+            minLength: 1,
+            description: API_DESCRIPTION.EC2_INSTANCE_ID_DESC,
+            pattern: '^i-[0-9a-f]{8,17}$'
+        })
+    ),
+    databaseHostId: Type.Optional(Type.String({ minLength: 1, description: API_DESCRIPTION.DATABASE_HOST_ID_DESC })),
+    databaseInstanceId: Type.Optional(
+        Type.String({ minLength: 1, description: API_DESCRIPTION.DATABASE_INSTANCE_ID_DESC })
+    ),
+    scriptId: Type.String({
+        enum: [...ORACLE_ADMIN_SCRIPT_IDS],
+        description: 'Allowlisted Oracle admin script to run via SSM on the host'
+    }),
+    args: Type.Optional(Type.Record(Type.String(), Type.String())),
+    comment: Type.Optional(Type.String({ maxLength: 100, description: 'SSM command comment' }))
+});
+type RunOracleScriptBodyType = Static<typeof RunOracleScriptBody>;
+
+const RunOracleScriptResponse = Type.Object({
+    output: Type.String()
+});
+type RunOracleScriptResponseType = Static<typeof RunOracleScriptResponse>;
+
 export {
     DatabaseHostObjectParams,
     DatabaseHostObjectParamsType,
@@ -775,5 +802,9 @@ export {
     OracleDbHostSummaryListResponse,
     OracleDbHostsSummaryResponse,
     NodeTopologyResponseType,
-    NodeTopologyResponse
+    NodeTopologyResponse,
+    RunOracleScriptBody,
+    RunOracleScriptBodyType,
+    RunOracleScriptResponse,
+    RunOracleScriptResponseType
 };

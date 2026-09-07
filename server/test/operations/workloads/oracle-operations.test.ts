@@ -4,7 +4,8 @@ import {
     getOracleDatabaseHostInstanceSummary,
     getOracleDatabaseMappedVolumes,
     getOraclePerformanceMetrics,
-    getOracleProtectionStatus
+    getOracleProtectionStatus,
+    runOracleAdminScript
 } from '../../../src/operations/workloads/oracle/oracle-operations';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 import {
@@ -178,5 +179,180 @@ describe('Oracle Database Operations', () => {
         expect(!isEmpty(result)).toBeTruthy();
         expect(result['dataguard-primary']).toBeDefined();
         expect(result['dataguard-primary'].associatedHosts.length).toBe(2);
+    });
+
+    it('should run an allowlisted topology-check script and return SSM output', async () => {
+        const result = await runOracleAdminScript(
+            accountId,
+            credentialsId,
+            region,
+            { ec2InstanceId: node1InstanceId },
+            'topology-check',
+            { ORACLE_SID: dbInstanceSid },
+            'oracle admin script'
+        );
+
+        expect(result).toEqual({
+            output: '{"status":"ok","svmName":"svm01","dataVolume":"oradata","logVolume":"oraredo"}'
+        });
+    });
+
+    it('should reject an unknown scriptId', async () => {
+        await expect(
+            runOracleAdminScript(
+                accountId,
+                credentialsId,
+                region,
+                { ec2InstanceId: node1InstanceId },
+                'echo-hello',
+                undefined,
+                'oracle admin script'
+            )
+        ).rejects.toThrow('Unknown scriptId: echo-hello');
+    });
+
+    it('should reject extra args that are not in the script allowlist', async () => {
+        await expect(
+            runOracleAdminScript(
+                accountId,
+                credentialsId,
+                region,
+                { ec2InstanceId: node1InstanceId },
+                'topology-check',
+                { ORACLE_SID: dbInstanceSid, DATA_VOLUME: 'oradata' },
+                'oracle admin script'
+            )
+        ).rejects.toThrow('Unexpected args for scriptId topology-check: DATA_VOLUME');
+    });
+
+    it('should reject missing required args for a mutating script', async () => {
+        await expect(
+            runOracleAdminScript(
+                accountId,
+                credentialsId,
+                region,
+                { ec2InstanceId: node1InstanceId },
+                'create-pdb',
+                { ORACLE_SID: dbInstanceSid },
+                'oracle admin script'
+            )
+        ).rejects.toThrow(
+            'Missing required args for scriptId create-pdb: PDB_NAME, PDB_ADMIN_USER, PDB_ADMIN_PASSWORD'
+        );
+    });
+
+    it('should reject an invalid admin script arg name', async () => {
+        await expect(
+            runOracleAdminScript(
+                accountId,
+                credentialsId,
+                region,
+                { ec2InstanceId: node1InstanceId },
+                'topology-check',
+                { 'ORACLE-SID': dbInstanceSid },
+                'oracle admin script'
+            )
+        ).rejects.toThrow('Invalid script arg name: ORACLE-SID');
+    });
+
+    it('should reject an admin script with neither ec2InstanceId nor databaseHostId', async () => {
+        await expect(
+            runOracleAdminScript(
+                accountId,
+                credentialsId,
+                region,
+                {},
+                'topology-check',
+                { ORACLE_SID: dbInstanceSid },
+                'oracle admin script'
+            )
+        ).rejects.toThrow('Provide ec2InstanceId for an unregistered host or databaseHostId for a registered host');
+    });
+
+    it('should reject a scriptId with missing required args before resolving the target', async () => {
+        await expect(
+            runOracleAdminScript(
+                accountId,
+                credentialsId,
+                region,
+                {},
+                'topology-check',
+                undefined,
+                'oracle admin script'
+            )
+        ).rejects.toThrow('Missing required args for scriptId topology-check: ORACLE_SID');
+    });
+
+    it('should reject databaseInstanceId without databaseHostId', async () => {
+        await expect(
+            runOracleAdminScript(
+                accountId,
+                credentialsId,
+                region,
+                { databaseInstanceId: 'id1' },
+                'topology-check',
+                { ORACLE_SID: dbInstanceSid },
+                'oracle admin script'
+            )
+        ).rejects.toThrow('databaseInstanceId requires databaseHostId for a registered Oracle host');
+    });
+
+    it('should reject an unknown registered Oracle host', async () => {
+        await expect(
+            runOracleAdminScript(
+                accountId,
+                credentialsId,
+                region,
+                { databaseHostId: 'missing-oracle-run-script-host' },
+                'topology-check',
+                { ORACLE_SID: dbInstanceSid },
+                'oracle admin script'
+            )
+        ).rejects.toThrow('Oracle host missing-oracle-run-script-host not found');
+    });
+
+    it('should run an oracle admin script on a registered host via databaseHostId', async () => {
+        const result = await runOracleAdminScript(
+            accountId,
+            credentialsId,
+            region,
+            { databaseHostId: '6cbdabbfe3fb147e', databaseInstanceId: dbInstanceSid },
+            'topology-check',
+            { ORACLE_SID: 'MSSQLSERVER' },
+            'oracle admin script'
+        );
+
+        expect(result).toEqual({
+            output: '{"status":"ok","svmName":"svm01","dataVolume":"oradata","logVolume":"oraredo"}'
+        });
+    });
+
+    it('should reject a databaseInstanceId that is not on the registered host', async () => {
+        const hostId = 'oracle-run-script-host-no-inst';
+        try {
+            await createResource(accountId, {
+                resourceId: hostId,
+                resourceName: 'oracle-run-script-no-inst',
+                resourceType: 'ORACLE',
+                credentialsId,
+                storageType: 'FSXN',
+                region,
+                metadata: { node1InstanceId }
+            });
+
+            await expect(
+                runOracleAdminScript(
+                    accountId,
+                    credentialsId,
+                    region,
+                    { databaseHostId: hostId, databaseInstanceId: 'not-on-this-host' },
+                    'topology-check',
+                    { ORACLE_SID: dbInstanceSid },
+                    'oracle admin script'
+                )
+            ).rejects.toThrow(`databaseInstanceId not-on-this-host not found on host ${hostId}`);
+        } finally {
+            await deleteResource(accountId, hostId);
+        }
     });
 });

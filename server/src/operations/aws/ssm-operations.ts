@@ -61,6 +61,23 @@ import { getLogsAnalyzerBedrockRegionsList } from './bedrock-operations';
 
 const logger = getLogger();
 
+const SSM_COMMAND_EXPORT_LINE = /^(\s*export\s+(\w+)=).*$/gim;
+const SSM_SECRET_ARG_NAME = /PASSWORD|SECRET|TOKEN|USERNAME/i;
+
+// Redaction only feeds a log line, so it must never be the reason an SSM call fails:
+// on any unexpected input it drops the command text instead of throwing or leaking.
+function redactSsmCommands(commands: Array<string>): Array<string> {
+    try {
+        return Array.from(commands ?? [], command =>
+            String(command).replace(SSM_COMMAND_EXPORT_LINE, (line, prefix, name) =>
+                SSM_SECRET_ARG_NAME.test(name) ? `${prefix}'*******'` : line
+            )
+        );
+    } catch {
+        return ['<commands omitted: redaction failed>'];
+    }
+}
+
 type callSsmExecutionParams = {
     credentialsId: string;
     region: string;
@@ -293,7 +310,7 @@ async function callSsmExecution({
         'Calling SSM command execution',
         credentialsId,
         region,
-        commands,
+        redactSsmCommands(commands),
         ec2InstanceId,
         comment,
         accountId,
@@ -896,5 +913,6 @@ export {
     getSSMParametersList,
     canReadFleetManagerResource,
     canQuerySSMInventory,
-    getFallbackPermissionReadiness
+    getFallbackPermissionReadiness,
+    redactSsmCommands
 };

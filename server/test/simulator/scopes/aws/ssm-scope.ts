@@ -738,6 +738,7 @@ const remediateMpioSessions = /#Remediate MPIO iSCSI sessions/;
 const getVCPUAndMaxDopDetails = /#Get vCPU and MAXDOP Details/;
 const crrAssessmentDataRegex = /#Get CRR details/;
 const pgsqlProtectionRegex = /pgsql protection script/;
+const oracleAdminScriptRegex = /#oracle admin script/;
 const fetchMssqlInstanceMtuDetailsRegex = /#Get MSSQL Instance MTU Details/;
 const fetchFsxMtuDetailsRegex = /#Get FSx MTU Details/;
 const optimizeMtuRegex = /#Optimize Network Interface MTU Settings/;
@@ -1051,6 +1052,10 @@ ssmMock
         return pgsqlProtectionRegex.test(params.Parameters.commands?.[0]);
     })
     .resolves(getSampleCommandResponse('pgsqlProtection'))
+    .on(SendCommandCommand, params => {
+        return oracleAdminScriptRegex.test(params.Parameters.commands?.[0]);
+    })
+    .resolves(getSampleCommandResponse('oracleAdminScript'))
     .on(SendCommandCommand, params => params.Comment === 'Discover PostgreSQL resources')
     .resolves(getSampleCommandResponse('discoverPgsqlResources'))
     .on(SendCommandCommand, params => {
@@ -1623,6 +1628,15 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'pgsqlProtection',
             '{ "records": [ { "uuid": "65ce42b0-093b-11f0-9005-d94de70408b8", "name": "wlmdb_pgsqldata_1742880617685", "snapshot_count": 1, "_links": { "self": { "href": "/api/storage/volumes/65ce42b0-093b-11f0-9005-d94de70408b8" } } } ], "num_records": 1, "_links": { "self": { "href": "/api/storage/volumes?fields=snapshot_count&name=wlmdb_pgsqldata_1742880617685" } } }'
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-oracleAdminScript'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'oracleAdminScript',
+            '{"status":"ok","svmName":"svm01","dataVolume":"oradata","logVolume":"oraredo"}'
         )
     )
     .on(GetCommandInvocationCommand, {

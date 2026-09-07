@@ -7,7 +7,8 @@ import {
     getEc2SqlParameters,
     getGenericFSxOntapRegionsList,
     pollCommandStatusForAllInstances,
-    pollSSMConnectionStatus
+    pollSSMConnectionStatus,
+    redactSsmCommands
 } from '../../../src/operations/aws/ssm-operations';
 import { SSM_PARAMS, DEFAULT_AWS_CREDENTIALS_TYPE, CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 import { SSMParameterObject } from '../../../src/utils/common-types';
@@ -229,5 +230,32 @@ describe('executeSsmDocument', () => {
     it('should poll ssm connection status', async () => {
         const connStatus = await pollSSMConnectionStatus(ACCOUNTID, CREDENTIALS_ID, DEFAULT_AWS_REGION, 'i-test-ec2');
         expect(connStatus.Status).toBe(ConnectionStatus.CONNECTED);
+    });
+
+    it('should redact secret export lines before a command body is logged', () => {
+        const [redacted] = redactSsmCommands([
+            [
+                'export ORACLE_SID=orcl',
+                'export PDB_ADMIN_PASSWORD="p@ssw0rd"',
+                'export FSX_PASSWORD="fsxSecret"',
+                'export FSX_USERNAME="fsxadmin"',
+                'echo done'
+            ].join('\n')
+        ]);
+
+        expect(redacted).not.toContain('p@ssw0rd');
+        expect(redacted).not.toContain('fsxSecret');
+        expect(redacted).not.toContain('fsxadmin');
+        expect(redacted).toContain('export ORACLE_SID=orcl');
+        expect(redacted).toContain('echo done');
+    });
+
+    it('should not fail or hang the caller on unexpected command input', () => {
+        expect(redactSsmCommands(undefined as unknown as Array<string>)).toEqual([]);
+        expect(redactSsmCommands([null as unknown as string])).toEqual(['null']);
+
+        const start = Date.now();
+        redactSsmCommands([`export ${'A'.repeat(50000)}`]);
+        expect(Date.now() - start).toBeLessThan(1000);
     });
 });

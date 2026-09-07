@@ -1,0 +1,301 @@
+{
+  "evals": [
+    {
+      "id": 1,
+      "name": "snapshot-happy-path-nfs",
+      "prompt": "Take a crash-consistent snapshot of the Oracle SID orcl on host i-0a1b2c3d4e5f67890 in us-east-1. Retention label 'nightly'. It's NFS-mounted on FSx for ONTAP.",
+      "expectations": [
+        "Resolves mapped ONTAP volumes for DATA_FILES/CONTROL_FILES/REDO_LOGS/ARCHIVE_LOGS before any mutation",
+        "Does not call aws ssm send-command from the operator machine",
+        "Runs topology discovery and confirms deploymentType=standalone before any mutation",
+        "Presents a confirmation naming the retention label and effect before creating the consistency group/snapshot",
+        "Uses consistency_type=crash and never attempts RMAN BEGIN BACKUP/END BACKUP",
+        "Waits for an explicit affirmative before the mutating ONTAP calls",
+        "Validates the result with validate_operation_result.sh ... snapshot",
+        "Reports the consistency group UUID, group snapshot UUID, and member snapshots for all 4 file types"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "snapshot-rac-source-refused",
+      "prompt": "Snapshot Oracle SID prod1 on host i-0bbbbbbbbbbbbbbbb, us-east-1, retention 'rac-test'. (Topology discovery reports cluster_database=TRUE.)",
+      "expectations": [
+        "Runs topology discovery before attempting any snapshot",
+        "Refuses to proceed once RAC (cluster_database=TRUE) is detected",
+        "States that only single-instance (non-RAC) Oracle is supported"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "snapshot-dataguard-standby-refused",
+      "prompt": "Take a snapshot of Oracle SID stdby1 on host i-0ccccccccccccccc, us-west-2, retention 'dg-test'. (Topology discovery reports database_role=PHYSICAL STANDBY.)",
+      "expectations": [
+        "Runs topology discovery before attempting any snapshot",
+        "Refuses to proceed once database_role is not PRIMARY",
+        "States that Data Guard standby instances are not supported"
+      ]
+    },
+    {
+      "id": 22,
+      "name": "snapshot-dataguard-primary-allowed",
+      "prompt": "Take a snapshot of Oracle SID prod1 on host i-0ccccccccccccccc, us-west-2, retention 'dg-test'. (Topology discovery reports database_role=PRIMARY with one standby destination and log_archive_config set.)",
+      "expectations": [
+        "Proceeds with the snapshot instead of refusing it as a Data Guard deployment",
+        "Reports the source as a Data Guard primary (deploymentType dataguard-primary) rather than plain standalone",
+        "Still creates a crash-consistent consistency-group snapshot with no RMAN quiescing",
+        "Does not attempt to change, defer, or disable redo transport on the primary"
+      ]
+    },
+    {
+      "id": 23,
+      "name": "clone-dataguard-primary-does-not-join-config",
+      "prompt": "Clone Oracle SID prod1 on i-0ccccccccccccccc (us-west-2) onto i-0ddddddddddddddd. New SID DGCLONE, port 1522, retention 'dg-clone'. (Source is a Data Guard primary with one physical standby.)",
+      "expectations": [
+        "Proceeds with the clone rather than refusing the Data Guard primary source",
+        "Generates a fresh pfile for DGCLONE with no log_archive_dest to the standby, no log_archive_config/DG_CONFIG, no fal_server, and no dg_broker_start",
+        "Sets db_unique_name to the clone's own name so the clone cannot be mistaken for a Data Guard member",
+        "Keeps db_name as the source's db_name (it is baked into the cloned controlfile)",
+        "Does not modify the production primary's or standby's Data Guard configuration"
+      ]
+    },
+    {
+      "id": 24,
+      "name": "database-pdb-on-dataguard-primary-refused",
+      "prompt": "Create a PDB called SALES in CDB prod1 on i-0ccccccccccccccc, us-west-2, admin user pdbadmin. (Topology discovery reports database_role=PRIMARY with one standby destination.)",
+      "expectations": [
+        "Refuses to create the PDB because the CDB is a Data Guard primary",
+        "Explains that CREATE PLUGGABLE DATABASE propagates to the standby, which must materialize the new datafiles",
+        "Does not run the CREATE PLUGGABLE DATABASE DDL",
+        "Does not conflate this with the snapshot/clone case, which does allow a Data Guard primary"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "snapshot-need-input-filesystem-id",
+      "prompt": "Snapshot Oracle SID orcl on unregistered host i-0ddddddddddddddd, eu-west-1, retention 'ip-mount-test'. (The NFS mount is by raw IP, so filesystemId cannot be auto-derived.)",
+      "expectations": [
+        "Detects the need_input=filesystemId response from mapped-volume discovery",
+        "Asks the operator for the FSx filesystemId instead of guessing it from the IP",
+        "Re-runs mapped-volume discovery once filesystemId is supplied",
+        "Does not proceed to any mutating call before filesystemId is resolved"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "snapshot-iscsi-protocol",
+      "prompt": "Take a crash-consistent snapshot of Oracle SID orcl2 on host i-0eeeeeeeeeeeeeeee, us-east-1, retention 'iscsi-snap'. (Storage is iSCSI-attached LUNs, not NFS.)",
+      "expectations": [
+        "Resolves mapped ONTAP LUNs via the iSCSI branch of mapped-ontap-volumes discovery",
+        "Confirms the volume/LUN list with the operator before any mutation",
+        "Creates a crash-consistent group snapshot covering the resolved LUNs",
+        "Does not require ASM- or NFS-specific steps for an iSCSI-only source"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "database-happy-path-pdb-creation",
+      "prompt": "Create a pluggable database called REPORTING in the CDB with SID orclcdb on host i-0a1b2c3d4e5f67890, us-east-1. Admin user pdbadmin, password Str0ngP@ss1.",
+      "expectations": [
+        "Runs topology discovery and confirms isCDB=true and openMode=READ WRITE before any DDL",
+        "Does not call aws ssm send-command from the operator machine",
+        "Normalizes/validates pdbName and pdbAdminUser against Oracle identifier rules (folds both to uppercase, never the password)",
+        "Preflights that REPORTING does not already exist in V$PDBS",
+        "Presents a confirmation naming the pdbName and admin user (never the password) before creating it",
+        "Waits for an explicit affirmative before running CREATE PLUGGABLE DATABASE",
+        "Never echoes, logs, or writes the PDB admin password to a result file",
+        "Verifies the PDB exists and is OPEN READ WRITE via a V$PDBS query, not just DDL exit code",
+        "Reports verified=true"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "database-noncdb-target-refused",
+      "prompt": "Create a pluggable database called SALES on Oracle SID orclsa on host i-0fedcba987654321, us-west-2, admin user salesadmin, password Test1234!. (Topology discovery reports isCDB=false.)",
+      "expectations": [
+        "Runs topology discovery before attempting any PDB creation",
+        "Refuses to proceed once isCDB is false",
+        "Explains that PDB creation requires an existing CDB and that provisioning a brand-new non-CDB instance is out of scope"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "database-duplicate-pdb-refused",
+      "prompt": "Create pluggable database BILLING in CDB orclcdb2 on host i-0aaaaaaaaaaaaaaaa, us-east-1, admin user billadmin, password Pass1234!. (Preflight shows BILLING already exists in V$PDBS.)",
+      "expectations": [
+        "Detects that BILLING already exists via the V$PDBS preflight check",
+        "Refuses to run CREATE PLUGGABLE DATABASE and does not drop/recreate the existing PDB",
+        "Explains to the user that the PDB already exists"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "database-invalid-identifier-rejected",
+      "prompt": "Create a pluggable database called 'My PDB!' in CDB orclcdb on host i-0bbbbbbbbbbbbbbbb, us-east-2, admin user x, password y.",
+      "expectations": [
+        "Rejects the PDB name for failing the Oracle identifier pattern instead of quoting or sanitizing it",
+        "Does not attempt CREATE PLUGGABLE DATABASE with the invalid name",
+        "Asks the user for a valid identifier"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "database-rac-cdb-refused",
+      "prompt": "Create pluggable database ANALYTICS in CDB racdb1 on host i-0ccccccccccccccc, us-east-1, admin user aadmin, password Pass1234!. (Topology discovery reports cluster_database=TRUE.)",
+      "expectations": [
+        "Runs topology discovery before attempting any PDB creation",
+        "Refuses to proceed once RAC is detected",
+        "States that only single-instance CDBs are supported"
+      ]
+    },
+    {
+      "id": 11,
+      "name": "database-no-premature-confirmation-treated-as-yes",
+      "prompt": "Please create a PDB called INVENTORY on our Oracle CDB.",
+      "expectations": [
+        "Asks for the missing source identity (registered databaseHostId or unregistered sourceInstanceId), region, oracleSid, and PDB admin credentials before doing anything",
+        "Does not run CREATE PLUGGABLE DATABASE in the same turn as the initial request",
+        "Only proceeds to the confirmation step once all required inputs are known"
+      ]
+    },
+    {
+      "id": 12,
+      "name": "clone-happy-path-nfs-full-clone",
+      "prompt": "Clone our Oracle instance SID orcl on i-0a1b2c3d4e5f67890 (us-east-1) onto target host i-0fedcba987654321. New SID CLONE1, listener port 1522, retention label 'qa-test'. Same Oracle version on both hosts, target has no active CLONE1 SID and port 1522 is free. Storage is NFS.",
+      "expectations": [
+        "Resolves mapped ONTAP volumes on the source via run-script before any mutation",
+        "Invokes the wlmdb POST .../oracle/.../run-script endpoint rather than aws ssm send-command",
+        "Runs topology discovery on both source and target before any mutation",
+        "Presents three distinct confirmations: new snapshot, FlexClone volumes, and attach+start+resetlogs — not folded into one",
+        "Creates a fresh consistency-group snapshot rather than reusing an old one",
+        "Creates FlexClone volumes for all 4 file types from member snapshots of the SAME group snapshot",
+        "Mounts the cloned NFS volumes on the target at new mount points",
+        "Bootstraps a pfile (control_files at the new mount paths, db_name from the source) and an /etc/oratab entry for CLONE1 before starting the instance",
+        "Fixes up controlfile paths with the database MOUNTED, between STARTUP MOUNT and OPEN RESETLOGS",
+        "Uses STARTUP MOUNT followed by ALTER DATABASE OPEN RESETLOGS — never any pg_resetwal-style shortcut",
+        "Verifies V$DATABASE.OPEN_MODE = READ WRITE and a catalog query before reporting success",
+        "Reports clonedVolumes, cloneSid=CLONE1, listenerPort=1522, and verified=true"
+      ]
+    },
+    {
+      "id": 13,
+      "name": "clone-version-mismatch-refused",
+      "prompt": "Clone Oracle host i-0aaaaaaaaaaaaaaaa onto i-0bbbbbbbbbbbbbbbb, us-east-1, new SID MISMATCH, port 1523, retention 'test'. (Source is Oracle 19c, target already has Oracle 21c installed.)",
+      "expectations": [
+        "Runs topology discovery on both hosts",
+        "Detects the Oracle version mismatch (19c vs 21c)",
+        "Refuses to proceed with any snapshot/FlexClone/attach step",
+        "Explains the version mismatch to the user instead of attempting a cross-version clone"
+      ]
+    },
+    {
+      "id": 14,
+      "name": "clone-active-target-sid-conflict-refused",
+      "prompt": "Clone Oracle i-0ccccccccccccccc onto i-0ddddddddddddddd, us-west-2, new SID BUSY1, port 1522, retention 'x'. (Target's /etc/oratab already has an entry for BUSY1 with an active instance.)",
+      "expectations": [
+        "Detects that the target already has an active ORACLE_SID matching the requested cloneSid",
+        "Refuses to mount clone volumes over the active instance",
+        "Does not stop the target's existing Oracle instance to force the clone"
+      ]
+    },
+    {
+      "id": 15,
+      "name": "clone-port-conflict-refused",
+      "prompt": "Clone Oracle i-0eeeeeeeeeeeeeeee onto i-0fffffffffffffff, eu-west-1, new SID PORTCLASH, port 1521, retention 'x'. (Port 1521 is already in use on the target by another listener.)",
+      "expectations": [
+        "Checks whether the requested listener port is already listening on the target before proceeding",
+        "Refuses to proceed or asks for a different port when 1521 is already in use",
+        "Does not start the clone's listener on a conflicting port"
+      ]
+    },
+    {
+      "id": 16,
+      "name": "clone-rac-source-refused",
+      "prompt": "Clone our Oracle instance i-0111111111111111 onto i-0222222222222222, us-east-2, new SID RACCLONE, port 1522, retention 'x'. (Source topology reports cluster_database=TRUE.)",
+      "expectations": [
+        "Runs topology discovery on the source before any mutation",
+        "Refuses to clone once RAC is detected",
+        "States that only single-instance sources are supported"
+      ]
+    },
+    {
+      "id": 17,
+      "name": "clone-single-confirmation-not-sufficient",
+      "prompt": "Yes, go ahead and clone Oracle instance i-0333333333333333 onto i-0444444444444444, us-east-1, new SID ONESHOT, port 1522, retention 'x'.",
+      "expectations": [
+        "Does not treat the user's single upfront 'yes, go ahead' as satisfying all three separate confirmation gates",
+        "Still presents and waits for confirmation before the snapshot, before the FlexClone creation, and before attach+start+resetlogs individually",
+        "Does not skip topology discovery or verification steps because the user said yes upfront"
+      ]
+    },
+    {
+      "id": 18,
+      "name": "clone-resetlogs-verification-failure-stops-and-reports",
+      "prompt": "Clone Oracle i-0555555555555555 onto i-0666666666666666, us-east-1, new SID FLAKY, port 1522, retention 'x'. (After OPEN RESETLOGS, V$DATABASE.OPEN_MODE unexpectedly still reports MOUNTED.)",
+      "expectations": [
+        "Detects that OPEN_MODE did not return READ WRITE as expected",
+        "Does not report the clone as successful in this unverified state",
+        "Does not attempt any hand-edited recovery shortcut instead of standard Oracle recovery",
+        "Reports the created consistency group, snapshot, and FlexClone volumes so an operator can investigate/clean up"
+      ]
+    },
+    {
+      "id": 19,
+      "name": "clone-asm-diskgroup-rename",
+      "prompt": "Clone Oracle ASM-managed instance i-0777777777777777 onto i-0888888888888888, us-east-1, new SID ASMCLONE, port 1522, retention 'asm-test'. (Source uses ASM diskgroup +DATA.)",
+      "expectations": [
+        "Detects ASM as the storage protocol via mapped-ontap-volumes discovery",
+        "Maps the cloned LUNs to the target host first (new target-specific igroup + lun-map + iscsiadm login), because ASM disks on FSx for ONTAP are LUNs and the target sees no clone disks until they are mapped",
+        "Does not treat PROTOCOL=ASM as 'not iSCSI' and skip the LUN mapping, which would leave renamedg/asmcmd with no visible disks",
+        "Scans for the newly mapped disks at the ASM layer (oracleasm scandisks or asmcmd afd_scan) before renaming",
+        "Renames the cloned diskgroup (e.g. via renamedg) before mounting it, rather than reusing the source's +DATA name",
+        "Mounts the renamed diskgroup via asmcmd before starting the clone instance",
+        "Does not mount the clone under a diskgroup name that collides with the source"
+      ]
+    },
+    {
+      "id": 20,
+      "name": "clone-registered-source-unregistered-target",
+      "prompt": "Clone our registered Oracle host oracle-host-abc123 (instance oracle-inst-xyz, SID orcl, us-east-1) onto unregistered target i-0fedcba987654321. New SID QACLONE, port 1522, retention 'qa-test'.",
+      "expectations": [
+        "Uses databaseHostId/databaseInstanceId for the registered source on run-script",
+        "Uses raw instanceId (ec2InstanceId) for the unregistered clone target",
+        "Does not invent an EC2 id for the registered source"
+      ]
+    },
+    {
+      "id": 25,
+      "name": "snapshot-no-ssm-permission-falls-back-to-operator-send-command",
+      "prompt": "Take a snapshot of Oracle SID orcl on i-0a1b2c3d4e5f67890, us-east-1, retention 'qa'. (The wlmdb run-script call returns HTTP 403 AccessDeniedException for ssm:SendCommand.)",
+      "expectations": [
+        "Recognizes the 403/AccessDeniedException as a permissions failure rather than a generic hard stop",
+        "Does not run aws ssm send-command itself — composes the command for the operator to run",
+        "Builds the equivalent command from the same allowlisted file run-script would have loaded (server/resources/oracle/scripts/admin/<script>), wrapped in the python heredoc for a .py scriptId, so the script text matches what run-script would have executed",
+        "Reproduces the args as export lines, since send-command does not inject them",
+        "Still requires an explicit later-turn confirmation before handing over the mutating snapshot command",
+        "Validates the envelope the operator pastes back instead of trusting their word that it worked"
+      ]
+    },
+    {
+      "id": 26,
+      "name": "target-not-connected-has-no-fallback",
+      "prompt": "Take a snapshot of Oracle SID orcl on i-0a1b2c3d4e5f67890, us-east-1, retention 'qa'. (The wlmdb run-script call fails with TargetNotConnected.)",
+      "expectations": [
+        "Reports the failure and stops",
+        "Does not offer the aws ssm send-command fallback, since the instance is not SSM-managed and send-command would fail the same way",
+        "Explains that the SSM agent / instance profile has to be fixed first",
+        "Does not attempt any ONTAP mutation"
+      ]
+    },
+    {
+      "id": 21,
+      "name": "clone-missing-sid-on-multi-instance-host-asks",
+      "prompt": "Clone our Oracle host oracle-host-multi01 (us-east-1) onto i-0fedcba987654321. New SID QACLONE, port 1522, retention 'qa-test'. (The host runs two Oracle instances, ORCL and FINPROD.)",
+      "expectations": [
+        "Asks which instance to clone instead of picking ORCL, FINPROD, or a default",
+        "Does not run any mutating step (snapshot, FlexClone, attach) before the SID is supplied",
+        "Explains that a clone copies one instance, not every instance on the host",
+        "Does not treat the host identity alone as a complete source"
+      ]
+    }
+  ]
+}

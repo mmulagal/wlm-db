@@ -8,6 +8,7 @@ import {
     HttpErrorCodes,
     OFFLINE,
     ONLINE,
+    ORACLE_ADMIN_SSM_EXECUTION_TIMEOUT,
     ORACLE_DATABASE_INSTANCE_INDEX_MAPPING,
     ORACLE_INSTANCE_STATE,
     ServerState,
@@ -50,6 +51,7 @@ import {
     ORACLE_PERFORMANCE_METRICS
 } from './oracle-ssm-script-utils';
 import { getDatabaseInstanceTopology, parseMappedVolumeData } from '../../../utils/sql-utils';
+import { loadOracleAdminScript } from './oracle-admin-scripts';
 import { isFsxnAwsBackupEnabled } from '../../aws/fsx-operations';
 import {
     fetchOracleDatabasesCount,
@@ -1569,6 +1571,146 @@ async function getDataguardDetailsForAllInstances(
     }
 }
 
+const ORACLE_ADMIN_SCRIPT_MARKER = '#oracle admin script';
+const SHELL_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+type OracleScriptTarget = {
+    ec2InstanceId?: string;
+    databaseHostId?: string;
+    databaseInstanceId?: string;
+};
+
+function shellSingleQuote(value: string): string {
+    const quote = String.fromCharCode(39);
+    const escaped = `${quote}\\${quote}${quote}`;
+    return `${quote}${value.split(quote).join(escaped)}${quote}`;
+}
+
+function buildOracleAdminScript(scriptBody: string, args?: Record<string, string>): string {
+    const exports: string[] = [];
+    for (const [key, value] of Object.entries(args ?? {})) {
+        if (!SHELL_IDENTIFIER.test(key)) {
+            throw createError(HttpErrorCodes.BAD_REQUEST, `Invalid script arg name: ${key}`);
+        }
+        exports.push(`export ${key}=${shellSingleQuote(value)}`);
+    }
+    const prelude = exports.length > 0 ? `${exports.join('\n')}\n` : '';
+    return `${ORACLE_ADMIN_SCRIPT_MARKER}\n${prelude}${scriptBody}`;
+}
+
+async function resolveOracleScriptTarget(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    { ec2InstanceId, databaseHostId, databaseInstanceId }: OracleScriptTarget,
+    oracleSid?: string
+): Promise<string> {
+    if (databaseInstanceId && isEmpty(databaseHostId)) {
+        const errorMessage = 'databaseInstanceId requires databaseHostId for a registered Oracle host';
+        logger.error(errorMessage, { accountId, databaseInstanceId });
+        throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
+    }
+    if (databaseHostId) {
+        const resources = await listResources({
+            accountId,
+            resourceId: databaseHostId,
+            credentialIds: credentialsId,
+            region,
+            resourceType: DatabaseTypes.ORACLE,
+            includeDatabaseInstances: Boolean(databaseInstanceId),
+            selectKeys: ['metadata', 'resource_id', 'resource_type']
+        });
+        if (isEmpty(resources)) {
+            const errorMessage = `Oracle host ${databaseHostId} not found`;
+            logger.error(errorMessage, { accountId, credentialsId, region, databaseHostId });
+            throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+        }
+        const resource = resources[0] as ResourceDetails;
+        if (databaseInstanceId) {
+            const match = resource.database_instances?.find(
+                instance => instance.database_instance_id === databaseInstanceId
+            );
+            if (!match) {
+                const errorMessage = `databaseInstanceId ${databaseInstanceId} not found on host ${databaseHostId}`;
+                logger.error(errorMessage, { accountId, databaseHostId, databaseInstanceId });
+                throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+            }
+            const instanceSid = match.database_instance_name;
+            if (oracleSid && instanceSid && instanceSid.toUpperCase() !== oracleSid.toUpperCase()) {
+                const errorMessage = `ORACLE_SID ${oracleSid} does not match databaseInstanceId ${databaseInstanceId} (instance ${instanceSid}) on host ${databaseHostId}`;
+                logger.error(errorMessage, { accountId, databaseHostId, databaseInstanceId, oracleSid, instanceSid });
+                throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
+            }
+        }
+        const { node1InstanceId, node2InstanceId } = (resource.metadata || {}) as Metadata;
+        const resolvedInstanceId = ec2InstanceId || node1InstanceId || node2InstanceId;
+        if (!resolvedInstanceId) {
+            const errorMessage = `No EC2 node registered on Oracle host ${databaseHostId}`;
+            logger.error(errorMessage, { accountId, databaseHostId });
+            throw createError(HttpErrorCodes.FAILED_DEPENDENCY, errorMessage);
+        }
+        if (ec2InstanceId && ec2InstanceId !== node1InstanceId && ec2InstanceId !== node2InstanceId) {
+            const errorMessage = 'ec2InstanceId does not belong to the given databaseHostId';
+            logger.error(errorMessage, { accountId, databaseHostId, ec2InstanceId, node1InstanceId, node2InstanceId });
+            throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
+        }
+        return resolvedInstanceId;
+    }
+    if (ec2InstanceId) {
+        return ec2InstanceId;
+    }
+    const errorMessage = 'Provide ec2InstanceId for an unregistered host or databaseHostId for a registered host';
+    logger.error(errorMessage, { accountId });
+    throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
+}
+
+async function runOracleAdminScript(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    target: OracleScriptTarget,
+    scriptId: string,
+    args?: Record<string, string>,
+    comment?: string
+) {
+    const { body: scriptBody, mutating } = loadOracleAdminScript(accountId, scriptId, args);
+    const { databaseHostId, databaseInstanceId } = target;
+    const ec2InstanceId = await resolveOracleScriptTarget(accountId, credentialsId, region, target, args?.ORACLE_SID);
+    logger.info('Running oracle admin script', {
+        accountId,
+        credentialsId,
+        region,
+        ec2InstanceId,
+        databaseHostId,
+        databaseInstanceId,
+        scriptId,
+        mutating,
+        comment,
+        argKeys: Object.keys(args ?? {})
+    });
+    const identityArgs = {
+        REGION: region,
+        ...(databaseHostId && { DATABASE_HOST_ID: databaseHostId }),
+        ...(databaseInstanceId && { DATABASE_INSTANCE_ID: databaseInstanceId })
+    };
+    const fullScript = buildOracleAdminScript(scriptBody, { ...identityArgs, ...args });
+    const output = await callSsmExecution({
+        credentialsId,
+        region,
+        commands: [fullScript],
+        ec2InstanceId,
+        comment: comment || 'oracle admin script',
+        accountId,
+        // Without this the ssm.execution-timeout default (45s) applies, which is shorter than
+        // the ONTAP job waits inside the snapshot/clone scripts — SSM would kill the command
+        // while the ONTAP job runs on, creating a snapshot or clone reported as failed.
+        executionTimeout: ORACLE_ADMIN_SSM_EXECUTION_TIMEOUT,
+        documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+        documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+    });
+    return { output: output ?? '' };
+}
+
 export {
     getOracleInstanceDetails,
     getOracleDatabaseInstancesSummary,
@@ -1577,5 +1719,6 @@ export {
     getOracleProtectionStatus,
     getOracleDatabaseMappedVolumes,
     getOracleDatabaseHostInstanceSummary,
-    getDataguardDetailsForAllInstances
+    getDataguardDetailsForAllInstances,
+    runOracleAdminScript
 };

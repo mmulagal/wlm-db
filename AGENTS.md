@@ -132,3 +132,20 @@ See `.github/instructions/*`. The instruction files contain their own `applyTo` 
 -   `src/utils/tools.ts` — Bedrock tool definitions
 -   `src/utils/logging.ts` — Logger setup
 -   `test/` — Unit tests and sample log fixtures
+
+## Learned User Preferences
+
+-   Invoke the `oracle-admin` skill through the wlmdb REST API (`POST .../oracle/.../run-script`), not raw AWS SSM from the operator machine.
+-   Support both registered hosts (`databaseHostId` / optional `databaseInstanceId`) and unregistered hosts (raw `ec2InstanceId`).
+-   Confirm the mapped ONTAP volume list with the user before sending a mutating run-script command.
+-   When mapped-volume discovery cannot derive an FSx id or ONTAP credentials (IP NFS mount, or missing `/netapp/wlmdb/<filesystemId>` on the host), ask the operator in advance—after volume confirmation and before the mutating run-script POST. Never guess or print those credentials.
+-   Oracle snapshots and clones are crash-consistent only (ONTAP consistency-group snapshots); RMAN `BEGIN BACKUP`/application-consistent quiescing is out of scope.
+
+## Learned Workspace Facts
+
+-   The `oracle-admin` skill supports NFS, iSCSI, and ASM-managed storage, and both CDB and non-CDB topologies. It refuses RAC and any Data Guard **standby** (`databaseRole != PRIMARY`), but a Data Guard **primary** is a supported snapshot/clone source — `topology_check.sh` reports it as `deploymentType: "dataguard-primary"` with `status: "ok"`. PDB creation still requires `deploymentType: "standalone"`, so it refuses a Data Guard primary (`CREATE PLUGGABLE DATABASE` propagates to the standby). `deploymentType: "unknown"` means the Data Guard probe was inconclusive — ask the operator, never treat it as standalone.
+-   "Create database" means creating a Pluggable Database from `PDB$SEED` inside an already-running CDB — there is no PDB-equivalent primitive for a non-CDB instance, and full DBCA-based instance provisioning is out of scope.
+-   The crash-consistent group for snapshot/clone covers `DATA_FILES`, `CONTROL_FILES`, `REDO_LOGS`, and `ARCHIVE_LOGS`; `TEMP_FILES` and `FRA` are excluded by default (tempfiles carry no recoverable state; FRA exclusion drops flashback-log continuity — see `ontap-consistency-groups.md` for the upgrade path).
+-   Oracle clone recovery has no `pg_resetwal` equivalent: it is always `STARTUP MOUNT` → `ALTER DATABASE OPEN RESETLOGS`, followed by a mandatory `V$DATABASE.OPEN_MODE`/catalog verification. It runs in two phases (`clone_start_resetlogs.sh PHASE=mount`, then `PHASE=open`) so the RMAN controlfile fix-up can run in between — RMAN needs the database mounted to catalog or switch anything. `clone_bootstrap_pfile.sh` must run first: a brand-new `cloneSid` has no pfile/spfile and no oratab entry, so `STARTUP MOUNT` otherwise fails at `ORA-01078`/`LRM-00109`. That generated pfile is also what keeps a Data Guard primary's clone out of the production Data Guard configuration.
+-   ONTAP credentials and ONTAP API calls stay on the target EC2 host inside the SSM script.
+-   Mutating skill operations are gated by `--apply` plus `CONFIRM=true`.

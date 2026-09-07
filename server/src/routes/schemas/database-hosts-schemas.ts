@@ -17,7 +17,9 @@ import {
     PgSqlDbHostSummaryListResponse,
     PgSqlDbHostsSummaryResponse,
     OracleDbHostsSummaryResponse,
-    OracleDbHostSummaryListResponse
+    OracleDbHostSummaryListResponse,
+    RunOracleScriptBody,
+    RunOracleScriptResponse
 } from '../types/database-hosts.types';
 import { CredentialsIdParams, JobIdResponse } from '../types/generic.types';
 
@@ -233,6 +235,18 @@ const OracleDatabaseHostInstanceDetailsSchema = {
         'Fetch Oracle database server resource (memory, cpu, disk) consumption, metadata about installation (server details, network), storage savings, usage cost and databases in the server.'
 };
 
+const RunOracleScriptSchema = {
+    ...resourceRequest,
+    hide: true,
+    summary: 'Run an Oracle admin script on an EC2 host',
+    description:
+        'Load an allowlisted admin script by scriptId, prepend validated args as environment variables, and execute it via SSM on the given EC2 instance.',
+    body: RunOracleScriptBody,
+    response: {
+        200: RunOracleScriptResponse
+    }
+};
+
 const DatabasesListSchemaV2 = {
     tags: [RouteTags.RESOURCE],
     summary: 'Fetch details about databases in a server',
@@ -259,5 +273,6 @@ export {
     PgSqlDbHostDetailsSchema,
     oracleDbHostDetailsSchema,
     OracleDbHostsSummarySchema,
+    RunOracleScriptSchema,
     resourceRequest
 };

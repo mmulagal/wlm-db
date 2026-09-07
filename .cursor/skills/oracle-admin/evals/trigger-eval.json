@@ -1,0 +1,118 @@
+[
+  {
+    "query": "take a crash-consistent snapshot of our Oracle instance for FSx",
+    "should_trigger": true
+  },
+  {
+    "query": "create a pluggable database called reporting in our Oracle CDB",
+    "should_trigger": true
+  },
+  {
+    "query": "clone our Oracle instance to a new host for testing",
+    "should_trigger": true
+  },
+  {
+    "query": "run TCO / explore savings for our Oracle FSx setup",
+    "should_trigger": false
+  },
+  {
+    "query": "analyze oracle alert logs and recommend remediation",
+    "should_trigger": false
+  },
+  {
+    "query": "create a new PDB called sales on instance i-0a1b2c3d4e5f67890",
+    "should_trigger": true
+  },
+  {
+    "query": "snapshot the oracle datafiles and redo logs before we do maintenance",
+    "should_trigger": true
+  },
+  {
+    "query": "spin up a full disposable copy of our Oracle database on a new EC2 host",
+    "should_trigger": true
+  },
+  {
+    "query": "flexclone the oracle data and redo volumes and get a running instance on the target box",
+    "should_trigger": true
+  },
+  {
+    "query": "make a test copy of our production Oracle database for the QA team, needs to actually be running",
+    "should_trigger": true
+  },
+  {
+    "query": "clone oracle",
+    "should_trigger": true
+  },
+  {
+    "query": "create pluggable database",
+    "should_trigger": true
+  },
+  {
+    "query": "snapshot oracle",
+    "should_trigger": true
+  },
+  {
+    "query": "clone our Oracle RAC database for dev testing",
+    "should_trigger": false
+  },
+  {
+    "query": "clone our Oracle Data Guard standby for a sandbox",
+    "should_trigger": false
+  },
+  {
+    "query": "clone our Oracle Data Guard primary onto a test host",
+    "should_trigger": true
+  },
+  {
+    "query": "snapshot the oracle data guard primary before a release",
+    "should_trigger": true
+  },
+  {
+    "query": "run RMAN BEGIN BACKUP and take an application-consistent backup of our oracle database",
+    "should_trigger": false
+  },
+  {
+    "query": "provision a brand new non-CDB Oracle database from scratch with DBCA",
+    "should_trigger": false
+  },
+  {
+    "query": "delete the old oracle clone we made last week",
+    "should_trigger": false
+  },
+  {
+    "query": "create a new database on our MSSQL AOAG cluster",
+    "should_trigger": false
+  },
+  {
+    "query": "create a database on our PostgreSQL standalone host",
+    "should_trigger": false
+  },
+  {
+    "query": "what does Workload Factory say about drift on this Oracle database?",
+    "should_trigger": false
+  },
+  {
+    "query": "analyze oracle logs with the AI log analyzer",
+    "should_trigger": false
+  },
+  {
+    "query": "give me a TCO comparison for migrating our oracle workloads to FSx ONTAP",
+    "should_trigger": false
+  },
+  {
+    "query": "create a pluggable database SALES admin user sales_admin identified by a password on CDB orclcdb",
+    "should_trigger": true
+  },
+  {
+    "query": "clone our standalone oracle instance i-0a1b2c3d4e5f67890 onto host i-0fedcba987654321, new SID CLONE1, port 1522",
+    "should_trigger": true
+  },
+  {
+    "query": "just take a storage-level snapshot of the oracle ASM diskgroups, don't need a running clone",
+    "should_trigger": true
+  },
+  {
+    "query": "create a table called orders in an existing oracle pluggable database",
+    "should_trigger": false
+  }
+]
