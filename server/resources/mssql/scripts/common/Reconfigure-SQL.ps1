@@ -106,7 +106,7 @@ try {
     Write-Host "SQL Installer path $SQLMediaPath."
 
     try{
-        $CurrentCollation = sqlcmd -S $ServerInstanceName -Q "set nocount on; select serverproperty('collation') as collation" -h -1
+        $CurrentCollation = sqlcmd -S $ServerInstanceName -C -Q "set nocount on; select serverproperty('collation') as collation" -h -1 -W
         $CurrentCollation = $CurrentCollation.TrimStart().TrimEnd()
     }catch {
         Write-Output "Error while determining collation set. $_"
@@ -198,10 +198,10 @@ try {
         # Check if NTAUTHORITY\SYSTEM user is available in SQL logins
         $NtAuthorityUser = 'NT AUTHORITY\SYSTEM'
         $NtAuthorityUserQuery = "set nocount on; select name from sys.server_principals where name = 'NT AUTHORITY\SYSTEM'"
-        $NtAuthorityUserQueryResponse = sqlcmd -S $ServerInstanceName -Q $NtAuthorityUserQuery -h -1
+        $NtAuthorityUserQueryResponse = sqlcmd -S $ServerInstanceName -C -Q $NtAuthorityUserQuery -h -1 -W
         if (([string]::IsNullOrEmpty($NtAuthorityUserQueryResponse))) {
             Write-Output "Creating NT AUTHORITY\SYSTEM login"
-            sqlcmd -S $ServerInstanceName -Q "CREATE LOGIN [$NtAuthorityUser] FROM WINDOWS ;" 
+            sqlcmd -S $ServerInstanceName -C -Q "CREATE LOGIN [$NtAuthorityUser] FROM WINDOWS ;" 
         }
     
 

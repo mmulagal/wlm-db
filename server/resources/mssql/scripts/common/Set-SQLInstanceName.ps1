@@ -86,7 +86,7 @@ END"
         #     Invoke-Sqlcmd -Query $query -TrustServerCertificate
         # }
 
-        sqlcmd -S $Using:ServerInstanceName -Q $query 
+        sqlcmd -S $Using:ServerInstanceName -C -Q $query 
 
     }
     Invoke-Command -Authentication Credssp -Scriptblock $renameinstance -ComputerName $NetBIOSName -Credential $DomainAdminCreds
