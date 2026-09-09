@@ -457,10 +457,10 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
                     if ($sqlCredential.useDomainAuth -eq $True) {
                         $dbAgResponse = Invoke-CommandWithCredSSP -sqlquery $databaseAgQuery -instanceName $instanceName
                     } elseif ($sqlCredential.useSqlAuth -eq $True) {
-                        $dbAgResponse = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $instanceName -Q $databaseAgQuery -y 0 2>> $null
+                        $dbAgResponse = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $instanceName -C -Q $databaseAgQuery -y 0 2>> $null
                     }
                     if ($($LASTEXITCODE -and $LASTEXITCODE -ne 0) -Or $($sqlCredential.useSqlAuth -eq $False -And $sqlCredential.useDomainAuth -eq $False)) {
-                        $dbAgResponse = sqlcmd -S $instanceName -Q $databaseAgQuery -y 0 2>> $null
+                        $dbAgResponse = sqlcmd -S $instanceName -C -Q $databaseAgQuery -y 0 2>> $null
                     }
                     if (-not [string]::IsNullOrEmpty($dbAgResponse) -and $dbAgResponse -ne "NULL") {
                         $dbAgParsed = $dbAgResponse | ConvertFrom-Json
@@ -478,11 +478,11 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
                 if ($sqlCredential.useDomainAuth -eq $True) {
                     $sqlResponse = Invoke-CommandWithCredSSP -sqlquery $query -instanceName $instanceName
                 } elseif ($sqlCredential.useSqlAuth -eq $True) {
-                    $sqlResponse = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $instanceName -Q $query -y 0 2>> $sqlError
+                    $sqlResponse = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $instanceName -C -Q $query -y 0 2>> $sqlError
                 }
 
                 if ($($LASTEXITCODE -and $LASTEXITCODE -ne 0) -Or $($sqlCredential.useSqlAuth -eq $False -And $sqlCredential.useDomainAuth -eq $False)) {
-                    $sqlResponse =  sqlcmd -S $instanceName -Q $query -y 0 2>> $sqlError
+                    $sqlResponse =  sqlcmd -S $instanceName -C -Q $query -y 0 2>> $sqlError
                 }
 
                 if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
@@ -599,11 +599,11 @@ const RESOURCE_UTILIZATION = (instances: string[], sqlAuthEnabled = false) => `
                     if ($sqlCredential.useDomainAuth -eq $True) {
                         $sqlResponse = Invoke-CommandWithCredSSP -sqlquery $query -instanceName $instanceName -IsMultiQuery $True
                     } elseif ($sqlCredential.useSqlAuth -eq $True) {
-                        $sqlResponse = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $instanceName -Q $query -y 0 2>> $sqlError
+                        $sqlResponse = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $instanceName -C -Q $query -y 0 2>> $sqlError
                     }
 
                     if ($($LASTEXITCODE -and $LASTEXITCODE -ne 0) -Or $($sqlCredential.useSqlAuth -eq $False -And $sqlCredential.useDomainAuth -eq $False)) {
-                        $sqlResponse =  sqlcmd -S $instanceName -Q $query -y 0 2>> $sqlError
+                        $sqlResponse =  sqlcmd -S $instanceName -C -Q $query -y 0 2>> $sqlError
                     }
 
                     if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
@@ -785,7 +785,7 @@ const validateSQLInstanceConnectivity = (
                     ${
                         windowsUser
                             ? '$sqlresult = Invoke-CommandWithCredSSP -sqlquery $sqlquery -instanceName $serverInstanceName -extraArguments -r1'
-                            : '$sqlresult = Sqlcmd -S $serverInstanceName -U $sqlCredential.username -P $sqlCredential.password -Q $sqlquery -y 0 -r1 2> $null'
+                            : '$sqlresult = Sqlcmd -S $serverInstanceName -U $sqlCredential.username -P $sqlCredential.password -C -Q $sqlquery -y 0 -r1 2> $null'
                     }
 
                     if([string]::IsNullOrEmpty($sqlresult)) {
@@ -843,7 +843,7 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
                                 ${
                                     windowsUser
                                         ? '$dbAgResponse = Invoke-CommandWithCredSSP -sqlquery $databaseAgQuery -instanceName $serverInstanceName'
-                                        : '$dbAgResponse = Sqlcmd -S $serverInstanceName -U $sqlCredential.username -P $sqlCredential.password -Q $databaseAgQuery -y 0 2> $null'
+                                        : '$dbAgResponse = Sqlcmd -S $serverInstanceName -U $sqlCredential.username -P $sqlCredential.password -C -Q $databaseAgQuery -y 0 2> $null'
                                 }
                                 
                                 if (-not [string]::IsNullOrEmpty($dbAgResponse) -and $dbAgResponse -ne "NULL") {
@@ -862,7 +862,7 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
                                     ${
                                         windowsUser
                                             ? '$aoagResponse = Invoke-CommandWithCredSSP -sqlquery $aoagQuery -instanceName $serverInstanceName'
-                                            : '$aoagResponse = Sqlcmd -S $serverInstanceName -U $sqlCredential.username -P $sqlCredential.password -Q $aoagQuery -y 0 2> $null'
+                                            : '$aoagResponse = Sqlcmd -S $serverInstanceName -U $sqlCredential.username -P $sqlCredential.password -C -Q $aoagQuery -y 0 2> $null'
                                     }
                                     
                                     if (-not [string]::IsNullOrEmpty($aoagResponse) -and $aoagResponse -ne "NULL") {
@@ -1177,7 +1177,7 @@ const getMappedVolumesHostDataScript = (
 
             $scriptblock = {
                 param ($sqlquery, $extraArguments)
-                Sqlcmd -S $using:serverInstanceName -Q $sqlquery -y 0 $extraArguments 2> $null
+                Sqlcmd -S $using:serverInstanceName -C -Q $sqlquery -y 0 $extraArguments 2> $null
             }
 
             $output = Invoke-Command -ScriptBlock $scriptblock -ArgumentList $sqlquery, $extraArguments \`
@@ -1412,9 +1412,9 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER);
                 if ($sqlCredential.useDomainAuth -eq $true) {
                     $combinedResponse = Invoke-CommandWithCredSSP -sqlquery $combinedSqlQuery -instanceName $executableInstance -extraArguments -r1
                 } elseif ($sqlCredential.useSqlAuth -eq $true) {
-                    $combinedResponse = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $executableInstance -Q $combinedSqlQuery -y 0 -r1 2>&1
+                    $combinedResponse = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $executableInstance -C -Q $combinedSqlQuery -y 0 -r1 2>&1
                 } else {
-                    $combinedResponse = sqlcmd -S $executableInstance -Q $combinedSqlQuery -y 0 -r1 2>&1
+                    $combinedResponse = sqlcmd -S $executableInstance -C -Q $combinedSqlQuery -y 0 -r1 2>&1
                 }
 
                 if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
@@ -1675,16 +1675,16 @@ Function Call-SqlCmd {
     } elseif ($sqlCredential.useSqlAuth -eq $True) {
         if ([string]::IsNullOrEmpty($ExtraArguments)) {
             if ($SuppressStderr) {
-                $sqlresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "$InstanceName" -Q "$Query" -y 0 2> $null;
+                $sqlresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "$InstanceName" -C -Q "$Query" -y 0 2> $null;
             } else {
-                $sqlresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "$InstanceName" -Q "$Query" -y 0;
+                $sqlresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "$InstanceName" -C -Q "$Query" -y 0;
             }
         }
         else {
             if ($SuppressStderr) {
-                $sqlresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "$InstanceName" -Q "$Query" -y 0 $ExtraArguments 2> $null;
+                $sqlresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "$InstanceName" -C -Q "$Query" -y 0 $ExtraArguments 2> $null;
             } else {
-                $sqlresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "$InstanceName" -Q "$Query" -y 0 $ExtraArguments;
+                $sqlresponse =  sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S "$InstanceName" -C -Q "$Query" -y 0 $ExtraArguments;
             }
         }
     }
@@ -1699,16 +1699,16 @@ Function Call-SqlCmd {
     if (($sqlCredential.useSqlAuth -eq $True -And $LASTEXITCODE -And $LASTEXITCODE -ne 0) -Or ($sqlCredential.useDomainAuth -eq $True -And [string]::IsNullOrEmpty($sqlresponse)) -Or ($sqlCredential.useSqlAuth -eq $False -And $sqlCredential.useDomainAuth -eq $False)) {
         if ([string]::IsNullOrEmpty($ExtraArguments)) {
             if ($SuppressStderr) {
-                $sqlresponse =  sqlcmd  -S "$InstanceName" -Q "$Query" -y 0 2> $null;
+                $sqlresponse =  sqlcmd  -S "$InstanceName" -C -Q "$Query" -y 0 2> $null;
             } else {
-                $sqlresponse =  sqlcmd  -S "$InstanceName" -Q "$Query" -y 0;
+                $sqlresponse =  sqlcmd  -S "$InstanceName" -C -Q "$Query" -y 0;
             }
         }
         else {
             if ($SuppressStderr) {
-                $sqlresponse =  sqlcmd  -S "$InstanceName" -Q "$Query" -y 0 $ExtraArguments 2> $null;
+                $sqlresponse =  sqlcmd  -S "$InstanceName" -C -Q "$Query" -y 0 $ExtraArguments 2> $null;
             } else {
-                $sqlresponse =  sqlcmd  -S "$InstanceName" -Q "$Query" -y 0 $ExtraArguments;
+                $sqlresponse =  sqlcmd  -S "$InstanceName" -C -Q "$Query" -y 0 $ExtraArguments;
             }
         }
     }
@@ -1832,11 +1832,11 @@ const sqlQueryExecutionWithAuth = (instances: string[], query: string, sqlAuthEn
                 if ($sqlCredential.useDomainAuth -eq $True) {
                     $sqlResponse = Invoke-CommandWithCredSSP -sqlquery $query -instanceName $instanceName
                 } elseif ($sqlCredential.useSqlAuth -eq $True) {
-                    $sqlResponse = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $instanceName -Q $query -y 0 2>> $sqlError
+                    $sqlResponse = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $instanceName -C -Q $query -y 0 2>> $sqlError
                 }
 
                 if ($($LASTEXITCODE -and $LASTEXITCODE -ne 0) -Or $($sqlCredential.useSqlAuth -eq $False -And $sqlCredential.useDomainAuth -eq $False)) {
-                    $sqlResponse =  sqlcmd -S $instanceName -Q $query -y 0 2>> $sqlError
+                    $sqlResponse =  sqlcmd -S $instanceName -C -Q $query -y 0 2>> $sqlError
                 }
 
                 if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
@@ -2004,7 +2004,7 @@ FOR JSON PATH;
         ${invokeCommandWithCredSSP}
         foreach ($instanceName in $instancesList) {
             $metrics = @()
-            $sqlCmdParams = @()
+            $sqlCmdParams = @("-C")
             $sqlAuth = $false
             $windowsAuth = $false
 

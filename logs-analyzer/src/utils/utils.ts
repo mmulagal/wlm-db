@@ -135,7 +135,7 @@ const invokeCommandWithCredSSP = `
 
         $scriptblock = {
             param ($sqlquery, $extraArguments)
-            Sqlcmd -S $using:serverInstanceName -Q $sqlquery -y 0 $extraArguments 2> $null
+            Sqlcmd -S $using:serverInstanceName -C -Q $sqlquery -y 0 $extraArguments 2> $null
         }
 
         $job = Invoke-Command -ScriptBlock $scriptblock -ArgumentList $sqlquery, $extraArguments -Credential $Credential -ComputerName $env:computername -Authentication credssp -AsJob
@@ -191,11 +191,11 @@ const sqlQueryExecutionWithAuth = (sql: string[], databaseInstanceName: string, 
                         if ($sqlCredential.useDomainAuth -eq $True){
                             $sqlResponse = Invoke-CommandWithCredSSP -sqlquery $query
                         } elseif ($sqlCredential.useSqlAuth -eq $True) {
-                            $sqlResponse = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $instanceName -Q $query -y 0 2>> $sqlError
+                            $sqlResponse = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $instanceName -C -Q $query -y 0 2>> $sqlError
                         }
 
                         if ($LASTEXITCODE -ne 0 -Or $($sqlCredential.useSqlAuth -eq $False -And $sqlCredential.useDomainAuth -eq $False)) {
-                            $sqlResponse =  sqlcmd -S $instanceName -Q $query -y 0 2>> $sqlError
+                            $sqlResponse =  sqlcmd -S $instanceName -C -Q $query -y 0 2>> $sqlError
                         }
 
                         if ($LASTEXITCODE -ne 0) {

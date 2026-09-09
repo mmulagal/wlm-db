@@ -125,7 +125,7 @@ try {
   $Dblisterrlog = 'C:\cfn\log\dblist_err.log'
   if ($ResourceID) { 
     if($sqlAuth){
-    $dblist = (Sqlcmd -S "$SqlInstanceName" -U $Dbuser -P $Dbpass -Q "SET NOCOUNT ON;SELECT name FROM sys.databases" -l 20 -y 0 -r1 2> $Dblisterrlog)
+    $dblist = (Sqlcmd -S "$SqlInstanceName" -U $Dbuser -P $Dbpass -C -Q "SET NOCOUNT ON;SELECT name FROM sys.databases" -l 20 -y 0 -r1 2> $Dblisterrlog)
     if (Get-Content $Dblisterrlog) { throw }
     }
     if($windowsAuth) {
@@ -167,14 +167,14 @@ try {
         }
     }
     $checkdb =  {
-        $dblist = (Sqlcmd -S "$Using:SqlInstanceName" -Q "SET NOCOUNT ON;SELECT name FROM sys.databases" -l 20 -y 0 -r1 2> $Using:Dblisterrlog)
+        $dblist = (Sqlcmd -S "$Using:SqlInstanceName" -C -Q "SET NOCOUNT ON;SELECT name FROM sys.databases" -l 20 -y 0 -r1 2> $Using:Dblisterrlog)
         return $dblist
     }
     $dblist = Invoke-Command -ScriptBlock $checkdb -ComputerName $ENV:ComputerName -Credential $DomainAdminCreds -Authentication Credssp
     }
   }
   else {
-    $dblist = (Sqlcmd -S "$SqlInstanceName" -Q "SET NOCOUNT ON;SELECT name FROM sys.databases" -l 20 -y 0 -r1 2> $Dblisterrlog)
+    $dblist = (Sqlcmd -S "$SqlInstanceName" -C -Q "SET NOCOUNT ON;SELECT name FROM sys.databases" -l 20 -y 0 -r1 2> $Dblisterrlog)
     if (Get-Content $Dblisterrlog) { throw }
   } 
 }
@@ -216,12 +216,12 @@ try {
   if ($ResourceID) {
     if ($sqlAuth) {
     #Execute DB create query with SQL user authentication
-    $invokecreate = (Sqlcmd  -S "$SqlInstanceName" -U $Dbuser -P $Dbpass -Q "$Query" -l 20 -y 0  -r1 2> $Dbcreateerrlog 1> $Dbcreatelog)
+    $invokecreate = (Sqlcmd  -S "$SqlInstanceName" -U $Dbuser -P $Dbpass -C -Q "$Query" -l 20 -y 0  -r1 2> $Dbcreateerrlog 1> $Dbcreatelog)
     $ErrorExists = Test-Path -Path C:\cfn\log\dblist_err.log
     }
     if ($windowsAuth) {
         $createquery = {
-            $dbcreate = (Sqlcmd  -S "$Using:SqlInstanceName" -Q "$Using:Query" -l 20 -y 0  -r1 2> $Using:Dbcreateerrlog 1> $Using:Dbcreatelog)
+            $dbcreate = (Sqlcmd  -S "$Using:SqlInstanceName" -C -Q "$Using:Query" -l 20 -y 0  -r1 2> $Using:Dbcreateerrlog 1> $Using:Dbcreatelog)
             return $dbcreate
             }
         $invokecreate = Invoke-Command -ScriptBlock $createquery -ComputerName $ENV:ComputerName -Credential $DomainAdminCreds -Authentication Credssp
@@ -232,7 +232,7 @@ try {
   }
   else {
     #Execute DB create query with trusted connection(Windows authentication). If you omit the server, it will default to localhost.
-    $invokecreate = (Sqlcmd -S "$SqlInstanceName" -Q "$Query" -l 20 -y 0 -r1 2> $Dbcreateerrlog 1> $Dbcreatelog)
+    $invokecreate = (Sqlcmd -S "$SqlInstanceName" -C -Q "$Query" -l 20 -y 0 -r1 2> $Dbcreateerrlog 1> $Dbcreatelog)
     if (Get-Content $Dbcreateerrlog) { throw } 
   }
   

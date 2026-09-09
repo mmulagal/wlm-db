@@ -428,11 +428,11 @@ async function getResourceUtilisationDetails(
 
     let commands: string[] = [];
     const metricQuery = resourceUtilisationQuery(metricType);
-    commands = [`sqlcmd -S "${instanceName}" -Q "${metricQuery}" -y 0`];
+    commands = [`sqlcmd -S "${instanceName}" -C -Q "${metricQuery}" -y 0`];
 
     if (metricType === DATABASE_METRIC_TYPE.DISK) {
-        const dbSizecommand = [`sqlcmd -S "${instanceName}" -Q "${DB_SIZE}" -y 0`];
-        const diskUtilizationCommand = [`sqlcmd -S "${instanceName}" -Q "${DISK_UTILISATION}" -y 0`];
+        const dbSizecommand = [`sqlcmd -S "${instanceName}" -C -Q "${DB_SIZE}" -y 0`];
+        const diskUtilizationCommand = [`sqlcmd -S "${instanceName}" -C -Q "${DISK_UTILISATION}" -y 0`];
 
         const [diskdata, size] = await Promise.all([
             callSsmExecution({
@@ -1463,7 +1463,7 @@ async function getMssqlInstanceGuid(
     nodeIds: string[]
 ) {
     logger.info('Fetching mssql instance id', accountId, nodeIds, instanceName);
-    const commands = [`sqlcmd -S "${instanceName}" -Q "${INSTANCE_GUID}" -y 0`];
+    const commands = [`sqlcmd -S "${instanceName}" -C -Q "${INSTANCE_GUID}" -y 0`];
     let response;
     try {
         let sqlInstanceGuid;

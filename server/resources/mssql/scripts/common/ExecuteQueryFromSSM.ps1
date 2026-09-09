@@ -6,9 +6,9 @@ param(
 )
 
 if($DATABASE){
-$results = sqlcmd -d $Database -Q $Query -y 0
+$results = sqlcmd -d $Database -C -Q $Query -y 0
 }
 else{
-$results = sqlcmd -Q $Query -y 0
+$results = sqlcmd -C -Q $Query -y 0
 }
 Write-Output $results 

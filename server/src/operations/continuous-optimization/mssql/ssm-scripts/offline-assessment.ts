@@ -447,12 +447,12 @@ Function Test-SqlConnection {
         
         if ([string]::IsNullOrEmpty($Username)) {
             # Windows Authentication
-            Write-Log -Level "DEBUG" -Message "Executing sqlcmd with Windows Authentication: sqlcmd -S $ExecutableInstance -Q '$testQuery'"
-            $result = sqlcmd -S $ExecutableInstance -Q $testQuery -h -1 -W 2>&1
+            Write-Log -Level "DEBUG" -Message "Executing sqlcmd with Windows Authentication: sqlcmd -S $ExecutableInstance -C -Q '$testQuery' -h -1 -W"
+            $result = sqlcmd -S $ExecutableInstance -C -Q $testQuery -h -1 -W 2>&1
         } else {
             # SQL Authentication
-            Write-Log -Level "DEBUG" -Message "Executing sqlcmd with SQL Authentication: sqlcmd -S $ExecutableInstance -U $Username -Q '$testQuery'"
-            $result = sqlcmd -S $ExecutableInstance -U $Username -P $Password -Q $testQuery -h -1 -W 2>&1
+            Write-Log -Level "DEBUG" -Message "Executing sqlcmd with SQL Authentication: sqlcmd -S $ExecutableInstance -U $Username -C -Q '$testQuery' -h -1 -W"
+            $result = sqlcmd -S $ExecutableInstance -U $Username -P $Password -C -Q $testQuery -h -1 -W 2>&1
         }
         
         Write-Log -Level "DEBUG" -Message "sqlcmd exit code: $LASTEXITCODE, result: $($result -join ' ')"
@@ -1407,11 +1407,11 @@ ${SERVER_DETAILS}
 "@
 
             if ($sqlCredential.useSqlAuth -eq $True) {
-                $SqlResponse = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $executableInstance -Q $sqlquery -y 0;
-                $SqlQueryResponse = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $executableInstance -Q $SqlQueryForDatabaseAndVolumeList -y 0 -r1 2>&1
+                $SqlResponse = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $executableInstance -C -Q $sqlquery -y 0;
+                $SqlQueryResponse = sqlcmd -U $sqlCredential.username -P $sqlCredential.password -S $executableInstance -C -Q $SqlQueryForDatabaseAndVolumeList -y 0 -r1 2>&1
             } else {
-                $SqlResponse = sqlcmd -S $executableInstance -Q $sqlquery -y 0;
-                $SqlQueryResponse = sqlcmd -S $executableInstance -Q $SqlQueryForDatabaseAndVolumeList -y 0 -r1 2>&1
+                $SqlResponse = sqlcmd -S $executableInstance -C -Q $sqlquery -y 0;
+                $SqlQueryResponse = sqlcmd -S $executableInstance -C -Q $SqlQueryForDatabaseAndVolumeList -y 0 -r1 2>&1
             }
 
             if ([string]::IsNullOrEmpty($SqlResponse)) {

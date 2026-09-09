@@ -615,7 +615,7 @@ const HOST_AND_SQL_INFO_PS1 = [
           throw "SQL auth failed for instance '$ServerInstance' (sqlcmd exit code $LASTEXITCODE)"
         }
         $result['deploymentTypeCheck'] = sqlcmd -U $Credential.username -P $Credential.password -h -1 -C -W -l 3 -S $ServerInstance -Q $DeploymentTypeCheckQuery 2> $null
-        $result['existingPermissions'] = sqlcmd -U $Credential.username -P $Credential.password -S $ServerInstance -Q $permissionsQuery -y 0 2> $null
+        $result['existingPermissions'] = sqlcmd -U $Credential.username -P $Credential.password -S $ServerInstance -C -Q $permissionsQuery -y 0 2> $null
         $result['sqlInstanceDriveLetterOrPathList'] = GetSQLInstanceDriveDetails $ServerInstance $Credential.username $Credential.password
       }
       'windows' {
@@ -623,7 +623,7 @@ const HOST_AND_SQL_INFO_PS1 = [
         if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
           throw "Windows integrated auth failed for instance '$ServerInstance' (sqlcmd exit code $LASTEXITCODE)"
         }
-        $result['existingPermissions'] = sqlcmd -S $ServerInstance -Q $permissionsQuery -y 0 2> $null
+        $result['existingPermissions'] = sqlcmd -S $ServerInstance -C -Q $permissionsQuery -y 0 2> $null
         $result['deploymentTypeCheck'] = sqlcmd -h -1 -C -W -l 3 -S $ServerInstance -Q $DeploymentTypeCheckQuery 2> $null
         $result['sqlInstanceDriveLetterOrPathList'] = GetSQLInstanceDriveDetails $ServerInstance
       }

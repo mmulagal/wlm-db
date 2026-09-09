@@ -305,7 +305,7 @@ const invokeCommandWithCredSSP = `
 
         $scriptblock = {
             param ($sqlquery, $extraArguments)
-            Sqlcmd -S $using:serverInstanceName -Q $sqlquery -y 0 $extraArguments 2> $null
+            Sqlcmd -S $using:serverInstanceName -C -Q $sqlquery -y 0 $extraArguments 2> $null
         }
 
         $output = Invoke-Command -ScriptBlock $scriptblock -ArgumentList $sqlquery, $extraArguments -Credential $Credential -ComputerName $env:computername -Authentication credssp -ErrorAction Stop
@@ -818,9 +818,9 @@ const storageLayoutAssessmentTemplate = `
         if ($SqlCredential.useDomainAuth -eq $True) {
             return Invoke-CommandWithCredSSP -sqlquery $Query -instanceName $InstanceName
         } elseif ($SqlCredential.useSqlAuth -eq $True) {
-            return sqlcmd -U $SqlCredential.username -P $SqlCredential.password -S $InstanceName -Q $Query -y 0
+            return sqlcmd -U $SqlCredential.username -P $SqlCredential.password -S $InstanceName -C -Q $Query -y 0
         } else {
-            return sqlcmd -S $InstanceName -Q $Query -y 0
+            return sqlcmd -S $InstanceName -C -Q $Query -y 0
         }
     }
     

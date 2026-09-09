@@ -85,7 +85,7 @@ function Invoke-SQLQuery {
         [string]$SqlPassword
     )
 
-    $sqlcmd = "sqlcmd -S $InstanceName -Q `"$Query`" -y 0 -s `",`" "
+    $sqlcmd = "sqlcmd -S $InstanceName -C -Q `"$Query`" -y 0 -s `",`" "
 
     if (![string]::IsNullOrEmpty($SqlUserName) -and ![string]::IsNullOrEmpty($SqlPassword)) {
         $sqlcmd += " -U $SqlUserName -P $SqlPassword"
