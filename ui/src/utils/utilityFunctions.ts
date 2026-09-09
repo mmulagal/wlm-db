@@ -6,7 +6,7 @@ import numeral from 'numeral';
 import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 import moment from 'moment';
 import classNames from 'classnames';
-import { TFunction } from 'i18next';
+import { t, TFunction } from 'i18next';
 import { GENERAL, SELECT_CONFIG } from './appConstants';
 import {
     API_ERRORS,
@@ -914,12 +914,12 @@ export const isValidUserName = (userName: string) => {
     if (
         userName &&
         userName.length &&
-        (userName.length < 5 ||
-            !/^[a-zA-Z0-9]+$/.test(userName) ||
+        (userName.length < 2 ||
+            !/^[a-zA-Z0-9_-]+$/.test(userName) ||
             userName === 'admin' ||
             userName === 'administrator')
     ) {
-        return GENERAL.USERNAME_TOOLTIP;
+        return t('databases.general.username-invalid');
     }
 };
 

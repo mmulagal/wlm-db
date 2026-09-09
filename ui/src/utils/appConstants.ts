@@ -363,10 +363,6 @@ export const GENERAL = {
     DATABASE_CREDENTIAL_TEXT:
         'Create a new service account for SQL server or use existing service account credentials in the Active Directory',
     DATABASE_CREDENTIAL_TEXT_PGSQL: 'Provide password to the postgres user',
-    USERNAME_TOOLTIP:
-        'The user name must contain at least 5 alphanumeric characters. The user name can\'t be "admin" or "administrator".',
-    USERNAME_TOOLTIP1: 'The user name must contain at least 5 alphanumeric characters.',
-    USERNAME_TOOLTIP2: 'The user name can\'t be "admin" or "administrator".',
     USERNAME_TOOLTIP3: 'The user name must be enclosed in quotation marks. For example:',
     USERNAME_EXAMPLE: '"johnDoe"',
     USERNAME_TOOLTIP4: 'The user name must contain at most 20 alphanumeric characters.',

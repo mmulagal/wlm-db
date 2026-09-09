@@ -250,13 +250,13 @@ const DatabaseCredentials = ({ wizardType }: DatabaseCredentialsProps) => {
                                                         <div className={styles.listItem}>
                                                             <Bullet />
                                                             <div className={styles.textWidth}>
-                                                                {GENERAL.USERNAME_TOOLTIP1}
+                                                                {t('databases.general.username-rules')}
                                                             </div>
                                                         </div>
                                                         <div className={styles.listItem}>
                                                             <Bullet />
                                                             <div className={styles.textWidth}>
-                                                                {GENERAL.USERNAME_TOOLTIP2}
+                                                                {t('databases.general.username-not-admin')}
                                                             </div>
                                                         </div>
                                                     </div>

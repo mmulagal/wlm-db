@@ -1,4 +1,6 @@
 import numeral from 'numeral';
+import i18n from 'i18next';
+import en from '../../public/resources/i18n/en.json';
 import { GENERAL, SELECT_CONFIG } from './appConstants';
 import { CREATE_DATABASE_YAML, SQL_DEPLOYMENT_MODE } from './consts';
 import {
@@ -42,6 +44,10 @@ import {
     groupByTime,
     groupByJobSummaryTimeline
 } from './utilityFunctions';
+
+i18n.init({ lng: 'en', resources: { en: { translation: en } } });
+
+const invalidUserNameError = en.databases.general['username-invalid'];
 
 const databaseHostItem: any = [
     {
@@ -710,11 +716,25 @@ describe('regionsSort', () => {
 describe('isValidUserName', () => {
     it('Return invalid username', () => {
         const result = isValidUserName('admin');
-        expect(result).toEqual(GENERAL.USERNAME_TOOLTIP);
+        expect(result).toEqual(invalidUserNameError);
     });
     it('Return valid username', () => {
         const result = isValidUserName('Collector123');
         expect(result).toBeUndefined();
+    });
+    it('Return valid username with underscore and hyphen', () => {
+        expect(isValidUserName('AWSPRM25SV_gmsa')).toBeUndefined();
+        expect(isValidUserName('svc-sql')).toBeUndefined();
+    });
+    it('Return valid username with two characters', () => {
+        expect(isValidUserName('ab')).toBeUndefined();
+    });
+    it('Return invalid username shorter than two characters', () => {
+        expect(isValidUserName('a')).toEqual(invalidUserNameError);
+    });
+    it('Return invalid username with unsupported characters', () => {
+        expect(isValidUserName('svc sql')).toEqual(invalidUserNameError);
+        expect(isValidUserName('svc@sql')).toEqual(invalidUserNameError);
     });
 });
 
@@ -915,7 +935,7 @@ describe('validateChatbotField', () => {
     });
     it('Return error if invalid serviceAccountName', () => {
         const result = validateChatbotField('serviceAccountName', 'admin');
-        expect(result).toEqual(GENERAL.USERNAME_TOOLTIP);
+        expect(result).toEqual(invalidUserNameError);
     });
     it('Return empty if valid serviceAccountPassword', () => {
         const result = validateChatbotField('serviceAccountPassword', 'netapp1!');
