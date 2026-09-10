@@ -1,0 +1,171 @@
+{
+  "skill_name": "oracle-optimize",
+  "evals": [
+    {
+      "id": 1,
+      "name": "aws-backup-already-optimized",
+      "prompt": "Check the AWS backup configuration for Oracle instance ORCL on host host-oracle-01 in us-east-1 and let me know if it needs fixing.",
+      "expected_output": "GETs v2 assessment, finds backup-configuration optimized, reports optimized, no POST.",
+      "files": [],
+      "expectations": [
+        "Uses GET v2 oracle assessment with fields=aws-backup",
+        "Finds assessment item by id === backup-configuration (not aws-backup)",
+        "Reports the configuration is already optimized",
+        "Does not call POST .../optimize"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "aws-backup-not-optimized-offer",
+      "prompt": "Is AWS backup optimized for Oracle instance ORCL on host host-oracle-01 in us-east-1? If not, what would fixing it involve?",
+      "expected_output": "Reports not-optimized with recommendation and violating volumes, offers fix, no POST yet.",
+      "files": [],
+      "expectations": [
+        "Summarizes recommendation and violating objects from objectsInViolation/violationDetails",
+        "Offers to run the optimize but does not call POST .../optimize in this turn",
+        "Mentions backupRetentionDays and backupStartTime will be needed before optimizing"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "headroom-error-item",
+      "prompt": "Check file system headroom for Oracle instance ORCL on host host-oracle-01 in us-east-1.",
+      "expected_output": "Assessment item has errorMessage and no status; surfaces the error, does not offer optimize.",
+      "files": [],
+      "expectations": [
+        "Uses GET v2 oracle assessment with fields=storage and finds id === headroom",
+        "Detects the item as an error item because it has errorMessage and no status key",
+        "Surfaces the errorMessage to the user",
+        "Does not offer or call POST .../optimize for an error item"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "first-ask-not-confirmation",
+      "prompt": "Optimize the AWS backup configuration for this Oracle instance now.",
+      "expected_output": "Treats first ask as a request, not confirmation; states what will change and asks for retention/start time and explicit confirmation.",
+      "files": [],
+      "expectations": [
+        "Does not call POST .../optimize in this turn",
+        "States databaseHostId, databaseInstanceId, and that FSx automatic backup will be enabled",
+        "Asks for backupRetentionDays and backupStartTime if not already provided",
+        "Waits for explicit user confirmation before proceeding"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "invalid-retention-days",
+      "prompt": "Optimize AWS backup for Oracle instance ORCL on host host-oracle-01 in us-east-1, confirmed, retention 91 days, backup start 02:30 UTC.",
+      "expected_output": "Rejects invalid backupRetentionDays (out of 1-90 range), does not POST.",
+      "files": [],
+      "expectations": [
+        "Identifies 91 as invalid because it exceeds the 1-90 inclusive range",
+        "Does not call POST .../optimize with the invalid value",
+        "Asks for a corrected backupRetentionDays value"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "invalid-start-time",
+      "prompt": "Optimize AWS backup for Oracle instance ORCL on host host-oracle-01 in us-east-1, confirmed, retention 7 days, backup start 24:00 UTC.",
+      "expected_output": "Rejects invalid backupStartTime (hour 24 out of range), does not POST.",
+      "files": [],
+      "expectations": [
+        "Identifies 24:00 as invalid because hour must be 0-23",
+        "Does not call POST .../optimize with the invalid value",
+        "Asks for a corrected backupStartTime value"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "aws-backup-confirmed-optimize",
+      "prompt": "Yes, go ahead and optimize AWS backup for Oracle instance ORCL on host host-oracle-01 in us-east-1 with 7 days retention and a 02:30 UTC backup window.",
+      "expected_output": "POSTs the aws-backup payload with type/configurationName aws-backup, fsxFileSystemId from metadata, polls job every 10s, reports optimized on COMPLETED.",
+      "files": [],
+      "expectations": [
+        "POST body has type: aws-backup and hostsToOptimize[0].configurationName: aws-backup",
+        "databaseHosts[0] includes id, credentialsId, region, databases, fsxFileSystemId, backupRetentionDays: 7, backupStartTime: 02:30",
+        "fsxFileSystemId is sourced from metadata.fileSystemId on the GET assessment response, not invented",
+        "Polls GET .../jobs/{jobId} on an interval and stops at COMPLETED or FAILED",
+        "Reports the configuration as optimized after COMPLETED"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "aws-backup-job-failed",
+      "prompt": "User previously confirmed AWS backup optimize for Oracle instance ORCL on host host-oracle-01; the optimize job came back FAILED with error 'insufficient permissions to update FSx backup settings'. Tell me the result.",
+      "expected_output": "Reports not optimized and surfaces the job error message.",
+      "files": [],
+      "expectations": [
+        "States the configuration is not optimized after a FAILED job status",
+        "Surfaces the job's error message to the user",
+        "Does not claim the configuration is optimized"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "headroom-not-optimized-offer",
+      "prompt": "Is file system headroom optimized for Oracle instance ORCL on host host-oracle-01 in us-east-1? If not, offer to fix it.",
+      "expected_output": "Reports not-optimized headroom, offers fix with no extra fields required, no POST until confirmed.",
+      "files": [],
+      "expectations": [
+        "Uses GET v2 oracle assessment with fields=storage and finds id === headroom",
+        "Summarizes the not-optimized finding and recommendation",
+        "Offers to run the fix without asking for any user-supplied numeric fields",
+        "Does not call POST .../optimize before explicit confirmation"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "headroom-confirmed-optimize",
+      "prompt": "Yes, go ahead and fix the file system headroom for Oracle instance ORCL on host host-oracle-01 in us-east-1.",
+      "expected_output": "POSTs the headroom payload with type storage-sizing, configurationName headroom, no backup fields, polls job to terminal state.",
+      "files": [],
+      "expectations": [
+        "POST body has type: storage-sizing and hostsToOptimize[0].configurationName: headroom",
+        "databaseHosts[0] includes only id, credentialsId, region, databases (no fsxFileSystemId, backupRetentionDays, or backupStartTime)",
+        "Polls GET .../jobs/{jobId} on an interval and stops at COMPLETED or FAILED",
+        "Reports the result based on the terminal job status"
+      ]
+    },
+    {
+      "id": 11,
+      "name": "refuse-unimplemented-type",
+      "prompt": "Optimize the storage layout for this Oracle database, moving redo logs to a dedicated volume.",
+      "expected_output": "Refuses storage-layout as an unimplemented optimize type for this skill.",
+      "files": [],
+      "expectations": [
+        "States storage layout optimize is not yet implemented in this skill",
+        "Does not call POST .../optimize with a storage-layout or configuration payload",
+        "Only offers AWS Backup or File system headroom as available optimize types"
+      ]
+    },
+    {
+      "id": 12,
+      "name": "refuse-cross-skill-scope",
+      "prompt": "Run explore savings TCO and also show me registered drift findings for this Oracle database, then optimize AWS backup.",
+      "expected_output": "Refuses TCO and drift-read portions, redirects to wlm-db-tco and databases-wad, only proceeds on the AWS backup optimize portion.",
+      "files": [],
+      "expectations": [
+        "States TCO / Explore Savings is out of scope and redirects to wlm-db-tco",
+        "States registered drift reads are out of scope and redirects to databases-wad",
+        "Does not call TCO or drift-assessment endpoints itself",
+        "Still handles the AWS backup optimize request per this skill's workflow"
+      ]
+    },
+    {
+      "id": 13,
+      "name": "headroom-over-provisioned-no-fix",
+      "prompt": "File system headroom for Oracle instance ORCL on host host-oracle-01 in us-east-1 came back over-provisioned. Summarize it and fix it for me.",
+      "expected_output": "Reports the over-provisioned finding, explains capacity decrease is not automated, does not offer or run the fix.",
+      "files": [],
+      "expectations": [
+        "Uses GET v2 oracle assessment with fields=storage and finds id === headroom",
+        "Summarizes the over-provisioned finding and recommendation",
+        "States the fix is unavailable because capacity decrease is not automated, and that capacity must be reduced manually",
+        "Does not offer to run the fix and does not call POST .../optimize even though the user asked for it",
+        "Does not claim the configuration is optimized"
+      ]
+    }
+  ]
+}

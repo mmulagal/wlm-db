@@ -1,0 +1,54 @@
+[
+  {
+    "query": "enable AWS backup for this Oracle database on FSx for ONTAP",
+    "should_trigger": true
+  },
+  {
+    "query": "is the aws backup configuration optimized for this oracle instance",
+    "should_trigger": true
+  },
+  {
+    "query": "fix file system headroom for oracle host host-1 instance orcl",
+    "should_trigger": true
+  },
+  {
+    "query": "optimize oracle storage sizing headroom now",
+    "should_trigger": true
+  },
+  {
+    "query": "apply the recommended backup configuration fix for oracle",
+    "should_trigger": true
+  },
+  {
+    "query": "check if oracle backup configuration needs optimizing before I apply the fix",
+    "should_trigger": true
+  },
+  {
+    "query": "show me registered drift assessment findings for oracle",
+    "should_trigger": false
+  },
+  {
+    "query": "run explore savings tco for oracle ebs vs fsx",
+    "should_trigger": false
+  },
+  {
+    "query": "trigger logs analysis for this oracle instance",
+    "should_trigger": false
+  },
+  {
+    "query": "optimize aws backup for this mssql instance",
+    "should_trigger": false
+  },
+  {
+    "query": "dismiss this oracle drift finding for backup configuration",
+    "should_trigger": false
+  },
+  {
+    "query": "optimize the storage layout to move redo logs to a dedicated volume",
+    "should_trigger": false
+  },
+  {
+    "query": "add a new route in server for oracle optimize aggregation",
+    "should_trigger": false
+  }
+]

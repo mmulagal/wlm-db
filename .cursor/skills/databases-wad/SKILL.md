@@ -10,7 +10,7 @@ metadata:
 
 Read and manage continuous drift findings for managed MSSQL and Oracle databases.
 
-**Out of scope:** TCO / Explore Savings (use the `wlm-db-tco` skill); offline / one-time WAD collector upload; optimize / apply / remediate / fix; logs analysis; post-migration managed-host savings dashboards; PostgreSQL.
+**Out of scope:** TCO / Explore Savings (use the `wlm-db-tco` skill); offline / one-time WAD collector upload; optimize / apply / remediate / fix (Oracle AWS Backup / file system headroom: use the `oracle-optimize` skill); logs analysis; post-migration managed-host savings dashboards; PostgreSQL.
 
 ## Environment and auth
 
@@ -232,7 +232,7 @@ Severity counts: C = critical, S = severe, I = important. Lead with the not-opti
 ## Refusal template
 
 ```
-That request is outside what this skill covers — I only handle registered (continuous) drift assessment for MSSQL and Oracle, not TCO / Explore Savings, optimize / apply / fix actions, logs analysis, or the offline one-time WAD upload flow. You can run those from the Workload Factory UI or via the corresponding skill (for example, wlm-db-tco for storage savings).
+That request is outside what this skill covers — I only handle registered (continuous) drift assessment for MSSQL and Oracle, not TCO / Explore Savings, optimize / apply / fix actions, logs analysis, or the offline one-time WAD upload flow. You can run those from the Workload Factory UI or via the corresponding skill (for example, wlm-db-tco for storage savings, or oracle-optimize for Oracle AWS Backup / file system headroom fixes).
 ```
 
 ## Additional reference
