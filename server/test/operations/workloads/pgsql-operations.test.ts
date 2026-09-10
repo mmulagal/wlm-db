@@ -1,3 +1,4 @@
+import { DATABASE_TYPE, STORAGE_TYPE } from '@prisma/client';
 import {
     getPgSqlDatabaseCount,
     getPgSqlDatabaseInstancesDetails,
@@ -5,11 +6,13 @@ import {
     getPgSqlInstanceInfo,
     getPgSqlPerformaceMetrics,
     getPgSqlProtectionStatus,
-    getPgSqlStorageSavingsVolumeData
+    getPgSqlStorageSavingsVolumeData,
+    runPgSqlAdminScript
 } from '../../../src/operations/workloads/pgsql/pgsql-operations';
 import { DatabaseInstance, PgSqlInstanceDetails } from '../../../src/utils/common-types';
 import { ServerState, STORAGE_PROTOCOLS } from '../../../src/utils/consts';
 import { parsePgSqlInstanceInfo } from '../../../src/utils/utils';
+import { createResource, deleteResource, upsertDatabaseInstance } from '../../../src/lib/database/db';
 
 describe('PgSql Database Operations', () => {
     const credentialsId = 'test-credentials-id';
@@ -194,5 +197,199 @@ describe('PgSql Database Operations', () => {
             },
             isFsxOntapSnapshotsEnabled: true
         });
+    });
+
+    it('should run an allowlisted inspect script and return SSM output', async () => {
+        const result = await runPgSqlAdminScript(
+            accountId,
+            credentialsId,
+            region,
+            { ec2InstanceId: node1InstanceId },
+            'inspect',
+            { DATABASE_NAME: 'appdb' },
+            'pgsql admin script'
+        );
+
+        expect(result).toEqual({
+            output: '{"status":"ok","svmName":"svm01","dataVolume":"pgdata","logVolume":"pgwal"}'
+        });
+    });
+
+    it('should reject an unknown scriptId', async () => {
+        await expect(
+            runPgSqlAdminScript(
+                accountId,
+                credentialsId,
+                region,
+                { ec2InstanceId: node1InstanceId },
+                'echo-hello',
+                undefined,
+                'pgsql admin script'
+            )
+        ).rejects.toThrow('Unknown scriptId: echo-hello');
+    });
+
+    it('should reject extra args that are not in the script allowlist', async () => {
+        await expect(
+            runPgSqlAdminScript(
+                accountId,
+                credentialsId,
+                region,
+                { ec2InstanceId: node1InstanceId },
+                'inspect',
+                { DATA_VOLUME: 'pgdata' },
+                'pgsql admin script'
+            )
+        ).rejects.toThrow('Unexpected args for scriptId inspect: DATA_VOLUME');
+    });
+
+    it('should reject a caller REGION arg so path region cannot be overridden', async () => {
+        await expect(
+            runPgSqlAdminScript(
+                accountId,
+                credentialsId,
+                region,
+                { ec2InstanceId: node1InstanceId },
+                'inspect',
+                { REGION: 'eu-west-1' },
+                'pgsql admin script'
+            )
+        ).rejects.toThrow('Unexpected args for scriptId inspect: REGION');
+    });
+
+    it('should reject missing required args for a mutating script', async () => {
+        await expect(
+            runPgSqlAdminScript(
+                accountId,
+                credentialsId,
+                region,
+                { ec2InstanceId: node1InstanceId },
+                'createdb',
+                undefined,
+                'pgsql admin script'
+            )
+        ).rejects.toThrow('Missing required args for scriptId createdb: DATABASE_NAME');
+    });
+
+    it('should reject an invalid admin script arg name', async () => {
+        await expect(
+            runPgSqlAdminScript(
+                accountId,
+                credentialsId,
+                region,
+                { ec2InstanceId: node1InstanceId },
+                'inspect',
+                { 'DATA-VOLUME': 'pgdata' },
+                'pgsql admin script'
+            )
+        ).rejects.toThrow('Invalid script arg name: DATA-VOLUME');
+    });
+
+    it('should reject an admin script with neither ec2InstanceId nor databaseHostId', async () => {
+        await expect(
+            runPgSqlAdminScript(accountId, credentialsId, region, {}, 'inspect', undefined, 'pgsql admin script')
+        ).rejects.toThrow('Provide ec2InstanceId for an unregistered host or databaseHostId for a registered host');
+    });
+
+    it('should reject databaseInstanceId without databaseHostId', async () => {
+        await expect(
+            runPgSqlAdminScript(
+                accountId,
+                credentialsId,
+                region,
+                { databaseInstanceId: 'id1' },
+                'inspect',
+                undefined,
+                'pgsql admin script'
+            )
+        ).rejects.toThrow('databaseInstanceId requires databaseHostId for a registered PostgreSQL host');
+    });
+
+    it('should reject an unknown registered PostgreSQL host', async () => {
+        await expect(
+            runPgSqlAdminScript(
+                accountId,
+                credentialsId,
+                region,
+                { databaseHostId: 'missing-pgsql-run-script-host' },
+                'inspect',
+                undefined,
+                'pgsql admin script'
+            )
+        ).rejects.toThrow('PostgreSQL host missing-pgsql-run-script-host not found');
+    });
+
+    it('should run an inspect script on a registered host via databaseHostId', async () => {
+        const hostId = 'pgsql-run-script-host';
+        const instanceId = 'pgsql-run-script-instance';
+        try {
+            await createResource(accountId, {
+                resourceId: hostId,
+                resourceName: 'pgsql-run-script',
+                resourceType: 'PGSQL',
+                credentialsId,
+                storageType: STORAGE_TYPE.FSXN,
+                region,
+                metadata: { node1InstanceId }
+            });
+            await upsertDatabaseInstance(accountId, {
+                credentialsId,
+                region,
+                resourceId: hostId,
+                databaseInstanceId: instanceId,
+                databaseInstanceName: 'POSTGRES',
+                isDefault: true,
+                source: 'discovery',
+                sqlDeploymentType: 'Standalone',
+                fsxSvmId: {},
+                fsxnIds: 'fs-1234',
+                databaseType: DATABASE_TYPE.pgsql
+            });
+
+            const result = await runPgSqlAdminScript(
+                accountId,
+                credentialsId,
+                region,
+                { databaseHostId: hostId, databaseInstanceId: instanceId },
+                'inspect',
+                { DATABASE_NAME: 'appdb' },
+                'pgsql admin script'
+            );
+
+            expect(result).toEqual({
+                output: '{"status":"ok","svmName":"svm01","dataVolume":"pgdata","logVolume":"pgwal"}'
+            });
+        } finally {
+            await deleteResource(accountId, hostId);
+        }
+    });
+
+    it('should reject a databaseInstanceId that is not on the registered host', async () => {
+        const hostId = 'pgsql-run-script-host-no-inst';
+        try {
+            await createResource(accountId, {
+                resourceId: hostId,
+                resourceName: 'pgsql-run-script-no-inst',
+                resourceType: 'PGSQL',
+                credentialsId,
+                storageType: STORAGE_TYPE.FSXN,
+                region,
+                metadata: { node1InstanceId }
+            });
+
+            await expect(
+                runPgSqlAdminScript(
+                    accountId,
+                    credentialsId,
+                    region,
+                    { databaseHostId: hostId, databaseInstanceId: 'not-on-this-host' },
+                    'inspect',
+                    undefined,
+                    'pgsql admin script'
+                )
+            ).rejects.toThrow(`databaseInstanceId not-on-this-host not found on host ${hostId}`);
+        } finally {
+            await deleteResource(accountId, hostId);
+        }
     });
 });

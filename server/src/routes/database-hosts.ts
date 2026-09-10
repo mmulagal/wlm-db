@@ -21,6 +21,7 @@ import {
     DatabaseHostDiagramSchema,
     oracleDbHostDetailsSchema,
     OracleDbHostsSummarySchema,
+    RunPgSqlScriptSchema,
     RunOracleScriptSchema
 } from './schemas/database-hosts-schemas';
 import { DatabaseTypes } from '../utils/consts';
@@ -30,6 +31,7 @@ import {
     getOracleDatabaseHostInstanceSummary,
     runOracleAdminScript
 } from '../operations/workloads/oracle/oracle-operations';
+import { runPgSqlAdminScript } from '../operations/workloads/pgsql/pgsql-operations';
 import { IS_PROD } from '../utils/utils';
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
@@ -275,6 +277,22 @@ export default function databaseHostsRoutes(fastify: FastifyInstance) {
                 return reply.send(response);
             }
         )
+        .post(`${PGSQL_API_PREFIX_PATH}/run-script`, { schema: RunPgSqlScriptSchema }, async (request, reply) => {
+            const {
+                params: { accountId, credentialsId, region },
+                body: { ec2InstanceId, databaseHostId, databaseInstanceId, scriptId, args, comment }
+            } = castRequest(request);
+            const response = await runPgSqlAdminScript(
+                accountId,
+                credentialsId,
+                region,
+                { ec2InstanceId, databaseHostId, databaseInstanceId },
+                scriptId,
+                args,
+                comment
+            );
+            return reply.send(response);
+        })
         .post(`${ORACLE_API_PREFIX_PATH}/run-script`, { schema: RunOracleScriptSchema }, async (request, reply) => {
             const {
                 params: { accountId, credentialsId, region },

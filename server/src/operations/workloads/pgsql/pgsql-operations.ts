@@ -1,7 +1,7 @@
 import createError from 'http-errors';
 import { isArray, isEmpty } from 'lodash-es';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
-import { generateHash, parsePgSqlInstanceInfo, sqlResponseParsing } from '../../../utils/utils';
+import { generateHash, IS_DEMO_FLOW, parsePgSqlInstanceInfo, sqlResponseParsing } from '../../../utils/utils';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import getLogger from '../../../utils/logger';
 import {
@@ -14,19 +14,48 @@ import {
     ONLINE,
     OFFLINE,
     PGSQL_SYSTEM_DATABASES,
-    PGSQL_DEFAULT_INSTANCE_NAME
+    PGSQL_DEFAULT_INSTANCE_NAME,
+    DatabaseTypes
 } from '../../../utils/consts';
-import { DatabaseInstance, PgSqlInstanceDetails, ResourceDetails } from '../../../utils/common-types';
+import { DatabaseInstance, Metadata, PgSqlInstanceDetails, ResourceDetails } from '../../../utils/common-types';
+import { listResources } from '../../../lib/database/db';
 import { DatabaseHostInstanceSummaryResponseType } from '../../../routes/types/database-hosts.types';
 import { DATABASES_COUNT, LIST_DATABASES, PERFORMANCE_METRICS } from './queries';
 import { getPgSqlProtection, getPgSqlStorageSavings, getPgsqlInstanceData } from './pgsql-ssm-script-utils';
 import { getDatabaseInstanceTopology } from '../../../utils/sql-utils';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from './const';
+import { loadPgSqlAdminScript } from './pgsql-admin-scripts';
 import { isFsxnAwsBackupEnabled } from '../../aws/fsx-operations';
 
 const logger = getLogger();
 
 const IN_PRODUCTION = 'in production';
+const PGSQL_ADMIN_SCRIPT_MARKER = '#pgsql admin script';
+const SHELL_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+type PgSqlScriptTarget = {
+    ec2InstanceId?: string;
+    databaseHostId?: string;
+    databaseInstanceId?: string;
+};
+
+function shellSingleQuote(value: string): string {
+    const quote = String.fromCharCode(39);
+    const escaped = `${quote}\\${quote}${quote}`;
+    return `${quote}${value.split(quote).join(escaped)}${quote}`;
+}
+
+function buildAdminScript(scriptBody: string, args?: Record<string, string>): string {
+    const exports: string[] = [];
+    for (const [key, value] of Object.entries(args ?? {})) {
+        if (!SHELL_IDENTIFIER.test(key)) {
+            throw createError(HttpErrorCodes.BAD_REQUEST, `Invalid script arg name: ${key}`);
+        }
+        exports.push(`export ${key}=${shellSingleQuote(value)}`);
+    }
+    const prelude = exports.length > 0 ? `${exports.join('\n')}\n` : '';
+    return `${PGSQL_ADMIN_SCRIPT_MARKER}\n${prelude}${scriptBody}`;
+}
 
 async function getPgSqlInstanceDetails(
     accountId: string,
@@ -545,16 +574,121 @@ async function getPgSqlProtectionStatus(
             };
         }
 
-        const records = parsedResponse?.records[0];
-        const { snapshot_count: snapshotCount, uuid } = records;
-        const backupStatus = await isFsxnAwsBackupEnabled(credentialsId, region, fsxId, [uuid]);
+        const { records } = parsedResponse as {
+            records: Array<{ snapshot_count?: number; uuid?: string }>;
+        };
+        const volumeUuids = records.map(record => record.uuid).filter((uuid): uuid is string => Boolean(uuid));
+        const backupStatus = await isFsxnAwsBackupEnabled(credentialsId, region, fsxId, volumeUuids);
         const volumeUuidsInBackups = backupStatus?.volumeUuidsInBackups || [];
-        const fsxnBackup = volumeUuidsInBackups.includes(uuid);
+        const fsxnBackup = IS_DEMO_FLOW
+            ? volumeUuids.length > 0
+            : volumeUuids.length > 0 && volumeUuids.every(uuid => volumeUuidsInBackups.includes(uuid));
         return {
             isAwsBackupEnabled: { fsxn: fsxnBackup },
-            isFsxOntapSnapshotsEnabled: snapshotCount > 0
+            isFsxOntapSnapshotsEnabled: records.every(record => (record.snapshot_count ?? 0) > 0)
         };
     }
+}
+
+async function resolvePgSqlScriptTarget(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    { ec2InstanceId, databaseHostId, databaseInstanceId }: PgSqlScriptTarget
+): Promise<string> {
+    if (databaseInstanceId && isEmpty(databaseHostId)) {
+        const errorMessage = 'databaseInstanceId requires databaseHostId for a registered PostgreSQL host';
+        logger.error(errorMessage, { accountId, databaseInstanceId });
+        throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
+    }
+    if (databaseHostId) {
+        const resources = await listResources({
+            accountId,
+            resourceId: databaseHostId,
+            credentialIds: credentialsId,
+            region,
+            resourceType: DatabaseTypes.PG_SQL,
+            includeDatabaseInstances: Boolean(databaseInstanceId),
+            selectKeys: ['metadata', 'resource_id', 'resource_type']
+        });
+        if (isEmpty(resources)) {
+            const errorMessage = `PostgreSQL host ${databaseHostId} not found`;
+            logger.error(errorMessage, { accountId, credentialsId, region, databaseHostId });
+            throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+        }
+        const resource = resources[0] as ResourceDetails;
+        if (databaseInstanceId) {
+            const match = resource.database_instances?.find(
+                instance => instance.database_instance_id === databaseInstanceId
+            );
+            if (!match) {
+                const errorMessage = `databaseInstanceId ${databaseInstanceId} not found on host ${databaseHostId}`;
+                logger.error(errorMessage, { accountId, databaseHostId, databaseInstanceId });
+                throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+            }
+        }
+        const { node1InstanceId, node2InstanceId } = (resource.metadata || {}) as Metadata;
+        if (isEmpty(node1InstanceId)) {
+            const errorMessage = `No EC2 node registered on PostgreSQL host ${databaseHostId}`;
+            logger.error(errorMessage, { accountId, databaseHostId });
+            throw createError(HttpErrorCodes.FAILED_DEPENDENCY, errorMessage);
+        }
+        if (ec2InstanceId && ec2InstanceId !== node1InstanceId && ec2InstanceId !== node2InstanceId) {
+            const errorMessage = 'ec2InstanceId does not belong to the given databaseHostId';
+            logger.error(errorMessage, { accountId, databaseHostId, ec2InstanceId, node1InstanceId, node2InstanceId });
+            throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
+        }
+        return ec2InstanceId || node1InstanceId;
+    }
+    if (ec2InstanceId) {
+        return ec2InstanceId;
+    }
+    const errorMessage = 'Provide ec2InstanceId for an unregistered host or databaseHostId for a registered host';
+    logger.error(errorMessage, { accountId });
+    throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
+}
+
+async function runPgSqlAdminScript(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    target: PgSqlScriptTarget,
+    scriptId: string,
+    args?: Record<string, string>,
+    comment?: string
+) {
+    const { body: scriptBody, mutating } = loadPgSqlAdminScript(accountId, scriptId, args);
+    const { databaseHostId, databaseInstanceId } = target;
+    const ec2InstanceId = await resolvePgSqlScriptTarget(accountId, credentialsId, region, target);
+    logger.info('Running pgsql admin script', {
+        accountId,
+        credentialsId,
+        region,
+        ec2InstanceId,
+        databaseHostId,
+        databaseInstanceId,
+        scriptId,
+        mutating,
+        comment,
+        argKeys: Object.keys(args ?? {})
+    });
+    const identityArgs = {
+        REGION: region,
+        ...(databaseHostId && { DATABASE_HOST_ID: databaseHostId }),
+        ...(databaseInstanceId && { DATABASE_INSTANCE_ID: databaseInstanceId })
+    };
+    const fullScript = buildAdminScript(scriptBody, { ...(args ?? {}), ...identityArgs });
+    const output = await callSsmExecution({
+        credentialsId,
+        region,
+        commands: [fullScript],
+        ec2InstanceId,
+        comment: comment || 'pgsql admin script',
+        accountId,
+        documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+        documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+    });
+    return { output: output ?? '' };
 }
 
 export {
@@ -567,5 +701,6 @@ export {
     getPgSqlDatabaseInstancesDetails,
     getPgSqlDatabasesList,
     getPgSqlPerformaceMetrics,
-    getPgSqlProtectionStatus
+    getPgSqlProtectionStatus,
+    runPgSqlAdminScript
 };

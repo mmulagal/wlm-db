@@ -1,0 +1,130 @@
+[
+  {
+    "query": "delete the old postgres snapshot from last month",
+    "should_trigger": false
+  },
+  {
+    "query": "snapshot our MSSQL AOAG cluster before the patch",
+    "should_trigger": false
+  },
+  {
+    "query": "run TCO / explore savings for our postgres FSx setup",
+    "should_trigger": false
+  },
+  {
+    "query": "clone the postgres instance to a new host for testing",
+    "should_trigger": true
+  },
+  {
+    "query": "create a new database on the postgres instance called reporting",
+    "should_trigger": true
+  },
+  {
+    "query": "what's the retention policy on our existing ONTAP snapshots?",
+    "should_trigger": false
+  },
+  {
+    "query": "analyze postgres slow query logs and recommend indexes",
+    "should_trigger": false
+  },
+  {
+    "query": "create a new postgres database called reporting on instance i-0a1b2c3d4e5f67890",
+    "should_trigger": true
+  },
+  {
+    "query": "provision a database named analytics owned by app_user on our standalone postgres host",
+    "should_trigger": true
+  },
+  {
+    "query": "add a new schema-level database to postgres for the billing team",
+    "should_trigger": true
+  },
+  {
+    "query": "can you make a createdb call for 'staging_copy' on the pg instance?",
+    "should_trigger": true
+  },
+  {
+    "query": "create database",
+    "should_trigger": true
+  },
+  {
+    "query": "create a new database on our MSSQL AOAG cluster",
+    "should_trigger": false
+  },
+  {
+    "query": "create a database on our Oracle RAC instance",
+    "should_trigger": false
+  },
+  {
+    "query": "create a table called orders in the reporting database",
+    "should_trigger": false
+  },
+  {
+    "query": "create a new role/user in postgres with login access",
+    "should_trigger": false
+  },
+  {
+    "query": "clone the postgres instance and give me a full copy on a new host",
+    "should_trigger": true
+  },
+  {
+    "query": "create a database on postgres with UTF8 encoding and a custom locale de_DE.UTF-8",
+    "should_trigger": true
+  },
+  {
+    "query": "run TCO explore savings for postgres storage costs",
+    "should_trigger": false
+  },
+  {
+    "query": "clone our standalone postgres instance i-0a1b2c3d4e5f67890 onto host i-0fedcba987654321 for testing, port 5433",
+    "should_trigger": true
+  },
+  {
+    "query": "spin up a full disposable copy of our postgres database on a new EC2 host",
+    "should_trigger": true
+  },
+  {
+    "query": "flexclone the postgres data and wal volumes and get a running instance on the target box",
+    "should_trigger": true
+  },
+  {
+    "query": "make a test copy of our production postgres for the QA team, needs to actually be running postgres",
+    "should_trigger": true
+  },
+  {
+    "query": "clone postgres",
+    "should_trigger": true
+  },
+  {
+    "query": "clone our MSSQL AOAG database for a sandbox",
+    "should_trigger": false
+  },
+  {
+    "query": "clone the oracle RAC instance for dev testing",
+    "should_trigger": false
+  },
+  {
+    "query": "run pg_dump to copy this postgres database into another one",
+    "should_trigger": false
+  },
+  {
+    "query": "clone our postgres replica/standby node",
+    "should_trigger": true
+  },
+  {
+    "query": "create a new database called reporting on the existing postgres instance",
+    "should_trigger": true
+  },
+  {
+    "query": "give me a TCO comparison for cloning workloads to FSx ONTAP",
+    "should_trigger": false
+  },
+  {
+    "query": "create a database called reporting on our HA postgres primary",
+    "should_trigger": true
+  },
+  {
+    "query": "create a database on the postgres standby node",
+    "should_trigger": true
+  }
+]

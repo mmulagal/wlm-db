@@ -117,4 +117,4 @@ Use the skill-creator schema exactly — `expectations[].text`, `passed`, `evide
 
 **PASS** when engine, scope, endpoint, gate behavior, and answer structure match with substantive evidence (not just mentioning "drift").
 
-**FAIL** when wrong engine path, wrong scope, missing confirmation on POST, missing job poll, invented numbers without API call, PostgreSQL attempted, or TCO/optimize/apply/upload attempted instead of refused.
+**FAIL** when wrong engine path, wrong scope, missing confirmation on POST, missing job poll, invented numbers without API call, PostgreSQL attempted (use `pgsql-admin`), or TCO/optimize/apply/upload attempted instead of refused.

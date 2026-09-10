@@ -1,0 +1,317 @@
+{
+  "skill_name": "pgsql-admin",
+  "evals": [
+    {
+      "id": 10,
+      "name": "database-first-turn-confirmation-gate",
+      "prompt": "Create a database called reporting on our standalone postgres host i-0a1b2c3d4e5f67890 in us-east-1. No specific owner needed. This is a simulated first-turn eval: inspect returns status=ok, deploymentType=standalone, nodeRole=none, serviceState=running, alreadyExists=false, and mapped data/WAL volumes on one SVM. Do not contact a live API.",
+      "expected_output": "Validates the simulated inspect result, presents the mapped-volume confirmation, and stops without running createdb in the initial request turn.",
+      "expectations": [
+        "Uses scriptId inspect with DATABASE_NAME=reporting and interprets the simulated standalone + running result",
+        "Resolves and presents the mapped ONTAP data and WAL volumes for confirmation",
+        "Does not call aws ssm send-command from the operator machine",
+        "Does not run createdb or claim reporting exists in this initial request turn",
+        "Explains that volume confirmation and then a later explicit CREATE DATABASE confirmation are required"
+      ]
+    },
+    {
+      "id": 11,
+      "name": "database-post-confirmation-with-owner",
+      "prompt": "Continue a simulated PostgreSQL create-database conversation. In prior turns, inspect on standalone primary i-0fedcba987654321 in us-west-2 returned running, analytics absent, ownerExists=true for app_user, and mapped volumes; the operator confirmed those volumes; you then presented the CREATE DATABASE analytics OWNER app_user confirmation. The operator now replies: \"Yes, create it.\" Simulate a successful createdb envelope with verified=true and owner=app_user. Do not contact a live API.",
+      "expected_output": "Treats this as the later-turn action confirmation, runs the allowlisted createdb operation, and validates the catalog owner from the simulated envelope.",
+      "expectations": [
+        "Uses the prior inspect result showing ownerExists=true for app_user rather than repeating or skipping the preflight",
+        "Treats the current reply as a later-turn explicit confirmation for analytics owned by app_user",
+        "Creates the database with the specified owner (createdb --owner=app_user)",
+        "Verifies the owner via pg_get_userbyid/pg_database rather than assuming success"
+      ]
+    },
+    {
+      "id": 12,
+      "name": "database-duplicate-name-refused",
+      "prompt": "Create a database named billing on postgres host i-0aaaaaaaaaaaaaaaa in us-east-1. (inspect with DATABASE_NAME shows billing already exists.)",
+      "expected_output": "Refuses to create billing because it already exists, without dropping or recreating it.",
+      "expectations": [
+        "Inspect with DATABASE_NAME shows 'billing' already exists",
+        "Refuses to run createdb and does not drop/recreate the existing database",
+        "Explains to the user that the database already exists"
+      ]
+    },
+    {
+      "id": 13,
+      "name": "database-missing-owner-role-refused",
+      "prompt": "Create database 'reports' owned by 'nonexistent_role' on postgres host i-0bbbbbbbbbbbbbbbb, eu-west-1. (nonexistent_role does not exist.)",
+      "expected_output": "Refuses because the requested owner role does not exist, rather than silently falling back to the cluster default owner.",
+      "expectations": [
+        "Inspect with DATABASE_NAME/OWNER shows the requested owner role is missing",
+        "Refuses to create the database with cluster-default ownership as a silent fallback",
+        "Asks the user to create the role first or supply an existing owner"
+      ]
+    },
+    {
+      "id": 14,
+      "name": "database-invalid-identifier-rejected",
+      "prompt": "Create a postgres database called 'My Reports!' on host i-0ccccccccccccccc, us-east-2.",
+      "expected_output": "Rejects the invalid database identifier instead of quoting or sanitizing it.",
+      "expectations": [
+        "Rejects the database name for failing ^[a-z_][a-z0-9_]{0,62}$ instead of quoting or sanitizing it",
+        "Does not attempt createdb with the invalid name",
+        "Asks the user for a valid lowercase identifier"
+      ]
+    },
+    {
+      "id": 15,
+      "name": "database-ha-post-confirmation-routes-to-primary",
+      "prompt": "Continue a simulated HA PostgreSQL create-database conversation. Prior turns inspected i-0ddddddddddddddd in us-east-1 as deploymentType=ha and nodeRole=primary, identified standby i-0eeeeeeeeeeeeeee, confirmed mapped volumes, and presented the CREATE DATABASE testdb confirmation. The operator now replies: \"Yes, create testdb.\" Simulate a createdb envelope with primary catalog verified=true and replicated=true, followed by standby inspect with DATABASE_NAME=testdb returning alreadyExists=true. Do not contact a live API.",
+      "expected_output": "Creates testdb on the resolved primary using a bare instanceId, then verifies the catalog and that the standby replayed the WAL.",
+      "expectations": [
+        "Uses the prior inspect result that resolved the named host as the HA primary before attempting createdb",
+        "Treats the named host as the primary (nodeRole=primary) rather than refusing HA",
+        "Sends subsequent run-script calls with bare instanceId and omits databaseHostId",
+        "Verifies the new database from pg_database on the primary",
+        "Proves replication by inspecting the known standby with DATABASE_NAME=testdb"
+      ]
+    },
+    {
+      "id": 16,
+      "name": "database-no-premature-confirmation-treated-as-yes",
+      "prompt": "Please create a database called inventory on our postgres server.",
+      "expected_output": "Asks for source identity and region before running any createdb.",
+      "expectations": [
+        "Asks for the missing source identity (inventory databaseHostId or unregistered sourceInstanceId) and region before doing anything",
+        "Does not run createdb in the same turn as the initial request",
+        "Only proceeds to the confirmation step once instance/region are known"
+      ]
+    },
+    {
+      "id": 17,
+      "name": "clone-first-turn-confirmation-gates",
+      "prompt": "Clone our standalone postgres instance i-0a1b2c3d4e5f67890 (us-east-1) onto target host i-0fedcba987654321. Call it 'qa-clone', use port 5433, retention label 'qa-test'. Both hosts are on the same FSx SVM and same PostgreSQL major version, target has no active PGDATA and 5433 is free.",
+      "expected_output": "Completes source and target preflight, presents the mapped-volume confirmation, and explains the three later mutation gates without applying a mutation in the initial turn.",
+      "expectations": [
+        "Resolves mapped ONTAP data and WAL volumes on the source via run-script before any mutation",
+        "Invokes the wlmdb POST .../pgsql/.../run-script endpoint rather than aws ssm send-command",
+        "Runs inspect on both source and target before any mutation",
+        "Presents three distinct confirmations: new snapshot, FlexClone volumes, and mount+start \u2014 not folded into one",
+        "Does not run cg-snapshot, cg-flexclone, or clone-recovery with --apply in the initial request turn",
+        "States that a fresh consistency-group snapshot will be used and both FlexClones must come from that same group snapshot",
+        "States that clone-recovery will sanitize inherited recovery state before starting the separate clone service",
+        "Never calls pg_resetwal",
+        "Does not claim clonedVolumes, a running service, or verified=true before the later confirmations and validation complete"
+      ]
+    },
+    {
+      "id": 18,
+      "name": "clone-version-mismatch-refused",
+      "prompt": "Clone postgres host i-0aaaaaaaaaaaaaaaa onto i-0bbbbbbbbbbbbbbbb, us-east-1, name 'mismatch-clone', port 5434, retention 'test'. (Source is PostgreSQL 17, target already has PostgreSQL 15 installed.)",
+      "expected_output": "Refuses the clone because the source and target PostgreSQL major versions differ.",
+      "expectations": [
+        "Runs inspect on both hosts",
+        "Detects the pgVersionMajor mismatch (17 vs 15)",
+        "Refuses to proceed with any snapshot/FlexClone/mount step",
+        "Explains the version mismatch to the user instead of attempting a cross-version clone"
+      ]
+    },
+    {
+      "id": 19,
+      "name": "clone-active-target-pgdata-refused",
+      "prompt": "Clone postgres i-0ccccccccccccccc onto i-0ddddddddddddddd, us-west-2, name 'busy-target', port 5433, retention 'x'. (Target already has an active running PostgreSQL at the same intended mount path.)",
+      "expected_output": "Refuses to mount clone volumes over the target's active PGDATA and does not stop its running service.",
+      "expectations": [
+        "Detects that the target already has an active PGDATA / running PostgreSQL",
+        "Refuses to mount clone volumes over the active PGDATA",
+        "Does not stop the target's existing PostgreSQL service to force the clone"
+      ]
+    },
+    {
+      "id": 20,
+      "name": "clone-port-conflict-refused",
+      "prompt": "Clone postgres i-0eeeeeeeeeeeeeeee onto i-0fffffffffffffff, eu-west-1, name 'port-clash', port 5432, retention 'x'. (Port 5432 is already in use on the target by another service.)",
+      "expected_output": "Refuses or asks for a different port because the requested clone port is already in use on the target.",
+      "expectations": [
+        "Checks whether clonePort is already listening on the target before proceeding",
+        "Refuses to proceed or asks for a different port when 5432 is already in use",
+        "Does not start PostgreSQL on a conflicting port"
+      ]
+    },
+    {
+      "id": 21,
+      "name": "clone-ha-source-routes-to-primary",
+      "prompt": "Clone our postgres instance i-0111111111111111 onto i-0222222222222222, us-east-2, name 'ha-clone', port 5433, retention 'x'. (Source inspect reports deploymentType=ha, nodeRole=primary. Target is not in an HA pair.)",
+      "expected_output": "Clones the primary's data and WAL volumes onto the target instead of refusing HA, using a bare instanceId for source run-script calls.",
+      "expectations": [
+        "Runs inspect on the source before any mutation",
+        "Uses the primary as the clone source rather than refusing HA",
+        "Sends source run-script calls with bare instanceId and omits databaseHostId",
+        "Does not clone from a standby's volume pair"
+      ]
+    },
+    {
+      "id": 22,
+      "name": "clone-single-confirmation-not-sufficient",
+      "prompt": "Yes, go ahead and clone the postgres instance i-0333333333333333 onto i-0444444444444444, us-east-1, name 'one-shot', port 5433, retention 'x'.",
+      "expected_output": "Treats the upfront yes as a request and still gates snapshot, FlexClone, and mount+start separately.",
+      "expectations": [
+        "Does not treat the user's single upfront 'yes, go ahead' as satisfying all three separate confirmation gates",
+        "Still presents and waits for confirmation before the snapshot, before the FlexClone creation, and before mount+start individually (or clearly restates each stage's effect even if the user pre-authorized broadly)",
+        "Does not skip inspect or verification steps because the user said yes upfront"
+      ]
+    },
+    {
+      "id": 23,
+      "name": "clone-verification-failure-stops-and-reports",
+      "prompt": "Clone postgres i-0555555555555555 onto i-0666666666666666, us-east-1, name 'flaky-clone', port 5433, retention 'x'. (After mounting and starting, pg_is_in_recovery() unexpectedly returns true.)",
+      "expected_output": "Stops the target service on failed verification, avoids pg_resetwal, and reports every resource left behind for cleanup.",
+      "expectations": [
+        "Detects that pg_is_in_recovery() did not return false as expected",
+        "Stops the PostgreSQL service on the target instead of leaving it running in an unverified state",
+        "Does not attempt pg_resetwal or any other automated recovery fix",
+        "Reports the created consistency group, snapshot, and FlexClone volumes so an operator can investigate/clean up"
+      ]
+    },
+    {
+      "id": 24,
+      "name": "clone-registered-source-unregistered-target",
+      "prompt": "Clone our inventory PostgreSQL host pg-host-abc123 (instance pg-inst-xyz from host detail, us-east-1) onto unregistered target i-0fedcba987654321. Call it 'qa-clone', port 5433, retention 'qa-test'.",
+      "expected_output": "Uses databaseHostId for the inventory source and a raw EC2 instance id for the unregistered target.",
+      "expectations": [
+        "Uses databaseHostId/databaseInstanceId for the inventory source on run-script (host-detail instance list, not GET .../database-instances)",
+        "Uses raw instanceId (ec2InstanceId) for the unregistered clone target",
+        "Does not invent an EC2 id for the inventory source"
+      ]
+    },
+    {
+      "id": 25,
+      "name": "database-ssm-permission-missing-manual-steps",
+      "prompt": "Create a database called reporting on standalone postgres host i-0a1b2c3d4e5f67890 in us-east-1. The first run-script POST returns HTTP 403 AccessDeniedException (Workload Factory credential cannot ssm:SendCommand).",
+      "expected_output": "Stops automating on the SSM permission failure and prints numbered operator steps for CREATE DATABASE on the existing cluster.",
+      "expectations": [
+        "Does not retry via aws ssm send-command from the operator machine",
+        "Stops automating instead of guessing host or ONTAP state",
+        "Prints numbered operator steps to finish CREATE DATABASE on the existing cluster (shell on the host, confirm postgres running and existing data/WAL mounts, createdb, catalog verify)",
+        "Does not instruct the operator to provision new ONTAP volumes for CREATE DATABASE"
+      ]
+    },
+    {
+      "id": 26,
+      "name": "clone-ssm-permission-missing-manual-steps",
+      "prompt": "Clone standalone postgres i-0a1b2c3d4e5f67890 onto i-0fedcba987654321, us-east-1, name 'qa-clone', port 5433, retention 'qa-test'. run-script fails with TargetNotConnected / instance not valid to receive commands.",
+      "expected_output": "Stops automating on the SSM connectivity failure and prints numbered operator steps for the FlexClone, mount, start, and verification.",
+      "expectations": [
+        "Does not retry via aws ssm send-command from the operator machine",
+        "Stops automating instead of continuing to FlexClone or mount",
+        "Prints numbered operator steps covering crash-consistent CG snapshot, FlexClone of data and WAL from the same snapshot, NFS mount on the target, recovery sanitization, start, and verification",
+        "Tells the operator not to run pg_resetwal if verification fails"
+      ]
+    },
+    {
+      "id": 27,
+      "name": "database-ha-standby-redirected-with-confirmation",
+      "prompt": "Create database 'testdb' on inventory postgres host pg-host-ha, us-east-1. (inspect on the reachable node reports nodeRole=standby. GET .../pgsql/.../database-hosts returns nodeTopology.ec2Details with i-0primary000000000 and i-0standby00000000. Probing i-0primary000000000 reports nodeRole=primary.)",
+      "expected_output": "Does not run createdb on the standby; probes the peer, then asks confirmation naming the primary instance before creating testdb there.",
+      "expectations": [
+        "Detects that the named/reachable node is a standby (nodeRole=standby)",
+        "Reads the peer EC2 id from GET .../pgsql/.../database-hosts nodeTopology.ec2Details rather than guessing",
+        "Probes the peer and confirms it is nodeRole=primary before mutating",
+        "Does not run createdb on the standby",
+        "Confirmation names the actual primary instance (Routed from the standby) and waits for yes"
+      ]
+    },
+    {
+      "id": 28,
+      "name": "database-ha-unregistered-standby-asks-peer",
+      "prompt": "Create database 'testdb' on unregistered postgres i-0standbyaaaaaaaaaa, us-east-1. (inspect reports nodeRole=standby, primaryHost=10.0.1.20. The host is not in inventory.)",
+      "expected_output": "Asks the operator for the primary's EC2 id (showing the primary_conninfo IP) instead of inventing one or creating on the standby.",
+      "expectations": [
+        "Detects nodeRole=standby on the unregistered host",
+        "Asks the operator for the other node's EC2 id, showing primaryHost from the envelope",
+        "Does not invent an EC2 id or fsxadmin credentials for the peer",
+        "Does not run createdb on the standby"
+      ]
+    },
+    {
+      "id": 29,
+      "name": "database-wal-level-replica-not-treated-as-ha",
+      "prompt": "Create database 'testdb' on postgres host i-0ccccccccccccccc, us-east-1. (postgresql.conf has wal_level=replica, but pg_is_in_recovery is f, pg_stat_replication is empty, and pg_replication_slots is empty.)",
+      "expected_output": "Treats the host as standalone and creates testdb there; does not switch to bare-instanceId HA targeting.",
+      "expectations": [
+        "Does not classify the host as HA solely because wal_level=replica",
+        "Treats nodeRole=none / deploymentType=standalone as the source",
+        "Does not ask for a peer node or drop databaseHostId targeting for a false HA detection"
+      ]
+    },
+    {
+      "id": 30,
+      "name": "clone-inherited-replication-slots-dropped",
+      "prompt": "Clone HA primary i-0primary000000000 onto i-0target0000000000, us-east-1, name 'slot-clone', port 5433, retention 'x'. (Source has physical slot slaveslot1. Target is not HA.)",
+      "expected_output": "Starts the clone after dropping inherited replication slots and stripping pg_hba replication lines, and refuses to report verified while slots remain.",
+      "expectations": [
+        "Strips host replication lines from the clone's pg_hba.conf before start",
+        "Drops inherited replication slots via pg_drop_replication_slot after PostgreSQL is started",
+        "Does not report verified=true while pg_replication_slots is non-empty",
+        "Never calls pg_resetwal"
+      ]
+    },
+    {
+      "id": 31,
+      "name": "clone-onto-host-running-postgres",
+      "prompt": "Clone postgres i-0aaaaaaaaaaaaaaaa onto i-0bbbbbbbbbbbbbbbb, us-east-1, name 'beside-existing', port 5433, retention 'x'. (Target inspect with CLONE_* reports nodeRole=standby, serviceState=running on its own PGDATA, same pgVersionMajor, port 5433 free, no postgresql-beside-existing.service, clone mount paths unmounted.)",
+      "expected_output": "Accepts the running target as a valid sidecar destination, leaves its existing service untouched, and carries the existing cluster details into the later mount+start confirmation without claiming completion.",
+      "expectations": [
+        "Does not refuse the target merely because it already runs PostgreSQL or has nodeRole != none",
+        "Plans postgresql-beside-existing.service instead of editing, restarting, or adding a drop-in to the target's postgresql.service",
+        "Names the target's existing cluster (PGDATA, port, nodeRole) in the mount+start confirmation and states that its service is untouched",
+        "Does not report the clone service running or verified=true before the separate mutation confirmations complete"
+      ]
+    },
+    {
+      "id": 32,
+      "name": "clone-no-consistency-group-yet-extra-gate",
+      "prompt": "Clone postgres i-0aaaaaaaaaaaaaaaa onto i-0bbbbbbbbbbbbbbbb, us-east-1, name 'first', port 5433, retention 'x'. (The SVM has no consistency group at all; a separate group already contains the data volume together with two unrelated volumes.)",
+      "expected_output": "Refuses to adopt the partially-matching group, and treats creating the correct data+WAL group as its own confirmation before the snapshot confirmation.",
+      "expectations": [
+        "Does not adopt or snapshot a consistency group whose member set is not exactly the data and WAL volumes",
+        "Presents consistency-group creation as its own confirmation, separate from and before the snapshot confirmation",
+        "States that the group adopts the two existing volumes and creates no new volumes",
+        "Does not fold group creation, snapshot, FlexClone, and mount+start into one prompt"
+      ]
+    },
+    {
+      "id": 33,
+      "name": "clone-relinks-wal-and-clears-stale-lockfile",
+      "prompt": "Clone HA primary i-0primary000000000 onto that same host, us-east-1, name 'beside', port 5433, retention 'x'. (Source PGDATA /pgdata has pg_wal as an absolute symlink to /pglog/pg_wal, postgresql.conf sets data_directory = '/pgdata', and postmaster.pid names the live postmaster PID.)",
+      "expected_output": "Requires clone-recovery to re-point pg_wal, remove only the clone's stale postmaster.pid, and rewrite the clone's data_directory before start; it must not claim those actions ran before confirmation.",
+      "expectations": [
+        "Requires the clone's inherited absolute pg_wal symlink to be replaced so it resolves inside the clone log mount, not source /pglog",
+        "Requires pg_wal resolution to be verified before start and start to abort if it still points outside the clone log mount",
+        "Requires deletion of postmaster.pid only from the clone data directory before start",
+        "Requires data_directory to be rewritten in the clone's postgresql.conf instead of relying on -D alone",
+        "States that source PGDATA and WAL remain untouched and does not claim clone-recovery already ran before confirmation"
+      ]
+    },
+    {
+      "id": 34,
+      "name": "clone-unit-name-conflict-refused",
+      "prompt": "Clone postgres i-0aaaaaaaaaaaaaaaa onto i-0bbbbbbbbbbbbbbbb, us-east-1, name 'dup', port 5433, retention 'x'. (Target already has a postgresql-dup.service unit from an earlier clone.)",
+      "expected_output": "Refuses because the clone's systemd unit name is already taken on the target, and asks for a different cloneName.",
+      "expectations": [
+        "Passes CLONE_NAME (and other CLONE_* args) on inspect so sidecar conflict checks run",
+        "Detects unitConflict=true and refuses before any snapshot or FlexClone",
+        "Does not overwrite or adopt the existing postgresql-dup.service",
+        "Asks the operator for a different cloneName"
+      ]
+    },
+    {
+      "id": 35,
+      "name": "clone-flexclone-ontap-volume-names-no-hyphen",
+      "prompt": "Clone postgres i-0aaaaaaaaaaaaaaaa onto i-0bbbbbbbbbbbbbbbb, us-east-1, name 'bhaskar-clone', port 5433, retention '7d'. (Inspect is clean; volumes confirmed.)",
+      "expected_output": "Keeps cloneName bhaskar-clone for the systemd unit and mounts, but FlexClone volume names use underscores (no hyphen). Does not POST DATA_CLONE_VOLUME containing '-'.",
+      "expectations": [
+        "CLONE_NAME / unit / mount paths may keep the hyphenated cloneName",
+        "Derives DATA_CLONE_VOLUME and WAL_CLONE_VOLUME with hyphens replaced by underscores (e.g. wlmdb_pgsqldata_bhaskar_clone)",
+        "Does not send an ONTAP volume, CG, or snapshot name containing '-'",
+        "Does not treat a 917888 hyphen error as 'volumes did not come online'"
+      ]
+    }
+  ]
+}

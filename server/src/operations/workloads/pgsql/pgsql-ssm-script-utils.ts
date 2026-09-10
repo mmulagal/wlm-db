@@ -53,6 +53,22 @@ const getMappedOntapDataVolume = (fsxnId: string, region: string) => `
 
     mountedVolume=$(echo "$response" | jq -r '.records[0].name')
     check_status "Failed to extract mounted volume name"
+
+    walDir=$(readlink -f "$dataDir/pg_wal")
+    check_status "Failed to resolve pg_wal path"
+
+    wal_mount_path=$(sudo findmnt -n -o SOURCE --target $walDir)
+    check_status "Failed to get WAL mount path"
+
+    walJunctionPath=$(echo "$wal_mount_path" | cut -d':' -f2)
+    check_status "Failed to extract WAL junction path"
+
+    walVolEndpoint="storage/volumes?svm.name=$svmName&nas.path=$walJunctionPath"
+    walResponse=$(ontap_request 'GET' $walVolEndpoint)
+    check_status "Failed to fetch WAL volume endpoint data"
+
+    mountedLogVolume=$(echo "$walResponse" | jq -r '.records[0].name')
+    check_status "Failed to extract mounted log volume name"
 `;
 
 const getPgSqlStorageSavings = (fsxnId: string, region: string, endpoint: string) => `
@@ -70,7 +86,7 @@ const getPgSqlProtection = (fsxnId: string, region: string) => `
     #pgsql protection script
  
     ${getMappedOntapDataVolume(fsxnId, region)}
-    endpoint="storage/volumes?fields=snapshot_count&svm.name=$svmName&name=$mountedVolume"
+    endpoint="storage/volumes?fields=snapshot_count&svm.name=$svmName&name=$mountedVolume,$mountedLogVolume"
     result=$(ontap_request 'GET' $endpoint)
     check_status "Failed to fetch protection data"
     echo $result
