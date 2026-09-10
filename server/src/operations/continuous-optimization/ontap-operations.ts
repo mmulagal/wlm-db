@@ -1,10 +1,17 @@
+import { isEmpty } from 'lodash-es';
+import createError from 'http-errors';
+
 import {
+    buildOntapProxyBase,
     collectAllOntapRecords,
+    collectOntapRecordsBatched,
     getOntapJobStatusForBase,
     type OntapVolumeRecord,
     type ProxyOperationBaseOpts
 } from '../../lib/ontap/ontap-gateway';
 import { callProxyForwarder } from '../../lib/cloud-manager/proxy-forwarder';
+import { HttpErrorCodes } from '../../utils/consts';
+import { IS_DEMO_FLOW } from '../../utils/utils';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
@@ -100,7 +107,48 @@ async function getOntapIscsiInterfaceIp(base: ProxyOperationBaseOpts, svmName: s
     return records[0]?.ip?.address;
 }
 
+async function assertVolumesHaveNoSnapmirror(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    fsxId: string,
+    volumeUuids: string[]
+): Promise<void> {
+    logger.info('Checking snapmirror', { accountId, credentialsId, region, fsxId, volumeUuids });
+    if (isEmpty(volumeUuids)) {
+        return;
+    }
+
+    const base = await buildOntapProxyBase(
+        accountId,
+        credentialsId,
+        IS_DEMO_FLOW ? 'test-fsx' : fsxId,
+        IS_DEMO_FLOW ? 'us-east-1' : region
+    );
+    const records = await collectOntapRecordsBatched<OntapVolumeRecord>(
+        base,
+        'api/storage/volumes',
+        'uuid',
+        volumeUuids,
+        { fields: 'uuid,name,snapmirror.is_protected' }
+    );
+    const protectedVolumes = records
+        .filter(({ snapmirror }) => snapmirror?.is_protected)
+        .map(({ name, uuid }) => name || uuid);
+
+    if (isEmpty(protectedVolumes)) {
+        return;
+    }
+
+    const errorMessage = `A SnapMirror relationship exists for volume(s) ${protectedVolumes.join(
+        ', '
+    )}. Delete the SnapMirror relationship first, then retry.`;
+    logger.error(errorMessage, { accountId, fsxId, volumeUuids });
+    throw createError(HttpErrorCodes.CONFLICT, errorMessage);
+}
+
 export {
+    assertVolumesHaveNoSnapmirror,
     promoteVolumeEfficiency,
     getOntapVolumeEfficiency,
     getOntapExportPolicyRules,

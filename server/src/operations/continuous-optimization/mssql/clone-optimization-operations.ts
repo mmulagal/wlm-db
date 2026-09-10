@@ -35,7 +35,7 @@ import { getMappedOntapVolumes } from '../../aws/fsx-operations';
 import { listResources } from '../../../lib/database/db';
 import { getActiveSqlNode } from '../../workloads/mssql/mssql-operations';
 import { getInstanceDetails, getInstanceOntapDetails } from '../../database-hosts-operations';
-import { getServerNameWithHostname, IS_DEMO_FLOW } from '../../../utils/utils';
+import { extractErrorMessage, getServerNameWithHostname, IS_DEMO_FLOW } from '../../../utils/utils';
 import { updateAllOptimizedClonesDemoFlow } from '../../demo-operations';
 import { resetCache } from '../../../utils/cache';
 import { AssessmentCategories } from '../../../utils/continous-optimization-consts';
@@ -121,8 +121,13 @@ async function optimizeClone(
             endTime: Date.now()
         });
     } catch (err) {
-        const errorMessage = `Error while fixing clone ${clone.cloneDatabaseName} ${err}`;
-        logger.error(errorMessage);
+        const errorMessage = extractErrorMessage(err);
+        logger.error(`Error while fixing clone ${clone.cloneDatabaseName}`, {
+            accountId,
+            databaseHostId,
+            databaseInstanceId,
+            error: err
+        });
         await updateJobDetails(accountId, childCloneJobId, {
             status: JOBSTATUS.FAILED,
             endTime: Date.now(),
@@ -411,9 +416,13 @@ async function handleCloneRemediation(
             }
         }
     } catch (error: any) {
-        const errMsg = `Error while handling clone remediation: ${error}`;
-        logger.error(errMsg);
-        throw createError(error.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errMsg);
+        logger.error(`Error while handling clone remediation for ${cloneDatabaseName}`, {
+            accountId,
+            databaseHostId,
+            databaseInstanceId,
+            error
+        });
+        throw createError(error.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, extractErrorMessage(error));
     }
 }
 
@@ -457,7 +466,7 @@ async function deleteClone(
         );
         logger.debug(`Successfully deleted clone ${cloneDatabaseName}`);
     } catch (error: any) {
-        const errorMsg = `Error while deleting clone ${cloneDatabaseName}: ${error.message}`;
+        const errorMsg = `Error while deleting clone ${cloneDatabaseName}: ${extractErrorMessage(error)}`;
         logger.error(errorMsg, error);
 
         throw createError(error.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
@@ -526,8 +535,8 @@ async function refreshClone(
 
         logger.debug(`Successfully refreshed sandbox ${cloneDatabaseName} to the latest snapshot`);
     } catch (error: any) {
-        const errorMsg = `Error while refreshing sandbox ${cloneDatabaseName} in database host ${databaseHostId}: ${error.message}`;
-        logger.error(errorMsg, error);
+        const errorMsg = `Error while refreshing sandbox ${cloneDatabaseName}: ${extractErrorMessage(error)}`;
+        logger.error(errorMsg, { accountId, databaseHostId, databaseInstanceId, error });
         throw createError(error.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
     }
 }

@@ -6,7 +6,7 @@ import createError from 'http-errors';
 import { CLONE_ACTION, HttpErrorCodes, OTHER_CLONE, SSM_COMMAND_CACHE_TYPE } from '../../../utils/consts';
 import getLogger from '../../../utils/logger';
 import { CloneAssessment, CloneDetail, ClonedVolumeDetail, Metadata } from '../../../utils/common-types';
-import { IS_DEMO_FLOW } from '../../../utils/utils';
+import { IS_DEMO_FLOW, extractErrorMessage } from '../../../utils/utils';
 import { resetCache } from '../../../utils/cache';
 import { AssessmentCategoriesOracle } from '../../../utils/continous-optimization-consts';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
@@ -33,6 +33,7 @@ import {
     CloneOptimizePerHostRequestBodyType
 } from '../../../routes/types/oracle-continuous-optimization.types';
 import { isPdbGroupedVolumes } from '../assessment-utils';
+import { assertVolumesHaveNoSnapmirror } from '../ontap-operations';
 import { updateAllOptimizedClonesDemoFlow } from '../../demo-operations';
 import { triggerOracleAssessmentAfterOptimization } from './assessment-operations';
 import { buildCloneCleanupScript } from './ssm-scripts/clone-cleanup-scripts';
@@ -453,6 +454,8 @@ async function deleteClone(
         const effectiveVolumeUuids = IS_DEMO_FLOW ? ['test-volume-uuid'] : volumeUuids;
         const isIscsi = protocol === 'iSCSI';
 
+        await assertVolumesHaveNoSnapmirror(accountId, credentialsId, region, fsxId, effectiveVolumeUuids);
+
         const ontapBase = await buildOntapProxyBase(accountId, credentialsId, effectiveFsxId, region);
         const junctionPathsByUuid = isIscsi ? {} : await fetchCloneJunctionPaths(ontapBase, effectiveVolumeUuids);
 
@@ -548,8 +551,8 @@ async function deleteClone(
             cleanedPaths: parsed?.cleanedPaths
         });
     } catch (error: unknown) {
-        const errorMessage = `Failed to delete Oracle clone ${cloneDatabaseName} in host ${databaseHostId}`;
-        logger.error(errorMessage, { accountId, databaseHostId, databaseInstanceId, error });
+        const errorMessage = extractErrorMessage(error);
+        logger.error(errorMessage, { accountId, databaseHostId, databaseInstanceId, cloneDatabaseName });
         throw createError(
             (error as { statusCode?: number }).statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR,
             errorMessage
@@ -687,8 +690,8 @@ async function optimizeClone(
         jobStatus = JOBSTATUS.COMPLETED;
     } catch (error: unknown) {
         jobStatus = JOBSTATUS.FAILED;
-        jobError = `Failed to optimize Oracle clone ${cloneDatabaseName} in host ${databaseHostId}`;
-        logger.error(jobError, { accountId, databaseHostId, databaseInstanceId, error });
+        jobError = extractErrorMessage(error);
+        logger.error(jobError, { accountId, databaseHostId, databaseInstanceId });
     } finally {
         if (childCloneJobId) {
             await updateJobDetails(accountId, childCloneJobId, {

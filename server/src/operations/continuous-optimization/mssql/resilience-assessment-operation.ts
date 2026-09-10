@@ -12,7 +12,12 @@ import {
 } from '../../../utils/continous-optimization-consts';
 import { MSSQL_GOLDEN_CONFIG, MSSQL_HEARTBEAT_SETTINGS } from './golden-config';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE, HttpErrorCodes, SqlServerDeploymentModel } from '../../../utils/consts';
-import { IS_DEMO_FLOW, parseMultipleCommandResponse, sqlResponseParsing } from '../../../utils/utils';
+import {
+    IS_DEMO_FLOW,
+    extractErrorMessage,
+    parseMultipleCommandResponse,
+    sqlResponseParsing
+} from '../../../utils/utils';
 import {
     DatabaseInstance,
     DatabaseInstanceMetadata,
@@ -48,7 +53,7 @@ import {
     AOAG_INSTANCE_ROLE,
     type LunIgroupMapping
 } from '../../workloads/mssql/high-availability-scripts';
-import { collectAllOntapRecords, buildOntapProxyBase, extractErrorMessage } from '../../../lib/ontap/ontap-gateway';
+import { collectAllOntapRecords, buildOntapProxyBase } from '../../../lib/ontap/ontap-gateway';
 
 const logger = getLogger();
 

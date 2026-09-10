@@ -533,7 +533,8 @@ describe('deleteClone (Node-side ONTAP cleanup)', () => {
             ['vol-iscsi-1']
         );
 
-        expect(getCapturedProxyGetUris().some(uri => uri.includes('api/storage/volumes'))).toBe(false);
+        expect(getCapturedProxyGetUris().some(uri => uri.includes('snapmirror.is_protected'))).toBe(true);
+        expect(getCapturedProxyGetUris().some(uri => uri.includes('fields=nas.path'))).toBe(false);
         expect(getCapturedProxyPatchUris().some(uri => uri.includes('api/storage/volumes/vol-iscsi-1'))).toBe(false);
         expect(getCapturedProxyDeleteUris().some(uri => uri.includes('api/storage/volumes/vol-iscsi-1'))).toBe(true);
     });
@@ -561,7 +562,7 @@ describe('deleteClone (Node-side ONTAP cleanup)', () => {
                 'parent-job-3',
                 ['vol-nfs-2']
             )
-        ).rejects.toThrow(/Failed to delete Oracle clone/);
+        ).rejects.toThrow(/SSM execution failed/);
 
         expect(getCapturedProxyDeleteUris()).toEqual([]);
         expect(getCapturedProxyPatchUris().some(uri => uri.includes('api/storage/volumes/vol-nfs-2'))).toBe(false);
@@ -599,7 +600,7 @@ describe('deleteClone (Node-side ONTAP cleanup)', () => {
                 'parent-job-4',
                 ['vol-multi-a', 'vol-multi-b']
             )
-        ).rejects.toThrow(/Failed to delete Oracle clone/);
+        ).rejects.toThrow(/ONTAP volume deletion failed for/);
 
         const deleteUris = getCapturedProxyDeleteUris();
         expect(deleteUris.some(uri => uri.includes('api/storage/volumes/vol-multi-a'))).toBe(true);
@@ -741,7 +742,7 @@ describe('deleteClone (Node-side ONTAP cleanup)', () => {
                     'parent-job-9',
                     ['vol-nfs-8']
                 )
-            ).rejects.toThrow(/Failed to delete Oracle clone/);
+            ).rejects.toThrow(/Proxy-forwarder GET/);
 
             expect(ssmSpy).not.toHaveBeenCalled();
             expect(getCapturedProxyDeleteUris().some(uri => uri.includes('api/storage/volumes/vol-nfs-8'))).toBe(false);

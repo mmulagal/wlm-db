@@ -49,6 +49,7 @@ import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 import {
     convertToBytes,
     divideArrayIntoChunks,
+    extractErrorMessage,
     getArnPartition,
     getFsxArn,
     sleep,
@@ -66,7 +67,6 @@ import {
     getVolumeByName,
     getCifsShareVolumes,
     buildOntapProxyBase,
-    extractErrorMessage,
     type OntapGatewayTarget,
     type OntapLunRecord,
     type OntapVolumeRecord,

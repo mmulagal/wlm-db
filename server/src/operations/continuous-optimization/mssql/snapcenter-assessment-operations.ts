@@ -15,8 +15,8 @@ import type { DriftAssessmentDetail } from '../../../utils/wad-consts';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import { registerJob } from '../../database/job-operations';
-import { sqlResponseParsing } from '../../../utils/utils';
-import { collectAllOntapRecords, buildOntapProxyBase, extractErrorMessage } from '../../../lib/ontap/ontap-gateway';
+import { extractErrorMessage, sqlResponseParsing } from '../../../utils/utils';
+import { collectAllOntapRecords, buildOntapProxyBase } from '../../../lib/ontap/ontap-gateway';
 
 import { SNAPCENTER_ASSESSMENT_SCRIPT, type SnapCenterOntapData } from './ssm-scripts/snapcenter-assessment-scripts';
 import { MSSQL_GOLDEN_CONFIG } from './golden-config';

@@ -19,7 +19,14 @@ import {
     AuditStatus,
     SqlServerDeploymentModel
 } from '../utils/consts';
-import { IS_DEMO_FLOW, getDatabaseInstanceName, retryWithDelay, sleep, sqlResponseParsing } from '../utils/utils';
+import {
+    IS_DEMO_FLOW,
+    extractErrorMessage,
+    getDatabaseInstanceName,
+    retryWithDelay,
+    sleep,
+    sqlResponseParsing
+} from '../utils/utils';
 import {
     setLunSignature as setLunSignatureScript,
     getDbMappedOntapVolumes,
@@ -77,6 +84,7 @@ import { sqlQueryExecution, sqlQueryExecutionWithAuth } from './workloads/mssql/
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import { GET_SANDBOXES } from './workloads/mssql/queries';
 import { DatabaseInstanceRecord } from '../lib/database/db-types';
+import { assertVolumesHaveNoSnapmirror } from './continuous-optimization/ontap-operations';
 
 const logger = getLogger();
 const TIME_WINDOW = 60; // 60 seconds
@@ -1971,7 +1979,7 @@ async function startCleanup(
         status = JOBSTATUS.COMPLETED;
         return dropJsonResp;
     } catch (e: any) {
-        logger.error(`Failed to perform cleanup for ${name} ${destDetails.database}`);
+        logger.error(`Failed to perform cleanup for ${name} ${destDetails.database}: ${extractErrorMessage(e)}`);
         status = JOBSTATUS.FAILED;
         errorMsg = `Failed to clean up ${e.message}`;
         throw createError(e.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMsg);
@@ -2309,6 +2317,13 @@ async function performSandboxDeletion(
             isSandboxOptimizeFlow
         )) as VolumeLunMapping;
 
+        const volumeUuids = uniq([
+            ...mappings.data.map(vol => vol.volumeUuid),
+            ...mappings.log.map(vol => vol.volumeUuid)
+        ]);
+
+        await assertVolumesHaveNoSnapmirror(accountId, credentialsId, region, resDetails.fsxId, volumeUuids);
+
         await startCleanup(
             accountId,
             credentialsId,
@@ -2316,7 +2331,7 @@ async function performSandboxDeletion(
             parentJobId,
             resDetails,
             resDetails,
-            uniq([...mappings.data.map(vol => vol.volumeUuid), ...mappings.log.map(vol => vol.volumeUuid)]),
+            volumeUuids,
             uniq([...mappings.data.map(map => map.fileName), ...mappings.log.map(map => map.fileName)]),
             isOptimizeFlow,
             isSandboxOptimizeFlow

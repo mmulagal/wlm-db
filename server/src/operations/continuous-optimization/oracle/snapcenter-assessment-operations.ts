@@ -15,7 +15,8 @@ import { callSsmExecution } from '../../aws/ssm-operations';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import { registerJob } from '../../database/job-operations';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../../workloads/oracle/consts';
-import { collectAllOntapRecords, buildOntapProxyBase, extractErrorMessage } from '../../../lib/ontap/ontap-gateway';
+import { collectAllOntapRecords, buildOntapProxyBase } from '../../../lib/ontap/ontap-gateway';
+import { extractErrorMessage } from '../../../utils/utils';
 import { SNAPCENTER_ASSESSMENT_SCRIPT, type SnapCenterOntapData } from './ssm-scripts/snapcenter-assessment-scripts';
 import ORACLE_GOLDEN_CONFIG from './golden-config';
 

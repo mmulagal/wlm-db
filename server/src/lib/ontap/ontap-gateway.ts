@@ -5,7 +5,7 @@ import throat from 'throat';
 import { AWS_FSX_TYPE, HttpErrorCodes } from '../../utils/consts';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 import getLogger from '../../utils/logger';
-import { sleep } from '../../utils/utils';
+import { extractErrorMessage, sleep } from '../../utils/utils';
 
 import { describeFSx } from '../aws/fsx';
 import { callProxyForwarder, type ProxyHttpMethod } from '../cloud-manager/proxy-forwarder';
@@ -89,6 +89,7 @@ interface OntapVolumeRecord {
     };
     svm?: { name?: string; uuid?: string };
     nas?: { path?: string };
+    snapmirror?: { is_protected?: boolean };
     autosize?: { mode?: string };
     space?: {
         size?: number;
@@ -340,10 +341,6 @@ async function getOntapJobStatusForBase(
 
 function isOntapPagedResponse<T>(value: unknown): value is OntapPage<T> {
     return typeof value === 'object' && value !== null && Array.isArray((value as OntapPage<T>).records);
-}
-
-function extractErrorMessage(reason: unknown): string {
-    return reason instanceof Error ? reason.message : String(reason);
 }
 
 /** Builds the `{ accountId, targetId, endpoint }` base shared by all proxy-forwarder ONTAP calls for an FSx file system. */
@@ -875,7 +872,6 @@ export {
     resolveVolumesByJunction,
     addInitiatorsToIgroup,
     buildOntapProxyBase,
-    extractErrorMessage,
     unwrapOntapSettled,
     extractBaseIqn,
     findIgroupForInitiators,

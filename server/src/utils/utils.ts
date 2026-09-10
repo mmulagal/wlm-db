@@ -1696,6 +1696,10 @@ function coerceBooleanFromLooseTrue(value: unknown): boolean {
     return value === true || value === 'true' || String(value).toLowerCase() === 'true';
 }
 
+function extractErrorMessage(reason: unknown): string {
+    return reason instanceof Error ? reason.message : String(reason);
+}
+
 export {
     filterSqlAmis,
     generateDeploymentParams,
@@ -1794,5 +1798,6 @@ export {
     parseAssessmentFileContent,
     decodeBase64FileContent,
     validateWithSchema,
-    isDemoFlow
+    isDemoFlow,
+    extractErrorMessage
 };

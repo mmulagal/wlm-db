@@ -3,12 +3,12 @@ import {
     collectOntapRecordsBatched,
     unwrapOntapSettled,
     buildOntapProxyBase,
-    extractErrorMessage,
     OntapLunRecord,
     OntapVolumeRecord
 } from '../../../lib/ontap/ontap-gateway';
 import { DirectOntapAssessmentData } from '../../workloads/mssql/storage-scripts';
 import getLogger from '../../../utils/logger';
+import { extractErrorMessage } from '../../../utils/utils';
 
 const logger = getLogger();
 

@@ -6,7 +6,7 @@ import {
     DEFAULT_FSX_MTU_VALUE
 } from '../../../utils/continous-optimization-consts';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../../utils/consts';
-import { IS_DEMO_FLOW } from '../../../utils/utils';
+import { IS_DEMO_FLOW, extractErrorMessage } from '../../../utils/utils';
 import { Metadata, ResourceAssessmentData, WorkloadInstance } from '../../../utils/common-types';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { getInstanceInfo } from '../../database/database-operations';
@@ -15,7 +15,7 @@ import { FETCH_MSSQL_INSTANCE_MTU_DETAILS } from '../../workloads/mssql/mtu-scri
 import type { AssessmentErrorItemType } from '../../../routes/types/continuous-optimization.types';
 import type { MssqlAssessmentItemType } from '../../../routes/types/mssql-continuous-optimisation.types';
 import { MSSQL_GOLDEN_CONFIG } from './golden-config';
-import { collectAllOntapRecords, buildOntapProxyBase, extractErrorMessage } from '../../../lib/ontap/ontap-gateway';
+import { collectAllOntapRecords, buildOntapProxyBase } from '../../../lib/ontap/ontap-gateway';
 
 const logger = getLogger();
 
