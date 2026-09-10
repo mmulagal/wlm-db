@@ -827,6 +827,144 @@ describe('snapshot-policy assessment (storage/configuration)', () => {
     });
 });
 
+describe('calculateStorageDrift user-database-layout roles', () => {
+    const databaseFiles = (driveLetter: string, volumeName: string, databaseName: string) => ({
+        driveLetter,
+        lunPath: lunPath(volumeName, 'sql'),
+        ontapVolumeUuid: `uuid-${volumeName}`,
+        databaseDetails: [{ name: databaseName, sizeInMb: 8 }]
+    });
+
+    it('should mark data-files-location and log-files-location as OPTIMIZED when they use separate drives', async () => {
+        const drift = await runStorageDrift(
+            minimalStorageAssessment({
+                layout: {
+                    'user-database-layout': {
+                        data: [databaseFiles('E:', 'stddata', 'Shiro')],
+                        log: [databaseFiles('L:', 'stdlog', 'Shiro')],
+                        tempDb: []
+                    }
+                } as unknown as StorageAssessment['layout']
+            })
+        );
+
+        const dataEntry = drift.find(item => 'id' in item && item.id === 'data-files-location');
+        const logEntry = drift.find(item => 'id' in item && item.id === 'log-files-location');
+        expect(dataEntry).toMatchObject({ status: AssessmentStatus.OPTIMIZED, current: 'Separate drive' });
+        expect(logEntry).toMatchObject({ status: AssessmentStatus.OPTIMIZED, current: 'Separate drive' });
+    });
+
+    it('should flag both findings when data and log share drives across databases', async () => {
+        const drift = await runStorageDrift(
+            minimalStorageAssessment({
+                layout: {
+                    'user-database-layout': {
+                        data: [databaseFiles('E:', 'stddata', 'Shiro'), databaseFiles('D:', 'stdlog', 'messup')],
+                        log: [databaseFiles('D:', 'stdlog', 'Shiro'), databaseFiles('E:', 'stddata', 'messup')],
+                        tempDb: []
+                    }
+                } as unknown as StorageAssessment['layout']
+            })
+        );
+
+        const dataEntry = drift.find(item => 'id' in item && item.id === 'data-files-location');
+        const logEntry = drift.find(item => 'id' in item && item.id === 'log-files-location');
+        expect(dataEntry).toMatchObject({
+            status: AssessmentStatus.NOT_OPTIMIZED,
+            current: 'Shared drive with log/data files'
+        });
+        expect(logEntry).toMatchObject({
+            status: AssessmentStatus.NOT_OPTIMIZED,
+            current: 'Shared drive with log/data files'
+        });
+    });
+
+    it('should list only the misplaced side databases with their own placement details', async () => {
+        const drift = await runStorageDrift(
+            minimalStorageAssessment({
+                layout: {
+                    'user-database-layout': {
+                        data: [databaseFiles('E:', 'stddata', 'Shiro'), databaseFiles('L:', 'stdlog', 'Treebogger')],
+                        log: [databaseFiles('L:', 'stdlog', 'Shiro'), databaseFiles('G:', 'otherlog', 'Treebogger')],
+                        tempDb: []
+                    }
+                } as unknown as StorageAssessment['layout']
+            })
+        );
+
+        const dataEntry = drift.find(item => 'id' in item && item.id === 'data-files-location');
+        const logEntry = drift.find(item => 'id' in item && item.id === 'log-files-location');
+        expect(dataEntry).toMatchObject({
+            objectsInViolation: ['Treebogger'],
+            totalObjectsInViolation: 1,
+            violationDetails: [
+                {
+                    objectName: 'placement',
+                    value: 'Treebogger',
+                    objectType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
+                    additionalInfo: { lunPath: lunPath('stdlog', 'sql'), driveLetter: 'L:' }
+                }
+            ]
+        });
+        expect(logEntry).toMatchObject({
+            objectsInViolation: ['Shiro'],
+            violationDetails: [
+                {
+                    objectName: 'placement',
+                    value: 'Shiro',
+                    objectType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
+                    additionalInfo: { lunPath: lunPath('stdlog', 'sql'), driveLetter: 'L:' }
+                }
+            ]
+        });
+    });
+
+    it('should flag both findings when data and log share a volume on different drive letters', async () => {
+        const drift = await runStorageDrift(
+            minimalStorageAssessment({
+                layout: {
+                    'user-database-layout': {
+                        data: [databaseFiles('E:', 'shared', 'Shiro')],
+                        log: [databaseFiles('L:', 'shared', 'Treebogger')],
+                        tempDb: []
+                    }
+                } as unknown as StorageAssessment['layout']
+            })
+        );
+
+        const dataEntry = drift.find(item => 'id' in item && item.id === 'data-files-location');
+        expect(dataEntry).toMatchObject({
+            status: AssessmentStatus.NOT_OPTIMIZED,
+            current: 'Shared volume with log/data files'
+        });
+    });
+
+    it('should keep the shared-LUN verdict when a database has data and log on the same LUN', async () => {
+        const drift = await runStorageDrift(
+            minimalStorageAssessment({
+                layout: {
+                    'user-database-layout': {
+                        data: [databaseFiles('E:', 'stddata', 'Shiro')],
+                        log: [databaseFiles('E:', 'stddata', 'Shiro')],
+                        tempDb: []
+                    }
+                } as unknown as StorageAssessment['layout']
+            })
+        );
+
+        const dataEntry = drift.find(item => 'id' in item && item.id === 'data-files-location');
+        const logEntry = drift.find(item => 'id' in item && item.id === 'log-files-location');
+        expect(dataEntry).toMatchObject({
+            status: AssessmentStatus.NOT_OPTIMIZED,
+            current: 'Shared LUN with log files'
+        });
+        expect(logEntry).toMatchObject({
+            status: AssessmentStatus.NOT_OPTIMIZED,
+            current: 'Shared LUN with data files'
+        });
+    });
+});
+
 describe('calculateRegistryStorageLayoutDrift', () => {
     const registryInstance = (
         instanceName: string,

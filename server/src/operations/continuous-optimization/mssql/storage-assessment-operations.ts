@@ -295,6 +295,7 @@ function expandVolumeDataPerDatabaseForLayoutAssessment(data: DatabaseVolumeReco
     });
     return expandedData;
 }
+
 function expandDatabaseDetailForSizingAssessment(data: LogDriveDetails[]) {
     const expandedData: LogDriveDetails[] = [];
     data.forEach((volume: LogDriveDetails) => {
@@ -1093,6 +1094,8 @@ async function calculateStorageDrift(
             'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality';
         let severity = 'critical';
         let databasesInViolation: string[] = [];
+        let dataRoleViolations: string[] = [];
+        let logRoleViolations: string[] = [];
         goldenData = layoutConfigData.find(data => data.parameter === 'default-data-files-location');
         // DBS-5449: To address truncation databases databases sharing disk are combined. For layout assessment, we need to expand the data
         const dataVolumes = expandVolumeDataPerDatabaseForLayoutAssessment(
@@ -1144,6 +1147,30 @@ async function calculateStorageDrift(
         const databasesSharingDataLuns = Object.values(groupByDataLun).filter(count => count > 1);
         const databasesSharingLogLuns = Object.values(groupByLogLun).filter(count => count > 1);
 
+        // A drive/volume is mixed-role when one database keeps data files on it while another keeps
+        // log files there. Per-database checks above cannot see this, since each database on its own
+        // still looks separated: DBS-5449
+        const userDataVolumes = dataVolumes.filter(({ name }) => name !== 'msdb');
+        const userLogVolumes = logVolumes.filter(({ name }) => name !== 'msdb');
+        const dataDriveLetters = new Set(userDataVolumes.map(({ driveLetter }) => driveLetter));
+        const dataVolumeUuids = new Set(userDataVolumes.map(({ ontapVolumeUuid }) => ontapVolumeUuid));
+        const logDriveLetters = new Set(userLogVolumes.map(({ driveLetter }) => driveLetter));
+        const logVolumeUuids = new Set(userLogVolumes.map(({ ontapVolumeUuid }) => ontapVolumeUuid));
+
+        const dataFilesOnMixedRoleStorage = userDataVolumes.filter(
+            ({ driveLetter, ontapVolumeUuid }) =>
+                (driveLetter && logDriveLetters.has(driveLetter)) ||
+                (ontapVolumeUuid && logVolumeUuids.has(ontapVolumeUuid))
+        );
+        const logFilesOnMixedRoleStorage = userLogVolumes.filter(
+            ({ driveLetter, ontapVolumeUuid }) =>
+                (driveLetter && dataDriveLetters.has(driveLetter)) ||
+                (ontapVolumeUuid && dataVolumeUuids.has(ontapVolumeUuid))
+        );
+        const hasMixedRoleDrive = userDataVolumes.some(
+            ({ driveLetter }) => driveLetter && logDriveLetters.has(driveLetter)
+        );
+
         if (!isEmpty(databasesOnSameDataLogLun)) {
             dataFilesLayoutStatus = AssessmentStatus.NOT_OPTIMIZED;
             logFilesLayoutStatus = AssessmentStatus.NOT_OPTIMIZED;
@@ -1162,6 +1189,24 @@ async function calculateStorageDrift(
             recommendationString =
                 'Separate system databases from user databases to different drives/luns and different volumes';
             databasesInViolation = databasesOnSameDataLogVolume.map(data => data.name);
+        } else if (!isEmpty(dataFilesOnMixedRoleStorage) || !isEmpty(logFilesOnMixedRoleStorage)) {
+            dataFilesLayoutStatus = isEmpty(dataFilesOnMixedRoleStorage)
+                ? AssessmentStatus.OPTIMIZED
+                : AssessmentStatus.NOT_OPTIMIZED;
+            logFilesLayoutStatus = isEmpty(logFilesOnMixedRoleStorage)
+                ? AssessmentStatus.OPTIMIZED
+                : AssessmentStatus.NOT_OPTIMIZED;
+            currentDataFilesLabel = hasMixedRoleDrive
+                ? 'Shared drive with log/data files'
+                : 'Shared volume with log/data files';
+            currentLogFilesLabel = currentDataFilesLabel;
+            severity = hasMixedRoleDrive ? 'critical' : 'warning';
+            recommendationString =
+                'Dedicate each drive and volume to either data files or log files, so that a drive holding data files for one database does not hold log files for another';
+            // Each side lists only the databases misplaced on that side: a database can hold its data
+            // files on a mixed-role drive while its log files sit on a dedicated one.
+            dataRoleViolations = dataFilesOnMixedRoleStorage.map(data => data.name);
+            logRoleViolations = logFilesOnMixedRoleStorage.map(log => log.name);
         } else if (databasesAbove500Gb.length > 1) {
             if (
                 !isEmpty(databasesSharingDataVolumes) ||
@@ -1204,43 +1249,30 @@ async function calculateStorageDrift(
             databasesInViolation = databasesAbove500Gb.map(data => data.name);
         }
 
-        databasesInViolation = [...new Set(databasesInViolation)];
+        const dataFilesInViolation = [...new Set([...databasesInViolation, ...dataRoleViolations])];
+        const logFilesInViolation = [...new Set([...databasesInViolation, ...logRoleViolations])];
 
-        const dataViolationDetails: GenericViolationResponseType[] = databasesInViolation.flatMap(dbName => {
-            const dbs = dataLogVolumeDetails.filter(d => d.name === dbName);
-            const seen = new Set<string>();
-            return dbs
-                .filter(db => {
-                    const key = `${db.lunPath}|${db.driveLetter}`;
-                    if (seen.has(key)) {
-                        return false;
-                    }
-                    seen.add(key);
-                    return true;
-                })
-                .map(db => ({
+        // Placement details come from the side being reported, so a database flagged for its data
+        // files does not surface log drive/LUN paths, and vice versa.
+        const placementDetails = (databaseNames: string[], layoutVolumes: DatabaseVolumeRecord[]) =>
+            layoutVolumes
+                .filter(({ name }) => databaseNames.includes(name))
+                .map(({ name, lunPath, driveLetter }) => ({
                     objectName: 'placement',
-                    value: dbName,
+                    value: name,
                     objectType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
-                    additionalInfo: { lunPath: db.lunPath ?? '', driveLetter: db.driveLetter ?? '' }
+                    additionalInfo: { lunPath: lunPath ?? '', driveLetter: driveLetter ?? '' }
                 }));
-        });
 
-        const logViolationDetails: GenericViolationResponseType[] = databasesInViolation.map(dbName => {
-            const db = dataLogVolumeDetails.find(d => d.name === dbName);
-            return {
-                objectName: 'placement',
-                value: dbName,
-                objectType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
-                additionalInfo: {
-                    lunPath: db?.logLunPath ?? '',
-                    driveLetter: db?.logDriveLetter ?? ''
-                }
-            };
-        });
+        const dataViolationDetails: GenericViolationResponseType[] = placementDetails(
+            dataFilesInViolation,
+            dataVolumes
+        );
+        const logViolationDetails: GenericViolationResponseType[] = placementDetails(logFilesInViolation, logVolumes);
 
         const dataFilesGoldenData = layoutConfigData.find(data => data.parameter === 'default-data-files-location');
         const logFilesGoldenData = layoutConfigData.find(data => data.parameter === 'default-log-files-location');
+        const databasesAssessed = new Set([...userDataVolumes, ...userLogVolumes].map(({ name }) => name)).size;
         driftAssessmentData.push(
             {
                 ...dataFilesGoldenData!,
@@ -1249,9 +1281,9 @@ async function calculateStorageDrift(
                 severity,
                 recommendation: recommendationString,
                 current: currentDataFilesLabel,
-                objectsInViolation: databasesInViolation,
-                totalObjectsAssessed: dataLogVolumeDetails.length,
-                totalObjectsInViolation: databasesInViolation.length,
+                objectsInViolation: dataFilesInViolation,
+                totalObjectsAssessed: databasesAssessed,
+                totalObjectsInViolation: dataFilesInViolation.length,
                 violationDetails: dataViolationDetails.length > 0 ? dataViolationDetails : undefined
             },
             {
@@ -1261,9 +1293,9 @@ async function calculateStorageDrift(
                 severity,
                 recommendation: recommendationString,
                 current: currentLogFilesLabel,
-                objectsInViolation: databasesInViolation,
-                totalObjectsAssessed: dataLogVolumeDetails.length,
-                totalObjectsInViolation: databasesInViolation.length,
+                objectsInViolation: logFilesInViolation,
+                totalObjectsAssessed: databasesAssessed,
+                totalObjectsInViolation: logFilesInViolation.length,
                 violationDetails: logViolationDetails.length > 0 ? logViolationDetails : undefined
             }
         );
