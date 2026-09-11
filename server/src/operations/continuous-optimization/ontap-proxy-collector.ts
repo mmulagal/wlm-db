@@ -1,4 +1,5 @@
 import throat from 'throat';
+import { DATABASE_TYPE } from '@prisma/client';
 import { Ec2FsxRelationship, Ec2WithStorage } from '../cloud-manager/tagging-service-operations';
 import { trackSubtask } from '../cloud-manager/tracker-operations';
 import {
@@ -66,17 +67,21 @@ async function collectOntapHeadroomData(
 function buildWadSnapcenterData(
     ec2: Ec2WithStorage,
     fileSystemId: string,
-    inventory: FsxOntapInventory
+    inventory: FsxOntapInventory,
+    workloadType: DATABASE_TYPE
 ): WadSnapcenterData {
-    const { volumeUuids } = getAttachedUuids(ec2, fileSystemId);
+    const { volumeUuids } = getAttachedUuids(ec2, fileSystemId, workloadType);
     return buildWadSnapcenterDataFromUuids([...volumeUuids], inventory);
 }
 
-function getAttachedUuids(ec2: Ec2WithStorage, fileSystemId: string) {
-    const volumes = ec2.fsxs.find(fsx => fsx.fileSystemId === fileSystemId)?.volumes ?? [];
+function getAttachedUuids(ec2: Ec2WithStorage, fileSystemId: string, workloadType: DATABASE_TYPE) {
+    const volumes = (ec2.fsxs.find(({ fileSystemId: id }) => id === fileSystemId)?.volumes ?? []).filter(
+        ({ workloadTypes = [] }) => workloadTypes.length === 0 || workloadTypes.includes(workloadType)
+    );
     return {
-        volumeUuids: new Set(volumes.map(v => v.volumeUuid)),
-        lunUuids: new Set(volumes.flatMap(({ luns = [] }) => luns.map(l => l.lunUuid)))
+        volumes,
+        volumeUuids: new Set(volumes.map(({ volumeUuid }) => volumeUuid)),
+        lunUuids: new Set(volumes.flatMap(({ luns = [] }) => luns.map(({ lunUuid }) => lunUuid)))
     };
 }
 
@@ -212,7 +217,7 @@ function toMssqlStorageAssessment(
     fileSystemId: string,
     inventory: FsxOntapInventory
 ): MssqlStorageAssessment {
-    const { volumeUuids, lunUuids } = getAttachedUuids(ec2, fileSystemId);
+    const { volumeUuids, lunUuids } = getAttachedUuids(ec2, fileSystemId, DATABASE_TYPE.mssql);
     return toMssqlStorageAssessmentFromUuids(fileSystemId, inventory, volumeUuids, lunUuids);
 }
 
@@ -221,10 +226,8 @@ function toOracleStorageAssessment(
     fileSystemId: string,
     inventory: FsxOntapInventory
 ): OracleStorageAssessment {
-    const { volumeUuids, lunUuids } = getAttachedUuids(ec2, fileSystemId);
-    const volumeRecords: OracleVolumeRecord[] = (
-        ec2.fsxs.find(({ fileSystemId: id }) => id === fileSystemId)?.volumes ?? []
-    ).flatMap(({ volumeUuid, volumeName, luns = [] }) => {
+    const { volumes, volumeUuids, lunUuids } = getAttachedUuids(ec2, fileSystemId, DATABASE_TYPE.oracle);
+    const volumeRecords: OracleVolumeRecord[] = volumes.flatMap(({ volumeUuid, volumeName, luns = [] }) => {
         const { svm } = inventory.volumesByUuid[volumeUuid] ?? {};
         const base = { volumeId: volumeUuid, volumeName, svmId: svm?.uuid, svmName: svm?.name };
         return luns.length > 0 ? luns.map(({ lunUuid: lunId, lunName }) => ({ ...base, lunId, lunName })) : [base];
@@ -265,18 +268,20 @@ function buildStorageCollectionResults(
                 return [];
             }
 
-            return ec2.workloadTypes.map(workloadType => ({
-                instanceId: ec2.instanceId,
-                fileSystemId,
-                fsxName,
-                workloadType,
-                storageAssessment:
-                    workloadType === 'mssql'
-                        ? toMssqlStorageAssessment(ec2, fileSystemId, inventory)
-                        : toOracleStorageAssessment(ec2, fileSystemId, inventory),
-                headroomData: inventory.headroomData,
-                snapcenterData: buildWadSnapcenterData(ec2, fileSystemId, inventory)
-            }));
+            return ec2.workloadTypes
+                .filter(workloadType => getAttachedUuids(ec2, fileSystemId, workloadType).volumes.length > 0)
+                .map(workloadType => ({
+                    instanceId: ec2.instanceId,
+                    fileSystemId,
+                    fsxName,
+                    workloadType,
+                    storageAssessment:
+                        workloadType === 'mssql'
+                            ? toMssqlStorageAssessment(ec2, fileSystemId, inventory)
+                            : toOracleStorageAssessment(ec2, fileSystemId, inventory),
+                    headroomData: inventory.headroomData,
+                    snapcenterData: buildWadSnapcenterData(ec2, fileSystemId, inventory, workloadType)
+                }));
         })
     );
 }

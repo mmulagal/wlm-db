@@ -83,6 +83,7 @@ interface FsxVolume {
     luns?: FsxLun[];
     protocol?: string;
     attachedDirectly?: boolean;
+    workloadTypes?: DATABASE_TYPE[];
 }
 
 interface FsxItem {
@@ -155,6 +156,7 @@ interface VolumeDraft {
     region: string;
     attachedDirectly: boolean;
     luns: Map<string, string>;
+    workloadTypes: Set<DATABASE_TYPE>;
 }
 
 interface Ec2Draft {
@@ -260,9 +262,16 @@ function attachStorage(
         fileSystemId: volume.fileSystemId,
         region: volume.region,
         attachedDirectly: false,
-        luns: new Map<string, string>()
+        luns: new Map<string, string>(),
+        workloadTypes: new Set<DATABASE_TYPE>()
     };
     draft.volumes.set(volume.ontapUuid, volumeDraft);
+    workloads.forEach(({ workload }) => {
+        const type = toDatabaseType(workload);
+        if (type) {
+            volumeDraft.workloadTypes.add(type);
+        }
+    });
 
     if (lun) {
         volumeDraft.luns.set(lun.uuid, lun.name);
@@ -282,7 +291,8 @@ function toFsxItems(volumes: Map<string, VolumeDraft>, fsxNameById: Map<string, 
         fileSystemId,
         region,
         attachedDirectly,
-        luns
+        luns,
+        workloadTypes
     } of volumes.values()) {
         const fsxName = fsxNameById.get(fileSystemId);
         const fsx = fsxByFileSystem.get(fileSystemId) ?? {
@@ -300,6 +310,7 @@ function toFsxItems(volumes: Map<string, VolumeDraft>, fsxNameById: Map<string, 
             volumeName,
             attachedDirectly,
             protocol: luns.size > 0 ? STORAGE_PROTOCOLS.ISCSI : STORAGE_PROTOCOLS.NFS,
+            workloadTypes: [...workloadTypes],
             ...(luns.size > 0 && {
                 luns: [...luns.entries()].map(([lunUuid, lunName]) => ({ id: lunUuid, lunUuid, lunName }))
             })
@@ -361,6 +372,12 @@ async function buildEc2FsxRelationship(
     );
 
     const ec2ById = new Map(ec2Instances.map(ec2 => [ec2.instanceId, ec2]));
+    const typesByEc2 = new Map(
+        ec2Instances.map(({ instanceId, workloads = [] }) => [
+            instanceId,
+            new Set(workloads.flatMap(({ workload }) => toDatabaseType(workload) ?? []))
+        ])
+    );
     const fsxNameById = new Map(
         fsxFileSystems.map(({ fileSystemId, tags = [] }) => [
             fileSystemId,
@@ -377,18 +394,24 @@ async function buildEc2FsxRelationship(
     const draftByEc2 = new Map<string, Ec2Draft>();
 
     for (const { computeId, storageId, storageType } of relationships) {
-        if (ec2ById.has(computeId)) {
+        const hostTypes = typesByEc2.get(computeId);
+        if (hostTypes?.size) {
             if (storageType === 'ontap_volumes') {
                 const volume = fsxByOntapUuid.get(storageId);
-                if (volume) {
-                    const workloads = [...(volume.workloads ?? []), ...(ontapWorkloadsByUuid.get(storageId) ?? [])];
+                const workloads = [...(volume?.workloads ?? []), ...(ontapWorkloadsByUuid.get(storageId) ?? [])].filter(
+                    ({ workload }) => hostTypes.has(toDatabaseType(workload)!)
+                );
+                if (volume && workloads.length > 0) {
                     attachStorage(draftByEc2, computeId, volume, workloads);
                 }
             } else if (storageType === 'ontap_luns') {
                 const lun = lunByUuid.get(storageId);
                 const volume = lun && fsxByFileSystemAndName.get(`${lun.fileSystemId}::${lun.volumeName}`);
-                if (lun && volume) {
-                    attachStorage(draftByEc2, computeId, volume, lun.workloads ?? [], lun);
+                const workloads = (lun?.workloads ?? []).filter(({ workload }) =>
+                    hostTypes.has(toDatabaseType(workload)!)
+                );
+                if (lun && volume && workloads.length > 0) {
+                    attachStorage(draftByEc2, computeId, volume, workloads, lun);
                 }
             }
         }
@@ -397,9 +420,10 @@ async function buildEc2FsxRelationship(
     const ec2s: Ec2WithStorage[] = [];
     for (const [instanceId, { volumes, storageWorkloads }] of draftByEc2) {
         const { region: ec2Region, vpcId, platform, workloads: ec2Workloads } = ec2ById.get(instanceId)!;
+        const workloadTypes = [...new Set(storageWorkloads.flatMap(({ workload }) => toDatabaseType(workload) ?? []))];
         const workloads = dedupeDatabaseWorkloads([...(ec2Workloads ?? []), ...storageWorkloads]);
         const fsxs = toFsxItems(volumes, fsxNameById);
-        if (workloads.length > 0 && fsxs.length > 0) {
+        if (workloadTypes.length > 0 && fsxs.length > 0) {
             ec2s.push({
                 instanceId,
                 region: ec2Region,
@@ -407,13 +431,7 @@ async function buildEc2FsxRelationship(
                 // EC2 reports `platform` only for Windows instances; everything else is Linux.
                 operatingSystem: platform?.toLowerCase() === WINDOWS ? WINDOWS : LINUX,
                 workloads,
-                workloadTypes: [
-                    ...new Set(
-                        workloads
-                            .map(({ workload }) => toDatabaseType(workload))
-                            .filter((type): type is DATABASE_TYPE => type !== undefined)
-                    )
-                ],
+                workloadTypes,
                 fsxs
             });
         }
