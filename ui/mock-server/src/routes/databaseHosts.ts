@@ -80,7 +80,7 @@ router.get(`${BASE_URL}/v1/jobs/summary`, async (req: {}, res: any) => {
 
 router.get(`${BASE_URL}/v1/jobs/summary/timeline`, async (req: {}, res: any) => {
     setTimeout(() => {
-        generateResponse(res, 200, JobsSummaryTimeline['30']);
+        generateResponse(res, 200, { items: JobsSummaryTimeline['30'] });
     }, 30);
 });
 

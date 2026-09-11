@@ -1,8 +1,8 @@
 export interface CredentialsRes {
-    [index: number]: {
+    items: {
         credentialsId: string;
         name: string;
         arn: string;
         providerAccountId: string;
-    };
+    }[];
 }

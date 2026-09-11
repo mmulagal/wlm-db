@@ -20,7 +20,7 @@ router.get(`${BASE_URL}/v1/configs`, async (req: {}, res: any) => {
         },
     ];
     setTimeout(() => {
-        generateResponse(res, 200, retData);
+        generateResponse(res, 200, { items: retData });
     }, 30);
 });
 

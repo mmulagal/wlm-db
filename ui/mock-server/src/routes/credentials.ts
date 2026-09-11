@@ -4,7 +4,7 @@ import { CredentialsRes } from '../types/credentialsTypes';
 const router = require('express').Router();
 
 //Get credentials mock response
-router.get(`${BASE_URL}/v1/credentials/:credentialsType`, async (req: {}, res: CredentialsRes) => {
+router.get(`${BASE_URL}/v1/credentials/:credentialsType`, async (req: {}, res: any) => {
     const retData = [
         {
             credentialsId: '3ad8702c-a2fd-48d2-be50-1ba6ce83acd5',
@@ -19,7 +19,7 @@ router.get(`${BASE_URL}/v1/credentials/:credentialsType`, async (req: {}, res: C
             providerAccountId: '464262061436'
         }
     ];
-    generateResponse(res, 200, retData);
+    generateResponse(res, 200, { items: retData } as CredentialsRes);
 });
 
 export default router;

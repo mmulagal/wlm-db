@@ -22,6 +22,8 @@ import { DatabaseTables, BatchEntry } from './types/resourceTypes';
 import { delay, generateRandomDBName, sortListOfDict } from './utilityFunctions';
 import { SELECT_CONFIG } from './appConstants';
 
+const unwrapItems = (response: any) => (Array.isArray(response) ? response : (response?.items ?? []));
+
 // Place the relevant headers on all requests:
 const prepareHeaders = (
     headers: Headers,
@@ -243,7 +245,8 @@ export const awsApi = createApi({
             query: () => ({ url: 'v1/fsx-4gbps-supported-regions' })
         }),
         getCredentials: builder.query({
-            query: ({ credentialsType }) => ({ url: `v1/credentials/${credentialsType}` })
+            query: ({ credentialsType }) => ({ url: `v1/credentials/${credentialsType}` }),
+            transformResponse: unwrapItems
         }),
         getRegions: builder.query({
             query: ({ credentialId }) => ({ url: `v1/credentials/${credentialId}/fsx/regions` })
@@ -359,7 +362,7 @@ export const configApi = createApi({
     endpoints: builder => ({
         getConfigList: builder.query({
             query: () => ({ url: 'v1/configs' }),
-            transformResponse: response => (response ? sortListOfDict(response, 'creationTime', false) : [])
+            transformResponse: response => sortListOfDict(unwrapItems(response), 'creationTime', false)
         }),
         getConfigData: builder.query({
             query: ({ configId }) => ({ url: `v1/configs/${configId}` }),
@@ -508,7 +511,8 @@ export const jobMonitoringApi = createApi({
             query: ({ startTime, endTime }) => `v1/jobs/summary?startTime=${startTime}&endTime=${endTime}`
         }),
         getJobsSummaryTimelineData: builder.query({
-            query: ({ startTime, endTime }) => `v1/jobs/summary/timeline?startTime=${startTime}&endTime=${endTime}`
+            query: ({ startTime, endTime }) => `v1/jobs/summary/timeline?startTime=${startTime}&endTime=${endTime}`,
+            transformResponse: unwrapItems
         })
     })
 });
@@ -532,7 +536,8 @@ export const headersApi = createApi({
     baseQuery: dynamicBaseQuery,
     endpoints: builder => ({
         getHeadersCredentials: builder.query({
-            query: ({ credentialsType }) => ({ url: `v1/credentials/${credentialsType}` })
+            query: ({ credentialsType }) => ({ url: `v1/credentials/${credentialsType}` }),
+            transformResponse: unwrapItems
         }),
         getHeadersRegions: builder.query({
             query: ({ credentialId }) => ({ url: `v1/credentials/${credentialId}/fsx/regions` })
