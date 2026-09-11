@@ -55,33 +55,44 @@ If($ValidWindowsVersion -ne $true) {
     exit(1)
 }
 
-#Validate SQL server version
-$sqlServiceList = Get-WmiObject win32_service | ?{$_.DisplayName -like 'sql server (*'}
-Write-Host "SQL service list: $sqlServiceList"
-$ValidSqlVersion = $false
-ForEach ($sqlService in $sqlServiceList) {
-$sqlServiceBinaryPath = $sqlService.PathName  -Replace "-s.*", ""
-      If (Test-Path $sqlServiceBinaryPath.Replace('"', '')) {
-        $SqlVersion = Invoke-Expression -Command "(dir $sqlServiceBinaryPath).VersionInfo"}
-        Write-Host "VersionInfo:"
-        Write-Host $SqlVersion
-        Write-Host "Path:$sqlServiceBinaryPath"
-        Write-Host "Version:",$SqlVersion.ProductVersion
-        $ValidSqlVersion = $SqlVersion.ProductVersion -match '^1[3-9]'
-        If($ValidSqlVersion -eq $true) {
-        break
-        }    
-        
- }
-If($ValidSqlVersion -ne $true) {
-    $FailureReason = "Supported SQL server versions are Microsoft SQL Server 2016 and above. Check if SQL server is installed and is of supported version."
-    Write-Output @{status= "Failed"; reason=$FailureReason} | ConvertTo-Json -Compress
-    if ($IsTerraform) {
-        throw $FailureReason
+#Validate SQL server pre-installation for Standalone
+If ($SQLDeploymentMode -ne 'fci') {
+    $sqlServiceList = Get-WmiObject win32_service | ?{$_.DisplayName -like 'sql server (*'}
+    if ($sqlServiceList.Count -eq 0) {
+        $FailureReason = "No SQL server services found."
+        Write-Output @{status= "Failed"; reason=$FailureReason} | ConvertTo-Json -Compress
+        if ($IsTerraform) {
+            throw $FailureReason
+        }
+        Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
+        Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $InstanceId
+        exit(1)
     }
-    #Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
-    #Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $InstanceId
-    #exit(1)
+    Write-Host "SQL service list: $sqlServiceList"
+    $ValidSqlVersion = $false
+    ForEach ($sqlService in $sqlServiceList) {
+        $sqlServiceBinaryPath = $sqlService.PathName  -Replace "-s.*", ""
+        If (Test-Path $sqlServiceBinaryPath.Replace('"', '')) {
+            $SqlVersion = Invoke-Expression -Command "(dir $sqlServiceBinaryPath).VersionInfo"}
+            Write-Host "VersionInfo:"
+            Write-Host $SqlVersion
+            Write-Host "Path:$sqlServiceBinaryPath"
+            Write-Host "Version:",$SqlVersion.ProductVersion
+            $ValidSqlVersion = $SqlVersion.ProductVersion -match '^1[3-9]'
+            If($ValidSqlVersion -eq $true) {
+                break
+            }
+        }
+        If($ValidSqlVersion -ne $true) {
+        $FailureReason = "Supported SQL server versions are Microsoft SQL Server 2016 and above. Check if SQL server is installed and is of supported version."
+        Write-Output @{status= "Failed"; reason=$FailureReason} | ConvertTo-Json -Compress
+        if ($IsTerraform) {
+            throw $FailureReason
+        }
+        Start-Process "cfn-signal.exe" -ArgumentList "-e 1 -r $FailureReason $WaitHandler" -Wait -NoNewWindow
+        Send-CFNResourceSignal -StackName $Stackname -Status FAILURE -LogicalResourceId $ResourceID -UniqueId $InstanceId
+        exit(1)
+        }
 }
 
 #Check if image was created to be part of domain and if domain passed is same.
