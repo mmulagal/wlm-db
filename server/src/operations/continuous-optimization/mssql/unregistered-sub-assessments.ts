@@ -5,15 +5,19 @@ import {
     AWSBackupAssessment,
     CloneAssessment,
     ComputeAssessment,
-    StorageAssessment,
-    VolumeRecord
+    StorageAssessment
 } from '../../../utils/common-types';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { isFleetManagerCollectionFailure } from '../../aws/ssm-fleet-manager-operations';
 import { resolveAwsAccountIdFromCredentials } from '../../cloud-manager/credentials-operations';
-import { buildCloneAssessmentFromOntapVolumes } from '../clone-assessment-utils';
 import { runComputeAssessment } from '../compute-assessment-operations';
-import { assessAwsBackupForVolumes, mergeAwsBackupAssessments } from '../resilience-awsBackup-operations';
+import {
+    runUnregisteredOntapSubAssessment,
+    toMssqlFilesystemVolumes,
+    type UnregisteredSubAssessmentResult
+} from '../assessment-utils';
+import { runUnregisteredAwsBackupSubAssessment } from '../resilience-awsBackup-operations';
+import { runUnregisteredCloneSubAssessment } from '../clone-assessment-utils';
 import {
     runLayoutAssessment,
     getMultipathConfig,
@@ -24,11 +28,6 @@ import {
 } from './ssm-doc-storage-assessment';
 
 const logger = getLogger();
-
-interface UnregisteredSubAssessmentResult<T> {
-    data?: T;
-    error?: string;
-}
 
 function failSubJobOnCollectionError(
     result: { error?: string },
@@ -245,71 +244,6 @@ async function runClusterQuorumSubAssessment(
     }
 }
 
-async function runUnregisteredSubAssessment<T>(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    ec2InstanceId: string,
-    instanceName: string,
-    jobId: string,
-    jobName: string,
-    collect: () => Promise<T>
-): Promise<UnregisteredSubAssessmentResult<T>> {
-    const resourceName = `${ec2InstanceId}/${instanceName}`;
-    const { id: subJobId } = await registerJob(accountId, credentialsId, region, {
-        name: jobName,
-        description: `${jobName} for ${resourceName}`,
-        resourceName,
-        startTime: Date.now(),
-        status: JOBSTATUS.IN_PROGRESS,
-        type: JOBTYPE.ASSESSMENT,
-        parentJobId: jobId
-    });
-    let status: JOBSTATUS = JOBSTATUS.COMPLETED;
-    let errorMessage: string | undefined;
-    logger.info(`Starting ${jobName.toLowerCase()} for unregistered MSSQL instance`, {
-        accountId,
-        credentialsId,
-        region,
-        ec2InstanceId,
-        instanceName,
-        subJobId
-    });
-    try {
-        const data = await collect();
-        logger.info(`Completed ${jobName.toLowerCase()} for unregistered MSSQL instance`, {
-            accountId,
-            ec2InstanceId,
-            instanceName,
-            subJobId
-        });
-        return { data };
-    } catch (error) {
-        status = JOBSTATUS.FAILED;
-        errorMessage = error instanceof Error ? error.message : `${jobName} failed`;
-        logger.warn(`Failed to run ${jobName.toLowerCase()} for unregistered MSSQL instance`, {
-            accountId,
-            credentialsId,
-            region,
-            ec2InstanceId,
-            instanceName,
-            subJobId,
-            error
-        });
-        return { error: errorMessage };
-    } finally {
-        await updateJobDetails(accountId, subJobId, {
-            status,
-            endTime: Date.now(),
-            ...(errorMessage && { error: errorMessage })
-        });
-    }
-}
-
-function getScopedMssqlVolumes(ontapStorageAssessments: StorageAssessment[] | undefined): VolumeRecord[] {
-    return (ontapStorageAssessments ?? []).flatMap(assessment => assessment.volumes as unknown as VolumeRecord[]);
-}
-
 async function runAwsBackupSubAssessment(
     accountId: string,
     credentialsId: string,
@@ -320,50 +254,18 @@ async function runAwsBackupSubAssessment(
     ontapStorageAssessments?: StorageAssessment[],
     ontapCollectionError?: string
 ): Promise<UnregisteredSubAssessmentResult<AWSBackupAssessment>> {
-    return runUnregisteredSubAssessment(
-        accountId,
-        credentialsId,
-        region,
-        ec2InstanceId,
-        instanceName,
-        jobId,
-        'Backup configuration assessment',
-        async () => {
-            if (!ontapStorageAssessments?.length) {
-                throw new Error(
-                    ontapCollectionError || 'Backup configuration assessment requires tagged ONTAP volumes'
-                );
-            }
-            const perFileSystem = await Promise.all(
-                ontapStorageAssessments.map(async assessment => {
-                    const volumes = assessment.volumes as unknown as VolumeRecord[];
-                    if (!volumes.length) {
-                        throw new Error(
-                            assessment.errors?.volumes ||
-                                `Found no tagged ONTAP volumes for FSx file system ${assessment.filesystemId}`
-                        );
-                    }
-                    logger.info('Assessing AWS backup for unregistered MSSQL filesystem', {
-                        accountId,
-                        ec2InstanceId,
-                        instanceName,
-                        filesystemId: assessment.filesystemId,
-                        volumeCount: volumes.length
-                    });
-                    const result = await assessAwsBackupForVolumes(
-                        credentialsId,
-                        region,
-                        assessment.filesystemId,
-                        volumes.map(({ uuid }) => uuid),
-                        volumes.map(({ name }) => name),
-                        `${ec2InstanceId}/${instanceName}`,
-                        accountId
-                    );
-                    return { fileSystemId: assessment.filesystemId, ...result };
-                })
-            );
-            return mergeAwsBackupAssessments(perFileSystem);
-        }
+    return runUnregisteredAwsBackupSubAssessment(
+        {
+            accountId,
+            credentialsId,
+            region,
+            ec2InstanceId,
+            instanceName,
+            jobId,
+            workloadLabel: 'MSSQL'
+        },
+        toMssqlFilesystemVolumes(ontapStorageAssessments),
+        ontapCollectionError
     );
 }
 
@@ -377,31 +279,18 @@ async function runCloneSubAssessment(
     ontapStorageAssessments?: StorageAssessment[],
     ontapCollectionError?: string
 ): Promise<UnregisteredSubAssessmentResult<CloneAssessment>> {
-    return runUnregisteredSubAssessment(
-        accountId,
-        credentialsId,
-        region,
-        ec2InstanceId,
-        instanceName,
-        jobId,
-        'Clone management assessment',
-        async () => {
-            const volumes = getScopedMssqlVolumes(ontapStorageAssessments);
-            if (!ontapStorageAssessments?.length || !volumes.length) {
-                const ontapError = ontapStorageAssessments
-                    ?.map(assessment => assessment.errors?.volumes)
-                    .filter(Boolean)
-                    .join('; ');
-                throw new Error(
-                    ontapCollectionError || ontapError || 'Clone management assessment requires tagged ONTAP volumes'
-                );
-            }
-            return buildCloneAssessmentFromOntapVolumes(volumes, {
-                databaseHostName: ec2InstanceId,
-                databaseHostId: ec2InstanceId,
-                databaseInstanceName: instanceName
-            });
-        }
+    return runUnregisteredCloneSubAssessment(
+        {
+            accountId,
+            credentialsId,
+            region,
+            ec2InstanceId,
+            instanceName,
+            jobId,
+            workloadLabel: 'MSSQL'
+        },
+        toMssqlFilesystemVolumes(ontapStorageAssessments),
+        ontapCollectionError
     );
 }
 
@@ -413,13 +302,8 @@ async function runComputeSubAssessment(
     instanceName: string,
     jobId: string
 ): Promise<UnregisteredSubAssessmentResult<ComputeAssessment>> {
-    return runUnregisteredSubAssessment(
-        accountId,
-        credentialsId,
-        region,
-        ec2InstanceId,
-        instanceName,
-        jobId,
+    return runUnregisteredOntapSubAssessment(
+        { accountId, credentialsId, region, ec2InstanceId, instanceName, jobId, workloadLabel: 'MSSQL' },
         'Compute rightsizing assessment',
         async () => {
             const awsAccountId = await resolveAwsAccountIdFromCredentials(credentialsId, accountId);

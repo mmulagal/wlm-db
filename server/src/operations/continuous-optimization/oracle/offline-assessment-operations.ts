@@ -26,9 +26,14 @@ import {
 } from '../../../utils/utils';
 import getLogger from '../../../utils/logger';
 import { AWS_REGIONS, DatabaseTypes, HttpErrorCodes, RESOURCESTYPE, STORAGE_PROTOCOLS } from '../../../utils/consts';
-import { registerJob, updateJobDetails } from '../../database/job-operations';
+import { registerJob, updateJobDetails, updateParentJobStatus } from '../../database/job-operations';
 import { getPaginatedDatabaseInstances } from '../../database/database-operations';
-import { CloneAssessment, DatabaseInstance, OneTimeWADHeadroomData } from '../../../utils/common-types';
+import {
+    AWSBackupAssessment,
+    CloneAssessment,
+    DatabaseInstance,
+    OneTimeWADHeadroomData
+} from '../../../utils/common-types';
 import {
     OracleMappedOntapVolumesResponse,
     OracleMappedOntapVolumeRecord,
@@ -41,7 +46,10 @@ import {
     lunConfigData,
     blockDeviceConfig
 } from './storage-assessment-operations';
-import { calculateOneTimeWADCloneDrift } from '../clone-assessment-utils';
+import { calculateOneTimeWADCloneDrift, runUnregisteredCloneSubAssessment } from '../clone-assessment-utils';
+import { getOracleUnregisteredBackupFinding } from './resilience-awsBackup-assessment-operations';
+import { getOracleUnregisteredCloneFinding } from './clone-assessment-operations';
+import { runUnregisteredAwsBackupSubAssessment } from '../resilience-awsBackup-operations';
 import { calculateComputeHostOsDrift } from './compute-assessment-operations';
 import { calculateSnapCenterDrift, SnapcenterAssessmentData } from './snapcenter-assessment-operations';
 import { getOntapVolumeIdsByFileType, ORACLE_V1_MAP_CONFIG } from './assessment-operations';
@@ -53,6 +61,7 @@ import {
     mergeStorageDriftItemsById,
     filterToVolumeLunDriftItems,
     runScopedOntapSubAssessment,
+    toOracleFilesystemVolumes,
     isApplicableToStorageProtocol
 } from '../assessment-utils';
 import { ISCIOSAssessment, NFSOSAssessment, StorageAssessment } from './common-types';
@@ -164,6 +173,12 @@ interface OracleOfflineAssessmentRawData {
 interface OracleUnregisteredAssessmentRawData {
     ontapStorageAssessments?: StorageAssessment[];
     headroomData?: OneTimeWADHeadroomData;
+    awsBackupAssessment?: AWSBackupAssessment;
+    cloneAssessment?: CloneAssessment;
+    errors?: {
+        awsBackup?: string;
+        clone?: string;
+    };
 }
 
 interface OracleUnregisteredAssessmentMetadata {
@@ -680,7 +695,13 @@ async function fetchOracleUnregisteredInstanceAssessment(
         return { assessments: [], dismissedConfigurations: [], metadata: {} };
     }
 
-    const { ontapStorageAssessments, headroomData } = (record.rawdata as OracleUnregisteredAssessmentRawData) || {};
+    const {
+        ontapStorageAssessments,
+        headroomData,
+        awsBackupAssessment,
+        cloneAssessment,
+        errors: collectionErrors
+    } = (record.rawdata as OracleUnregisteredAssessmentRawData) || {};
     const { databaseInstanceName, ec2InstanceId, assessmentTimestamp } =
         (record.metadata as unknown as OracleUnregisteredAssessmentMetadata) || {};
 
@@ -721,6 +742,30 @@ async function fetchOracleUnregisteredInstanceAssessment(
         if (headroomItem) {
             assessments.push(headroomItem);
         }
+    }
+
+    const backupFinding = getOracleUnregisteredBackupFinding(
+        accountId,
+        effectiveCredentialsId ?? '',
+        effectiveRegion ?? '',
+        resourceId,
+        databaseInstanceId,
+        awsBackupAssessment,
+        collectionErrors?.awsBackup
+    );
+    if (backupFinding) {
+        assessments.push(backupFinding);
+    }
+
+    const cloneFinding = getOracleUnregisteredCloneFinding(
+        accountId,
+        resourceId,
+        databaseInstanceId,
+        cloneAssessment,
+        collectionErrors?.clone
+    );
+    if (cloneFinding) {
+        assessments.push(cloneFinding);
     }
 
     const { protocol: storageProtocol, isASMManaged: isAsmManaged = false } =
@@ -831,6 +876,14 @@ async function processOracleUnregisteredAssessment(
 ) {
     let status: JOBSTATUS = JOBSTATUS.COMPLETED;
     let errorMessage: string | undefined;
+    logger.info('Processing Oracle unregistered-instance assessment', {
+        accountId,
+        credentialsId,
+        region,
+        jobId,
+        ec2InstanceId,
+        instanceName
+    });
     try {
         const resourceId = ec2InstanceId;
 
@@ -844,12 +897,51 @@ async function processOracleUnregisteredAssessment(
             DATABASE_TYPE.oracle,
             'Oracle'
         );
-        const { ontapStorageAssessments, headroomData } = ontapStorageResult ?? {};
+        const { ontapStorageAssessments, headroomData, error: ontapCollectionError } = ontapStorageResult ?? {};
+        const filesystemVolumes = toOracleFilesystemVolumes(ontapStorageAssessments);
+        const subAssessmentContext = {
+            accountId,
+            credentialsId,
+            region,
+            ec2InstanceId,
+            instanceName,
+            jobId,
+            workloadLabel: 'Oracle'
+        };
+        const [awsBackupResult, cloneResult] = await Promise.all([
+            runUnregisteredAwsBackupSubAssessment(subAssessmentContext, filesystemVolumes, ontapCollectionError),
+            runUnregisteredCloneSubAssessment(subAssessmentContext, filesystemVolumes, ontapCollectionError)
+        ]);
+        const collectionErrors = {
+            ...(awsBackupResult.error && { awsBackup: awsBackupResult.error }),
+            ...(cloneResult.error && { clone: cloneResult.error })
+        };
+        logger.info('Persisting Oracle unregistered-instance sub-assessments', {
+            accountId,
+            credentialsId,
+            region,
+            jobId,
+            ec2InstanceId,
+            instanceName,
+            ontapFilesystemCount: ontapStorageAssessments?.length ?? 0,
+            ontapCollectionError,
+            hasAwsBackup: Boolean(awsBackupResult.data),
+            hasClone: Boolean(cloneResult.data),
+            collectionErrors
+        });
 
-        if (ontapStorageAssessments && ontapStorageAssessments.length > 0) {
+        if (
+            (ontapStorageAssessments && ontapStorageAssessments.length > 0) ||
+            awsBackupResult.data ||
+            cloneResult.data ||
+            Object.keys(collectionErrors).length > 0
+        ) {
             const rawdata: OracleUnregisteredAssessmentRawData = {
-                ontapStorageAssessments,
-                ...(headroomData && { headroomData })
+                ...(ontapStorageAssessments ? { ontapStorageAssessments } : {}),
+                ...(headroomData && { headroomData }),
+                ...(awsBackupResult.data && { awsBackupAssessment: awsBackupResult.data }),
+                ...(cloneResult.data && { cloneAssessment: cloneResult.data }),
+                ...(Object.keys(collectionErrors).length > 0 && { errors: collectionErrors })
             };
             const metadata: OracleUnregisteredAssessmentMetadata = {
                 source: OFFLINE_ASSESSMENT_SOURCE.UNREGISTERED,
@@ -883,30 +975,40 @@ async function processOracleUnregisteredAssessment(
         } else {
             status = JOBSTATUS.FAILED;
             errorMessage =
-                'No assessable data collected: ONTAP volume/LUN assessment returned no data for this instance';
+                'No assessable data collected: ONTAP volume/LUN, backup, and clone assessments ' +
+                'all returned no data for this instance';
+            logger.warn('No assessable data collected for Oracle unregistered-instance assessment', {
+                accountId,
+                credentialsId,
+                region,
+                jobId,
+                ec2InstanceId,
+                instanceName,
+                ontapCollectionError
+            });
         }
     } catch (error: unknown) {
         status = JOBSTATUS.FAILED;
         errorMessage = error instanceof Error ? error.message : 'Assessment failed';
         logger.error('Failed to process Oracle unregistered-instance assessment', {
             accountId,
+            credentialsId,
+            region,
             jobId,
             ec2InstanceId,
             instanceName,
             error
         });
     } finally {
-        await updateJobDetails(accountId, jobId, {
-            status,
-            endTime: Date.now(),
-            ...(errorMessage && { error: errorMessage })
-        }).catch(updateError =>
-            logger.error('Failed to update job details for Oracle unregistered-instance assessment', {
-                accountId,
-                jobId,
-                error: updateError
-            })
-        );
+        if (status === JOBSTATUS.FAILED) {
+            await updateJobDetails(accountId, jobId, {
+                status,
+                endTime: Date.now(),
+                ...(errorMessage && { error: errorMessage })
+            });
+        } else {
+            await updateParentJobStatus(accountId, jobId);
+        }
     }
 }
 
@@ -931,9 +1033,12 @@ async function triggerOracleUnregisteredAssessment(
     });
     logger.info('Initiating Oracle unregistered-instance assessment', {
         accountId,
+        credentialsId,
+        region,
         jobId,
         ec2InstanceId,
-        instanceName
+        instanceName,
+        parentJobId
     });
 
     processOracleUnregisteredAssessment(accountId, credentialsId, region, ec2InstanceId, instanceName, jobId).catch(

@@ -29,8 +29,11 @@ import type {
     ResourceAssessmentData,
     ResourceDetails,
     DismissConfig,
-    OneTimeWADHeadroomData
+    OneTimeWADHeadroomData,
+    StorageAssessment as MssqlStorageAssessment,
+    VolumeRecord
 } from '../../utils/common-types';
+import type { StorageAssessment as OracleStorageAssessment } from './oracle/common-types';
 import { OracleJobMetadata } from './oracle/consts';
 import { OracleMappedOntapVolumeRecordType } from '../workloads/oracle/common-types';
 import getMissingPermissionsList from '../aws/iam-operations';
@@ -115,6 +118,28 @@ interface ScopedOntapStorageResult<T> {
     ontapStorageAssessments?: T[];
     headroomData?: OneTimeWADHeadroomData;
     error?: string;
+}
+
+interface UnregisteredSubAssessmentResult<T> {
+    data?: T;
+    error?: string;
+}
+
+/** MSSQL and Oracle store scoped ONTAP volumes differently; sub-assessments consume this normalized shape. */
+interface UnregisteredFilesystemVolumes {
+    filesystemId: string;
+    volumes: VolumeRecord[];
+    volumesError?: string;
+}
+
+interface UnregisteredOntapSubAssessmentContext {
+    accountId: string;
+    credentialsId: string;
+    region: string;
+    ec2InstanceId: string;
+    instanceName: string;
+    jobId: string;
+    workloadLabel: string;
 }
 
 function getMatchingAssessmentStatus(finding: string) {
@@ -610,6 +635,90 @@ async function runScopedOntapSubAssessment<T>(
             ...(errorMessage && { error: errorMessage })
         });
     }
+}
+
+async function runUnregisteredOntapSubAssessment<T>(
+    context: UnregisteredOntapSubAssessmentContext,
+    jobName: string,
+    assess: () => Promise<T>
+): Promise<UnregisteredSubAssessmentResult<T>> {
+    const { accountId, credentialsId, region, ec2InstanceId, instanceName, jobId, workloadLabel } = context;
+    const resourceName = `${ec2InstanceId}/${instanceName}`;
+    const { id: subJobId } = await registerJob(accountId, credentialsId, region, {
+        name: jobName,
+        description: `${jobName} for ${resourceName}`,
+        resourceName,
+        startTime: Date.now(),
+        status: JOBSTATUS.IN_PROGRESS,
+        type: JOBTYPE.ASSESSMENT,
+        parentJobId: jobId
+    });
+    let status: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let errorMessage: string | undefined;
+    logger.info('Running unregistered sub-assessment', {
+        accountId,
+        credentialsId,
+        region,
+        jobId,
+        subJobId,
+        ec2InstanceId,
+        instanceName,
+        jobName,
+        workloadLabel
+    });
+    try {
+        const data = await assess();
+        logger.info('Finishing unregistered sub-assessment', {
+            accountId,
+            jobId,
+            subJobId,
+            ec2InstanceId,
+            instanceName,
+            jobName,
+            workloadLabel
+        });
+        return { data };
+    } catch (error) {
+        status = JOBSTATUS.FAILED;
+        errorMessage = error instanceof Error ? error.message : `${jobName} failed`;
+        logger.error('Failed to run unregistered sub-assessment', {
+            accountId,
+            credentialsId,
+            region,
+            jobId,
+            subJobId,
+            ec2InstanceId,
+            instanceName,
+            jobName,
+            workloadLabel,
+            error
+        });
+        return { error: errorMessage };
+    } finally {
+        await updateJobDetails(accountId, subJobId, {
+            status,
+            endTime: Date.now(),
+            ...(errorMessage && { error: errorMessage })
+        });
+    }
+}
+
+function toMssqlFilesystemVolumes(ontapStorageAssessments?: MssqlStorageAssessment[]): UnregisteredFilesystemVolumes[] {
+    return (ontapStorageAssessments ?? []).map(assessment => ({
+        filesystemId: assessment.filesystemId,
+        volumes: assessment.volumes as unknown as VolumeRecord[],
+        ...(assessment.errors?.volumes && { volumesError: assessment.errors.volumes })
+    }));
+}
+
+function toOracleFilesystemVolumes(
+    ontapStorageAssessments?: OracleStorageAssessment[]
+): UnregisteredFilesystemVolumes[] {
+    return (ontapStorageAssessments ?? []).map(assessment => ({
+        filesystemId: assessment.volumes.filesystemId,
+        volumes: (assessment.volumes.data ?? []) as unknown as VolumeRecord[],
+        ...(assessment.volumes.error && { volumesError: assessment.volumes.error })
+    }));
 }
 
 function getGoldenConfigEntryById(configData: GoldenConfigEntry[], id: string): GoldenConfigEntry {
@@ -1255,6 +1364,9 @@ export {
     filterToVolumeLunDriftItems,
     collectScopedOntapAssessment,
     runScopedOntapSubAssessment,
+    runUnregisteredOntapSubAssessment,
+    toMssqlFilesystemVolumes,
+    toOracleFilesystemVolumes,
     FSX_LINK_INACTIVE_HINT,
     buildAssessmentJobDescriptionWithDashboardLink,
     isApplicableToStorageProtocol
@@ -1265,5 +1377,8 @@ export type {
     GoldenConfigComponent,
     MapAssessmentToV1Config,
     UnOptimizedDiskGroups,
-    ScopedOntapStorageResult
+    ScopedOntapStorageResult,
+    UnregisteredSubAssessmentResult,
+    UnregisteredFilesystemVolumes,
+    UnregisteredOntapSubAssessmentContext
 };

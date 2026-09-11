@@ -1,6 +1,6 @@
 import { isEmpty } from 'lodash-es';
 
-import { JOBSTATUS, JOBTYPE } from '@prisma/client';
+import { DATABASE_TYPE, JOBSTATUS, JOBTYPE } from '@prisma/client';
 
 import getLogger from '../../../utils/logger';
 import { CloneAssessment, VolumeRecord, WorkloadInstance } from '../../../utils/common-types';
@@ -10,7 +10,7 @@ import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import ORACLE_GOLDEN_CONFIG from './golden-config';
 import type { AssessmentItemType, AssessmentErrorItemType } from '../../../routes/types/continuous-optimization.types';
-import { buildCloneAssessmentFromOntapVolumes } from '../clone-assessment-utils';
+import { buildCloneAssessmentFromOntapVolumes, calculateOneTimeWADCloneDrift } from '../clone-assessment-utils';
 import { collectAllOntapRecords, buildOntapProxyBase } from '../../../lib/ontap/ontap-gateway';
 
 const logger = getLogger();
@@ -205,4 +205,37 @@ function calculateOracleCloneDrift(
     }
 }
 
-export { initiateOracleCloneAssessmentCollection, calculateOracleCloneDrift, fetchOracleFlexCloneVolumes };
+function getOracleUnregisteredCloneFinding(
+    accountId: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    cloneAssessment?: CloneAssessment,
+    collectionError?: string
+): AssessmentItemType | AssessmentErrorItemType | undefined {
+    if (cloneAssessment) {
+        return calculateOneTimeWADCloneDrift(
+            accountId,
+            databaseHostId,
+            databaseInstanceId,
+            cloneAssessment,
+            DATABASE_TYPE.oracle
+        );
+    }
+    if (collectionError) {
+        logger.warn('Surfacing Oracle unregistered clone collection error', {
+            accountId,
+            databaseHostId,
+            databaseInstanceId,
+            errorMessage: collectionError
+        });
+        const cloneGoldenConfig = ORACLE_GOLDEN_CONFIG.find(e => e.id === 'clone-management');
+        return cloneGoldenConfig ? { ...cloneGoldenConfig, errorMessage: collectionError } : undefined;
+    }
+}
+
+export {
+    initiateOracleCloneAssessmentCollection,
+    calculateOracleCloneDrift,
+    fetchOracleFlexCloneVolumes,
+    getOracleUnregisteredCloneFinding
+};

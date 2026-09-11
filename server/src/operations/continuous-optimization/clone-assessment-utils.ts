@@ -7,6 +7,12 @@ import { AssessmentCategories, AssessmentStatus } from '../../utils/continous-op
 import getLogger from '../../utils/logger';
 import { calculateDaysSince } from '../../utils/utils';
 import type { AssessmentItemType, AssessmentErrorItemType } from '../../routes/types/continuous-optimization.types';
+import {
+    runUnregisteredOntapSubAssessment,
+    UnregisteredFilesystemVolumes,
+    UnregisteredOntapSubAssessmentContext,
+    UnregisteredSubAssessmentResult
+} from './assessment-utils';
 import { MSSQL_GOLDEN_CONFIG } from './mssql/golden-config';
 import ORACLE_GOLDEN_CONFIG from './oracle/golden-config';
 
@@ -142,4 +148,41 @@ function calculateOneTimeWADCloneDrift(
     }
 }
 
-export { calculateOneTimeWADCloneDrift, buildCloneAssessmentFromOntapVolumes };
+/** Clone assessment for an unregistered instance, derived from all its tagged ONTAP volumes. */
+async function runUnregisteredCloneSubAssessment(
+    context: UnregisteredOntapSubAssessmentContext,
+    filesystemVolumes: UnregisteredFilesystemVolumes[],
+    ontapCollectionError?: string
+): Promise<UnregisteredSubAssessmentResult<CloneAssessment>> {
+    const { accountId, credentialsId, region, ec2InstanceId, instanceName, jobId, workloadLabel } = context;
+    return runUnregisteredOntapSubAssessment(context, 'Clone management assessment', async () => {
+        const volumes = filesystemVolumes.flatMap(({ volumes: filesystemVolumeRecords }) => filesystemVolumeRecords);
+        logger.info('Running unregistered clone assessment', {
+            accountId,
+            credentialsId,
+            region,
+            jobId,
+            ec2InstanceId,
+            instanceName,
+            workloadLabel,
+            filesystemCount: filesystemVolumes.length,
+            volumeCount: volumes.length
+        });
+        if (isEmpty(volumes)) {
+            const ontapError = filesystemVolumes
+                .map(({ volumesError }) => volumesError)
+                .filter(Boolean)
+                .join('; ');
+            throw new Error(
+                ontapCollectionError || ontapError || 'Clone management assessment requires tagged ONTAP volumes'
+            );
+        }
+        return buildCloneAssessmentFromOntapVolumes(volumes, {
+            databaseHostName: ec2InstanceId,
+            databaseHostId: ec2InstanceId,
+            databaseInstanceName: instanceName
+        });
+    });
+}
+
+export { calculateOneTimeWADCloneDrift, buildCloneAssessmentFromOntapVolumes, runUnregisteredCloneSubAssessment };

@@ -275,6 +275,8 @@ function toOracleStorageAssessmentFromUuids(
             ({
                 name,
                 uuid,
+                create_time: createTime,
+                clone,
                 nas,
                 autosize,
                 guarantee,
@@ -288,6 +290,17 @@ function toOracleStorageAssessmentFromUuids(
                 return {
                     name,
                     uuid,
+                    // Clone/space fields stay snake_case to match VolumeRecord, which the shared
+                    // clone assessment reads directly off these records.
+                    ...(createTime && { create_time: createTime }),
+                    ...(clone && { clone }),
+                    ...(space && {
+                        space: {
+                            size: space.size,
+                            used: space.used,
+                            physical_used: space.physical_used
+                        }
+                    }),
                     junctionPath: nas?.path,
                     thinProvision: guarantee?.honored,
                     spaceGuarantee: guarantee?.type,

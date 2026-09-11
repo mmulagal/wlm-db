@@ -15,6 +15,7 @@ import * as taggingServiceOperations from '../../../../src/operations/cloud-mana
 import { Ec2FsxRelationship } from '../../../../src/operations/cloud-manager/tagging-service-operations';
 import { OracleGenericParameterDriftResponseType } from '../../../../src/routes/types/oracle-continuous-optimization.types';
 import { AssessmentStatus, AwsWellArchitecturedPillars } from '../../../../src/utils/continous-optimization-consts';
+import { GERERIC_JOB_ERROR_MESSAGE } from '../../../../src/utils/consts';
 import { OFFLINE_ASSESSMENT_SOURCE } from '../../../../src/operations/continuous-optimization/assessment-utils';
 import { ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE } from '../../../../src/operations/continuous-optimization/one-time-assessment-consts';
 import { prisma } from '../../../../src/utils/prisma-utils';
@@ -374,7 +375,16 @@ describe('triggerOracleUnregisteredAssessment', () => {
         registerProxyGetResponse({
             targetId: fsxFileSystemId,
             ontapPath: 'api/storage/volumes',
-            body: ontapPage([{ name: 'oradata_unreg', uuid: 'uuid-unreg-1', nas: { path: '/oradata_unreg' } }])
+            body: ontapPage([
+                {
+                    name: 'oradata_unreg',
+                    uuid: 'uuid-unreg-1',
+                    nas: { path: '/oradata_unreg' },
+                    create_time: '2020-01-01T00:00:00Z',
+                    clone: { is_flexclone: true, parent_volume: { name: 'oradata_source' } },
+                    space: { size: 300, used: 200, physical_used: 100 }
+                }
+            ])
         });
 
         const relationship = buildRelationship([
@@ -419,11 +429,15 @@ describe('triggerOracleUnregisteredAssessment', () => {
         expect(job?.description).not.toContain('Review detailed findings and recommendations in.;');
 
         const subJobs = await prisma.client.job.findMany({ where: { parent_job_id: jobId } });
-        expect(subJobs).toHaveLength(1);
-        expect(subJobs[0].name).toBe('ONTAP volume/LUN storage assessment');
-        expect(subJobs[0].status).toBe('COMPLETED');
-        expect(subJobs[0].description).toContain('Review detailed findings and recommendations in.;');
-        expect(JSON.parse(subJobs[0].description!.split(';')[1]).isUnregistered).toBe(true);
+        expect(subJobs.map(subJob => subJob.name).sort()).toEqual([
+            'Backup configuration assessment',
+            'Clone management assessment',
+            'ONTAP volume/LUN storage assessment'
+        ]);
+        const ontapSubJob = subJobs.find(subJob => subJob.name === 'ONTAP volume/LUN storage assessment');
+        expect(ontapSubJob?.status).toBe('COMPLETED');
+        expect(ontapSubJob?.description).toContain('Review detailed findings and recommendations in.;');
+        expect(JSON.parse(ontapSubJob!.description!.split(';')[1]).isUnregistered).toBe(true);
 
         const record = await getOfflineAssessment(ACCOUNT_ID, unregisteredEc2InstanceId, instanceName);
         expect((record?.metadata as any)?.source).toBe('unregistered');
@@ -445,6 +459,8 @@ describe('triggerOracleUnregisteredAssessment', () => {
         expect(byId.get('thin-provision')).toBeDefined();
         expect(byId.get('thin-provision')?.errorMessage).not.toBe(ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE);
         expect(byId.get('headroom')?.errorMessage).toBe(ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE);
+        expect(byId.get('clone-management')?.errorMessage).not.toBe(ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE);
+        expect(byId.get('backup-configuration')?.errorMessage).not.toBe(ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE);
 
         // Volume-placement checks fabricate a file-type->volume mapping in the unregistered flow
         // (no real host/SQL data), so they must be skipped and fall back to not-applicable stubs
@@ -554,7 +570,68 @@ describe('triggerOracleUnregisteredAssessment', () => {
         expect(notApplicableIds).not.toContain('nfs-rootonly');
     });
 
-    it('should fail the job with no-data message when there is no EC2-FSx relationship for the instance', async () => {
+    it('should compute clone/backup drift from unregistered rawdata and surface collection errors', async () => {
+        const hostId = 'i-unregistered-oracle-fetch';
+        const databaseInstanceId = 'ORAUNREGFETCH';
+        const fetchWithRawdata = (rawdata: Record<string, unknown>) =>
+            fetchOracleUnregisteredInstanceAssessment(
+                ACCOUNT_ID,
+                hostId,
+                databaseInstanceId,
+                DEFAULT_AWS_CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                {
+                    rawdata,
+                    metadata: {
+                        source: OFFLINE_ASSESSMENT_SOURCE.UNREGISTERED,
+                        databaseInstanceName: databaseInstanceId,
+                        ec2InstanceId: hostId,
+                        assessmentTimestamp: new Date().toISOString()
+                    },
+                    created_time: new Date()
+                } as unknown as OfflineAssessmentDBSchema
+            );
+
+        const collected = await fetchWithRawdata({
+            awsBackupAssessment: {
+                fileSystemId: 'fs-1',
+                isAWSBackupEnabled: true,
+                volumeBackupDetails: [
+                    { uuid: 'vol-1', name: 'oradata-1', isAWSBackupEnabled: true },
+                    { uuid: 'vol-2', name: 'oradata-2', isAWSBackupEnabled: true }
+                ]
+            },
+            cloneAssessment: {
+                status: AssessmentStatus.NOT_OPTIMIZED,
+                cloneDetails: [
+                    {
+                        databaseHostName: hostId,
+                        databaseHostId: hostId,
+                        databaseInstanceName: databaseInstanceId,
+                        cloneDatabaseName: 'old-ora-clone',
+                        cloneAge: 100,
+                        clonedBy: 'other'
+                    }
+                ]
+            }
+        });
+        expect(collected.assessments.find(a => a.id === 'backup-configuration')).toEqual(
+            expect.objectContaining({ status: AssessmentStatus.OPTIMIZED, totalObjectsAssessed: 2 })
+        );
+        expect(collected.assessments.find(a => a.id === 'clone-management')).toEqual(
+            expect.objectContaining({ status: AssessmentStatus.NOT_OPTIMIZED, objectsInViolation: ['old-ora-clone'] })
+        );
+
+        const failed = await fetchWithRawdata({
+            errors: { awsBackup: 'backup collection failed', clone: 'clone collection failed' }
+        });
+        const errorFor = (id: string) =>
+            (failed.assessments.find(a => a.id === id) as { errorMessage?: string })?.errorMessage;
+        expect(errorFor('backup-configuration')).toBe('backup collection failed');
+        expect(errorFor('clone-management')).toBe('clone collection failed');
+    });
+
+    it('should fail the job and persist clone/backup collection errors when there is no EC2-FSx relationship', async () => {
         const unregisteredEc2InstanceId = 'i-unregistered-oracle-no-relationship';
         const instanceName = 'ORANOREL';
 
@@ -572,7 +649,11 @@ describe('triggerOracleUnregisteredAssessment', () => {
 
         const job = await prisma.client.job.findUnique({ where: { id: jobId } });
         expect(job?.status).toBe('FAILED');
-        expect(job?.error).toContain('No assessable data collected');
+        expect(job?.error).toBe(GERERIC_JOB_ERROR_MESSAGE);
+        const record = await getOfflineAssessment(ACCOUNT_ID, unregisteredEc2InstanceId, instanceName);
+        const { clone, awsBackup } = (record?.rawdata as { errors?: Record<string, string> })?.errors ?? {};
+        expect(clone).toBeDefined();
+        expect(awsBackup).toBeDefined();
     }, 15000);
 });
 

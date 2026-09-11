@@ -1,5 +1,6 @@
 import createError from 'http-errors';
 import { isEmpty } from 'lodash-es';
+import throat from 'throat';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../../utils/logger';
 import { createDatabaseInstanceConfigData } from '../../lib/database/database-instance-config';
@@ -14,7 +15,13 @@ import type { AssessmentItemType, AssessmentErrorItemType } from '../../routes/t
 import { describeFSx } from '../../lib/aws/fsx';
 import { isFsxnAwsBackupEnabled } from '../aws/fsx-operations';
 import { registerJob, updateJobDetails } from '../database/job-operations';
-import { GoldenConfigEntry } from './assessment-utils';
+import {
+    GoldenConfigEntry,
+    runUnregisteredOntapSubAssessment,
+    UnregisteredFilesystemVolumes,
+    UnregisteredOntapSubAssessmentContext,
+    UnregisteredSubAssessmentResult
+} from './assessment-utils';
 
 const logger = getLogger();
 
@@ -236,38 +243,134 @@ function getAwsBackupDriftData(
         return { ...goldenConfig, errorMessage };
     }
 
-    const volumesWithoutBackup = volumeBackupDetails
-        ?.filter(volume => !volume.isAWSBackupEnabled)
+    const volumesWithoutBackup = (volumeBackupDetails ?? [])
+        .filter(volume => !volume.isAWSBackupEnabled)
         .map(volume => ({ ontapVolumeUuid: volume.uuid, ontapVolumeName: volume.name }));
 
     const backupRecommended = 'aws-backup-enabled';
-    const backupObjectsInViolation = [{ ontapVolumeUuid: fileSystemId, ontapVolumeName: fileSystemId }];
-    const violationDetails =
-        (volumesWithoutBackup ?? []).length > 0
-            ? volumesWithoutBackup!.map(v => ({
-                  objectName: v.ontapVolumeName ?? '',
-                  objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-                  value: 'Disabled',
-                  recommended: 'Enabled'
-              }))
-            : [
-                  {
-                      objectName: fileSystemId ?? '',
-                      objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-                      value: 'Disabled',
-                      recommended: 'Enabled'
-                  }
-              ];
+    let objectsInViolation = volumesWithoutBackup;
+    if (!isAWSBackupEnabled && isEmpty(volumeBackupDetails)) {
+        logger.warn('Reporting backup drift against the filesystem because no volume details were collected', {
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId,
+            fileSystemId
+        });
+        objectsInViolation = [{ ontapVolumeUuid: fileSystemId, ontapVolumeName: fileSystemId }];
+    }
+    logger.info('Calculating AWS backup drift', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        fileSystemId,
+        isAWSBackupEnabled,
+        volumeCount: volumeBackupDetails?.length ?? 0,
+        volumesWithoutBackupCount: volumesWithoutBackup.length
+    });
+    const violationDetails = objectsInViolation.map(({ ontapVolumeName }) => ({
+        objectName: ontapVolumeName ?? '',
+        objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        value: 'Disabled',
+        recommended: 'Enabled'
+    }));
 
     return {
         ...goldenConfig,
         status: isAWSBackupEnabled ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
-        totalObjectsInViolation: isAWSBackupEnabled ? 0 : volumesWithoutBackup?.length || 1,
+        totalObjectsInViolation: isAWSBackupEnabled ? 0 : objectsInViolation.length || 1,
         recommended: backupRecommended,
-        objectsInViolation: backupObjectsInViolation,
+        objectsInViolation,
         totalObjectsAssessed: volumeBackupDetails?.length || 1,
         violationDetails
     };
 }
 
-export { assessAwsBackupForVolumes, mergeAwsBackupAssessments, initiateAwsBackupAssessment, getAwsBackupDriftData };
+/** Backup assessment for an unregistered instance, derived from its tagged ONTAP volumes. */
+async function runUnregisteredAwsBackupSubAssessment(
+    context: UnregisteredOntapSubAssessmentContext,
+    filesystemVolumes: UnregisteredFilesystemVolumes[],
+    ontapCollectionError?: string
+): Promise<UnregisteredSubAssessmentResult<AWSBackupAssessment>> {
+    const { accountId, credentialsId, region, ec2InstanceId, instanceName, jobId, workloadLabel } = context;
+    return runUnregisteredOntapSubAssessment(context, 'Backup configuration assessment', async () => {
+        logger.info('Running unregistered backup configuration assessment', {
+            accountId,
+            credentialsId,
+            region,
+            jobId,
+            ec2InstanceId,
+            instanceName,
+            workloadLabel,
+            filesystemCount: filesystemVolumes.length
+        });
+        if (isEmpty(filesystemVolumes)) {
+            throw new Error(ontapCollectionError || 'Backup configuration assessment requires tagged ONTAP volumes');
+        }
+        const perFileSystem = (
+            await Promise.all(
+                filesystemVolumes.map(
+                    throat(3, async ({ filesystemId, volumes, volumesError }) => {
+                        if (isEmpty(volumes)) {
+                            logger.warn(
+                                'Skipping unregistered backup assessment for filesystem with no tagged volumes',
+                                {
+                                    accountId,
+                                    credentialsId,
+                                    region,
+                                    jobId,
+                                    ec2InstanceId,
+                                    instanceName,
+                                    filesystemId,
+                                    volumesError
+                                }
+                            );
+                            return null;
+                        }
+                        logger.info('Assessing AWS backup for unregistered filesystem', {
+                            accountId,
+                            credentialsId,
+                            region,
+                            jobId,
+                            ec2InstanceId,
+                            instanceName,
+                            filesystemId,
+                            volumeCount: volumes.length
+                        });
+                        const result = await assessAwsBackupForVolumes(
+                            credentialsId,
+                            region,
+                            filesystemId,
+                            volumes.map(({ uuid }) => uuid),
+                            volumes.map(({ name }) => name),
+                            `${ec2InstanceId}/${instanceName}`,
+                            accountId
+                        );
+                        return { fileSystemId: filesystemId, ...result };
+                    })
+                )
+            )
+        ).filter(assessment => assessment !== null);
+        if (isEmpty(perFileSystem)) {
+            const ontapError = filesystemVolumes
+                .map(({ volumesError }) => volumesError)
+                .filter(Boolean)
+                .join('; ');
+            throw new Error(
+                ontapCollectionError || ontapError || 'Backup configuration assessment requires tagged ONTAP volumes'
+            );
+        }
+        return mergeAwsBackupAssessments(perFileSystem);
+    });
+}
+
+export {
+    assessAwsBackupForVolumes,
+    mergeAwsBackupAssessments,
+    initiateAwsBackupAssessment,
+    getAwsBackupDriftData,
+    runUnregisteredAwsBackupSubAssessment
+};

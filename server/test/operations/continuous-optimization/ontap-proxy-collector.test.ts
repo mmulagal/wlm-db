@@ -148,10 +148,18 @@ describe('collectOntapAssessmentData', () => {
                 {
                     name: 'oradata',
                     uuid: 'vol-uuid-2',
+                    create_time: '2026-01-01T00:00:00Z',
+                    clone: { is_flexclone: true, parent_volume: { name: 'source-oradata' } },
                     nas: { path: '/oradata' },
                     autosize: { mode: 'off' },
                     guarantee: { honored: false, type: 'none' },
-                    space: { fractional_reserve: 10, snapshot: { reserve_percent: 0, autodelete: { enabled: false } } },
+                    space: {
+                        size: 300,
+                        used: 200,
+                        physical_used: 100,
+                        fractional_reserve: 10,
+                        snapshot: { reserve_percent: 0, autodelete: { enabled: false } }
+                    },
                     svm: { name: 'svm2', uuid: 'svm-uuid-2' },
                     efficiency: {
                         compression: 'inline',
@@ -205,7 +213,10 @@ describe('collectOntapAssessmentData', () => {
                 uuid: 'vol-uuid-2',
                 junctionPath: '/oradata',
                 spaceMgmtTryFirst: 'volume_grow',
-                autosize: 'off'
+                autosize: 'off',
+                create_time: '2026-01-01T00:00:00Z',
+                clone: { is_flexclone: true, parent_volume: { name: 'source-oradata' } },
+                space: { size: 300, used: 200, physical_used: 100 }
             })
         ]);
         // No LUNs attached and no fetch error -> "not applicable" rather than a blank error.
