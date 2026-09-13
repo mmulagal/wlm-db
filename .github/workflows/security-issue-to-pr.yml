@@ -1,0 +1,161 @@
+name: Security Issue to PR
+
+on:
+  issues:
+    types: [opened, labeled, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: security-issue-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  check-and-fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+      - name: Check if issue has 'security' label
+        id: check-label
+        env:
+          LABELS: ${{ toJSON(github.event.issue.labels) }}
+        run: |
+          if echo "$LABELS" | grep -q '"name":"security"'; then
+            echo "has_security=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_security=false" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Skip if no security label
+        if: steps.check-label.outputs.has_security != 'true'
+        run: echo "No 'security' label found. Skipping."
+        
+      - name: Re-verify issue state and labels
+        if: steps.check-label.outputs.has_security == 'true'
+        id: verify
+        run: |
+          ISSUE_DATA=$(gh issue view ${{ github.event.issue.number }} --repo ${{ github.repository }} --json state,labels)
+          STATE=$(echo "$ISSUE_DATA" | grep -o '"state":"[^"]*"' | cut -d'"' -f4)
+          if echo "$ISSUE_DATA" | grep -q '"name":"security"'; then
+            HAS_SECURITY="true"
+          else
+            HAS_SECURITY="false"
+          fi
+          
+          echo "state=$STATE" >> $GITHUB_OUTPUT
+          echo "has_security=$HAS_SECURITY" >> $GITHUB_OUTPUT
+          
+          if [ "$STATE" != "OPEN" ] || [ "$HAS_SECURITY" != "true" ]; then
+            echo "Issue state or labels changed. Skipping."
+            exit 0
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Check for existing PR
+        if: steps.verify.outputs.state == 'OPEN' && steps.verify.outputs.has_security == 'true'
+        id: check-pr
+        run: |
+          PR_LIST=$(gh pr list --repo ${{ github.repository }} --search "Fixes #${{ github.event.issue.number }}" --state open --json number)
+          if echo "$PR_LIST" | grep -q '"number"'; then
+            echo "pr_exists=true" >> $GITHUB_OUTPUT
+            echo "PR already exists for this issue. Skipping."
+          else
+            echo "pr_exists=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Checkout repository
+        if: steps.check-pr.outputs.pr_exists != 'true'
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        if: steps.check-pr.outputs.pr_exists != 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Install dependencies
+        if: steps.check-pr.outputs.pr_exists != 'true'
+        run: npm ci
+
+      - name: Run security agent
+        if: steps.check-pr.outputs.pr_exists != 'true'
+        id: agent
+        run: node .github/scripts/armor-fix-agent.js
+        env:
+          MM_LLM_PROXY_KEY: ${{ secrets.MM_LLM_PROXY_KEY }}
+          MODEL_ID: ${{ vars.MODEL_ID || 'claude-sonnet-5-medium' }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Check if files were modified
+        if: steps.check-pr.outputs.pr_exists != 'true'
+        id: check-changes
+        run: |
+          if git diff-index --quiet HEAD --; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "No changes detected."
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "Changes detected."
+            git diff --stat
+          fi
+          
+      - name: Create and push branch
+        if: steps.check-changes.outputs.has_changes == 'true'
+        id: branch
+        run: |
+          BRANCH="security-fix/issue-${{ github.event.issue.number }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git checkout -b "$BRANCH"
+          git add -A
+          git commit -m "GH-${{ github.event.issue.number }}: ${{ github.event.issue.title }}"
+          git push origin "$BRANCH"
+          
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+          
+      - name: Create pull request
+        if: steps.check-changes.outputs.has_changes == 'true'
+        id: pr
+        run: |
+          BRANCH="security-fix/issue-${{ github.event.issue.number }}"
+          
+          PR_URL=$(gh pr create \
+            --title "GH-${{ github.event.issue.number }}: ${{ github.event.issue.title }}" \
+            --body "Fixes #${{ github.event.issue.number }}" \
+            --base master \
+            --head "$BRANCH" \
+            --repo ${{ github.repository }})
+          
+          echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
+          
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Comment on issue
+        if: steps.check-changes.outputs.has_changes == 'true'
+        run: |
+          gh issue comment ${{ github.event.issue.number }} \
+            --repo ${{ github.repository }} \
+            --body "🤖 Automated fix PR opened: ${{ steps.pr.outputs.pr_url }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Comment if no changes
+        if: steps.check-pr.outputs.pr_exists != 'true' && steps.check-changes.outputs.has_changes != 'true'
+        run: |
+          gh issue comment ${{ github.event.issue.number }} \
+            --repo ${{ github.repository }} \
+            --body "⚠️ Security agent ran but could not determine how to fix this issue. Manual review needed."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

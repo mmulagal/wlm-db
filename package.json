@@ -8,6 +8,7 @@
         "url": "https://bitbucket.ngage.netapp.com/scm/wlmdb/wlmdb.git"
     },
     "devDependencies": {
+        "@anthropic-ai/sdk": "^0.125.0",
         "@typescript-eslint/eslint-plugin": "^6.1.0",
         "@typescript-eslint/parser": "^6.1.0",
         "eslint": "^8.45.0",
