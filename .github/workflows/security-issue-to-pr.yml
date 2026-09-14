@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   check-and-fix:
-    runs-on: ubuntu-latest
+    runs-on: wlmdb-runner
     timeout-minutes: 20
     
     steps:
