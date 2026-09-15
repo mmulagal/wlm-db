@@ -9,7 +9,13 @@ const API_KEY = process.env.MM_LLM_PROXY_KEY;
 const MODEL_ID = process.env.MODEL_ID || 'claude-sonnet-5-medium';
 const ISSUE_NUMBER = process.env.ISSUE_NUMBER;
 const ISSUE_TITLE = process.env.ISSUE_TITLE;
-const ISSUE_BODY = process.env.ISSUE_BODY;
+// Preferred: a plain file path (see .github/workflows/security-issue-to-pr.yml
+// "Fetch issue body" step) - keeps the untrusted issue body out of
+// $GITHUB_ENV entirely. ISSUE_BODY is kept as a fallback for local/manual
+// runs and the self-check.
+const ISSUE_BODY = process.env.ISSUE_BODY_FILE
+    ? fs.readFileSync(process.env.ISSUE_BODY_FILE, 'utf-8')
+    : process.env.ISSUE_BODY;
 const GITHUB_REPOSITORY = process.env.GITHUB_REPOSITORY;
 const LLM_PROXY_URL = 'https://llm-proxy-api.ai.eng.netapp.com';
 

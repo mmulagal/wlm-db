@@ -123,17 +123,17 @@ jobs:
         id: fetch-body
         env:
           ISSUE_NUMBER: ${{ steps.resolve.outputs.issue_number }}
+          ISSUE_BODY_FILE: ${{ runner.temp }}/issue_body.txt
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Per-run random delimiter - a fixed delimiter could be terminated
-          # early (and subsequent $GITHUB_ENV entries corrupted/injected) by
-          # an issue body that happens to contain that exact line.
-          DELIMITER="ISSUE_BODY_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}_$RANDOM"
-          {
-            echo "ISSUE_BODY<<$DELIMITER"
-            gh issue view "$ISSUE_NUMBER" --repo ${{ github.repository }} --json body --jq '.body'
-            echo "$DELIMITER"
-          } >> "$GITHUB_ENV"
+          # Write to a plain file rather than $GITHUB_ENV/$GITHUB_OUTPUT:
+          # those are heredoc-appended files shared by every later step in
+          # the job, so putting untrusted issue content in them (even behind
+          # a random delimiter) is flagged as an env-injection surface by
+          # CodeQL. A file that only the next step explicitly reads has no
+          # such blast radius.
+          gh issue view "$ISSUE_NUMBER" --repo ${{ github.repository }} --json body --jq '.body' > "$ISSUE_BODY_FILE"
+          echo "issue_body_file=$ISSUE_BODY_FILE" >> "$GITHUB_OUTPUT"
 
       - name: Run security agent
         if: steps.check-pr.outputs.pr_exists == 'false'
@@ -144,7 +144,7 @@ jobs:
           MODEL_ID: ${{ vars.MODEL_ID || 'claude-sonnet-5-medium' }}
           ISSUE_NUMBER: ${{ steps.resolve.outputs.issue_number }}
           ISSUE_TITLE: ${{ steps.verify.outputs.title }}
-          ISSUE_BODY: ${{ env.ISSUE_BODY }}
+          ISSUE_BODY_FILE: ${{ steps.fetch-body.outputs.issue_body_file }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Regenerate server lockfile
