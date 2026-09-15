@@ -17,7 +17,10 @@ permissions:
 
 concurrency:
   group: security-issue-${{ github.event.issue.number || inputs.issue_number }}
-  cancel-in-progress: true
+  # Never cancel a mid-flight run: canceling after it pushes a branch but
+  # before it opens the PR would leave an orphaned branch, and the next run
+  # would fail to re-push it (non-fast-forward). Queue instead.
+  cancel-in-progress: false
 
 jobs:
   check-and-fix:
@@ -27,17 +30,29 @@ jobs:
     steps:
       - name: Resolve issue number
         id: resolve
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_ISSUE_NUMBER: ${{ inputs.issue_number }}
+          ISSUE_EVENT_NUMBER: ${{ github.event.issue.number }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "issue_number=${{ inputs.issue_number }}" >> $GITHUB_OUTPUT
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            # Manual input is free-form text - validate it's digits-only
+            # before it's trusted anywhere else in this workflow.
+            if ! [[ "$INPUT_ISSUE_NUMBER" =~ ^[0-9]+$ ]]; then
+              echo "::error::issue_number input must contain only digits, got: $INPUT_ISSUE_NUMBER"
+              exit 1
+            fi
+            echo "issue_number=$INPUT_ISSUE_NUMBER" >> "$GITHUB_OUTPUT"
           else
-            echo "issue_number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
+            echo "issue_number=$ISSUE_EVENT_NUMBER" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Fetch and verify issue state and labels
         id: verify
+        env:
+          ISSUE_NUMBER: ${{ steps.resolve.outputs.issue_number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ISSUE_NUMBER="${{ steps.resolve.outputs.issue_number }}"
           # Use gh's own vendored --jq (no dependency on a system jq binary).
           DATA=$(gh issue view "$ISSUE_NUMBER" --repo ${{ github.repository }} \
             --json state,labels,title \
@@ -47,29 +62,28 @@ jobs:
           TITLE=$(printf '%s' "$DATA" | cut -f2)
           HAS_SECURITY=$(printf '%s' "$DATA" | cut -f3)
 
-          echo "state=$STATE" >> $GITHUB_OUTPUT
-          echo "has_security=$HAS_SECURITY" >> $GITHUB_OUTPUT
-          echo "title=$TITLE" >> $GITHUB_OUTPUT
+          echo "state=$STATE" >> "$GITHUB_OUTPUT"
+          echo "has_security=$HAS_SECURITY" >> "$GITHUB_OUTPUT"
+          echo "title=$TITLE" >> "$GITHUB_OUTPUT"
 
           if [ "$STATE" != "OPEN" ] || [ "$HAS_SECURITY" != "true" ]; then
             echo "Issue #$ISSUE_NUMBER is not an open 'security' issue. Skipping."
           fi
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check for existing PR
         if: steps.verify.outputs.state == 'OPEN' && steps.verify.outputs.has_security == 'true'
         id: check-pr
+        env:
+          ISSUE_NUMBER: ${{ steps.resolve.outputs.issue_number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          PR_COUNT=$(gh pr list --repo ${{ github.repository }} --search "Fixes #${{ steps.resolve.outputs.issue_number }}" --state open --json number --jq 'length')
+          PR_COUNT=$(gh pr list --repo ${{ github.repository }} --search "Fixes #$ISSUE_NUMBER" --state open --json number --jq 'length')
           if [ "$PR_COUNT" -gt 0 ]; then
-            echo "pr_exists=true" >> $GITHUB_OUTPUT
+            echo "pr_exists=true" >> "$GITHUB_OUTPUT"
             echo "PR already exists for this issue. Skipping."
           else
-            echo "pr_exists=false" >> $GITHUB_OUTPUT
+            echo "pr_exists=false" >> "$GITHUB_OUTPUT"
           fi
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Probe LLM proxy connectivity
         if: steps.check-pr.outputs.pr_exists == 'false'
@@ -107,14 +121,19 @@ jobs:
       - name: Fetch issue body
         if: steps.check-pr.outputs.pr_exists == 'false'
         id: fetch-body
-        run: |
-          {
-            echo "ISSUE_BODY<<EOF_ISSUE_BODY"
-            gh issue view "${{ steps.resolve.outputs.issue_number }}" --repo ${{ github.repository }} --json body --jq '.body'
-            echo "EOF_ISSUE_BODY"
-          } >> "$GITHUB_ENV"
         env:
+          ISSUE_NUMBER: ${{ steps.resolve.outputs.issue_number }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Per-run random delimiter - a fixed delimiter could be terminated
+          # early (and subsequent $GITHUB_ENV entries corrupted/injected) by
+          # an issue body that happens to contain that exact line.
+          DELIMITER="ISSUE_BODY_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}_$RANDOM"
+          {
+            echo "ISSUE_BODY<<$DELIMITER"
+            gh issue view "$ISSUE_NUMBER" --repo ${{ github.repository }} --json body --jq '.body'
+            echo "$DELIMITER"
+          } >> "$GITHUB_ENV"
 
       - name: Run security agent
         if: steps.check-pr.outputs.pr_exists == 'false'
@@ -128,65 +147,87 @@ jobs:
           ISSUE_BODY: ${{ env.ISSUE_BODY }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Regenerate server lockfile
+        # The agent may only write server/package.json (never
+        # server/package-lock.json), so if it changed anything, the lockfile
+        # is now out of sync and `npm ci` in server/ would reject it.
+        # Deterministically resync it here rather than trusting the model
+        # with a second writable file.
+        if: steps.check-pr.outputs.pr_exists == 'false'
+        run: |
+          cd server
+          npm install --package-lock-only
+
       - name: Check if files were modified
         if: steps.check-pr.outputs.pr_exists == 'false'
         id: check-changes
         run: |
-          if git diff-index --quiet HEAD --; then
-            echo "has_changes=false" >> $GITHUB_OUTPUT
+          # Only these two files are ever eligible to be committed - this is
+          # the enforcement point for the agent's stated write scope,
+          # independent of anything the model's tool calls may have done.
+          if git diff --quiet -- server/package.json server/package-lock.json; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
             echo "No changes detected."
           else
-            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
             echo "Changes detected."
-            git diff --stat
+            git diff --stat -- server/package.json server/package-lock.json
           fi
 
       - name: Create and push branch
         if: steps.check-changes.outputs.has_changes == 'true'
         id: branch
+        env:
+          ISSUE_NUMBER: ${{ steps.resolve.outputs.issue_number }}
+          ISSUE_TITLE: ${{ steps.verify.outputs.title }}
         run: |
-          BRANCH="security-fix/issue-${{ steps.resolve.outputs.issue_number }}"
+          BRANCH="security-fix/issue-$ISSUE_NUMBER"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git checkout -b "$BRANCH"
-          git add -A
-          git commit -m "GH-${{ steps.resolve.outputs.issue_number }}: ${{ steps.verify.outputs.title }}"
+          git add server/package.json server/package-lock.json
+          git commit -m "GH-$ISSUE_NUMBER: $ISSUE_TITLE"
           git push origin "$BRANCH"
 
-          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
 
       - name: Create pull request
         if: steps.check-changes.outputs.has_changes == 'true'
         id: pr
+        env:
+          ISSUE_NUMBER: ${{ steps.resolve.outputs.issue_number }}
+          ISSUE_TITLE: ${{ steps.verify.outputs.title }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          BRANCH="security-fix/issue-${{ steps.resolve.outputs.issue_number }}"
+          BRANCH="security-fix/issue-$ISSUE_NUMBER"
 
           PR_URL=$(gh pr create \
-            --title "GH-${{ steps.resolve.outputs.issue_number }}: ${{ steps.verify.outputs.title }}" \
-            --body "Fixes #${{ steps.resolve.outputs.issue_number }}" \
+            --title "GH-$ISSUE_NUMBER: $ISSUE_TITLE" \
+            --body "Fixes #$ISSUE_NUMBER" \
             --base master \
             --head "$BRANCH" \
             --repo ${{ github.repository }})
 
-          echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "pr_url=$PR_URL" >> "$GITHUB_OUTPUT"
 
       - name: Comment on issue
         if: steps.check-changes.outputs.has_changes == 'true'
-        run: |
-          gh issue comment ${{ steps.resolve.outputs.issue_number }} \
-            --repo ${{ github.repository }} \
-            --body "🤖 Automated fix PR opened: ${{ steps.pr.outputs.pr_url }}"
         env:
+          ISSUE_NUMBER: ${{ steps.resolve.outputs.issue_number }}
+          PR_URL: ${{ steps.pr.outputs.pr_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" \
+            --repo ${{ github.repository }} \
+            --body "🤖 Automated fix PR opened: $PR_URL"
 
       - name: Comment if no changes
         if: steps.check-pr.outputs.pr_exists == 'false' && steps.check-changes.outputs.has_changes != 'true'
+        env:
+          ISSUE_NUMBER: ${{ steps.resolve.outputs.issue_number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh issue comment ${{ steps.resolve.outputs.issue_number }} \
+          gh issue comment "$ISSUE_NUMBER" \
             --repo ${{ github.repository }} \
             --body "⚠️ Security agent ran but could not determine how to fix this issue. Manual review needed."
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

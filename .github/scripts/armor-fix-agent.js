@@ -1,7 +1,7 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { execSync, execFileSync } = require('child_process');
 
 const REPO_ROOT = process.cwd();
 const SCOPE_DIR = path.join(REPO_ROOT, 'server');
@@ -13,6 +13,11 @@ const ISSUE_BODY = process.env.ISSUE_BODY;
 const GITHUB_REPOSITORY = process.env.GITHUB_REPOSITORY;
 const LLM_PROXY_URL = 'https://llm-proxy-api.ai.eng.netapp.com';
 
+// Minimal env for any child process spawned on our behalf while handling
+// untrusted (issue-body-derived) input: no GH_TOKEN / MM_LLM_PROXY_KEY, so
+// even a prompt-injected command has nothing sensitive to read or exfiltrate.
+const SAFE_CHILD_ENV = { PATH: process.env.PATH || '', HOME: process.env.HOME || '' };
+
 if (!API_KEY) {
     console.error('Error: MM_LLM_PROXY_KEY environment variable not set');
     process.exit(1);
@@ -20,6 +25,11 @@ if (!API_KEY) {
 
 if (!ISSUE_NUMBER || !ISSUE_TITLE || !ISSUE_BODY) {
     console.error('Error: ISSUE_NUMBER, ISSUE_TITLE, and ISSUE_BODY environment variables required');
+    process.exit(1);
+}
+
+if (!/^\d+$/.test(ISSUE_NUMBER)) {
+    console.error('Error: ISSUE_NUMBER must be numeric, got:', ISSUE_NUMBER);
     process.exit(1);
 }
 
@@ -85,17 +95,28 @@ function writeFile(filePath, contents) {
     }
 }
 
+// The issue body (and thus this tool's arguments) is untrusted, attacker-
+// controlled input, so run_command is restricted to a strict allowlist of
+// read-only npm inspection subcommands, and shell metacharacters are
+// rejected outright to prevent chaining in a second command.
+const ALLOWED_COMMAND = /^npm\s+(view|show|list|ls|outdated|info)\b/;
+const FORBIDDEN_SHELL_CHARS = /[;&|`$()<>\n]/;
+
 function runCommand(cmd) {
     try {
-        if (cmd.includes('cd /') || cmd.includes('cd ~')) {
-            return 'Error: Cannot change to system directories';
+        if (typeof cmd !== 'string' || !ALLOWED_COMMAND.test(cmd.trim())) {
+            return "Error: only read-only 'npm view/show/list/ls/outdated/info' commands are permitted.";
+        }
+        if (FORBIDDEN_SHELL_CHARS.test(cmd)) {
+            return 'Error: command contains disallowed shell metacharacters.';
         }
 
         const output = execSync(cmd, {
             cwd: SCOPE_DIR,
             encoding: 'utf-8',
             maxBuffer: 5 * 1024 * 1024,
-            timeout: 30000
+            timeout: 30000,
+            env: SAFE_CHILD_ENV
         });
 
         return output || '(command succeeded with no output)';
@@ -130,7 +151,7 @@ async function postSkippedUpgradesComment() {
     ].join('\n');
 
     try {
-        execSync('gh issue comment ' + ISSUE_NUMBER + ' --repo ' + GITHUB_REPOSITORY + ' --body-file -', {
+        execFileSync('gh', ['issue', 'comment', ISSUE_NUMBER, '--repo', GITHUB_REPOSITORY, '--body-file', '-'], {
             cwd: REPO_ROOT,
             input: body,
             encoding: 'utf-8'
@@ -195,13 +216,13 @@ async function runAgent() {
         },
         {
             name: 'run_command',
-            description: 'Run a read-only inspection shell command inside server/ (e.g. npm view/list). Do not use this to modify files - use write_file for package.json edits.',
+            description: "Run a read-only npm inspection command inside server/. Only 'npm view/show/list/ls/outdated/info' are permitted - anything else, or any shell metacharacter (; & | ` $ ( ) < >), is refused. Do not use this to modify files - use write_file for package.json edits.",
             input_schema: {
                 type: 'object',
                 properties: {
                     cmd: {
                         type: 'string',
-                        description: "Shell command to run inside server/ (e.g., 'npm view fast-uri versions')"
+                        description: "npm inspection command to run inside server/ (e.g., 'npm view fast-uri versions')"
                     }
                 },
                 required: ['cmd']
@@ -344,13 +365,11 @@ Start by exploring the server/ directory structure and understanding the issue, 
         }
 
         if (!hasToolUse && response.stop_reason === 'end_turn') {
-            console.log('Agent finished without calling finish tool. Extracting summary from last response...');
-            for (const block of response.content) {
-                if (block.type === 'text') {
-                    agentSummary = block.text;
-                }
-            }
-            return;
+            // The model stopped talking without calling finish(). For a
+            // multi-finding issue this could mean only some findings were
+            // addressed - fail the job rather than silently publish a
+            // partial fix.
+            throw new Error('Agent ended the conversation without calling the finish tool - refusing to treat this as complete.');
         }
 
         messages.push({
@@ -366,34 +385,29 @@ Start by exploring the server/ directory structure and understanding the issue, 
         }
     }
 
-    console.log('Max iterations reached');
+    throw new Error(`Agent reached the ${maxIterations}-iteration limit without calling finish - refusing to treat this as complete.`);
 }
 
 async function main() {
+    let agentError = null;
+
     try {
         await runAgent();
-        await postSkippedUpgradesComment();
-
-        console.log('\n=== AGENT COMPLETED ===');
-        console.log(
-            JSON.stringify(
-                {
-                    success: true,
-                    filesModified: Array.from(modifiedFiles),
-                    skippedMajorUpgrades,
-                    summary: agentSummary
-                },
-                null,
-                2
-            )
-        );
     } catch (err) {
-        console.error('Agent error:', err);
+        agentError = err;
+    }
+
+    // Post any recorded major-upgrade skips regardless of outcome - they're
+    // still useful triage info even if the run ultimately failed.
+    await postSkippedUpgradesComment();
+
+    if (agentError) {
+        console.error('Agent error:', agentError);
         console.log(
             JSON.stringify(
                 {
                     success: false,
-                    error: err instanceof Error ? err.message : String(err)
+                    error: agentError instanceof Error ? agentError.message : String(agentError)
                 },
                 null,
                 2
@@ -401,6 +415,24 @@ async function main() {
         );
         process.exit(1);
     }
+
+    console.log('\n=== AGENT COMPLETED ===');
+    console.log(
+        JSON.stringify(
+            {
+                success: true,
+                filesModified: Array.from(modifiedFiles),
+                skippedMajorUpgrades,
+                summary: agentSummary
+            },
+            null,
+            2
+        )
+    );
 }
 
-main();
+if (require.main === module) {
+    main();
+}
+
+module.exports = { ALLOWED_COMMAND, FORBIDDEN_SHELL_CHARS, runCommand, resolvePath, SCOPE_DIR };
