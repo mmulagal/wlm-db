@@ -22,6 +22,7 @@ interface BrokerState {
     reconnectDelay: number;
     reconnecting: boolean;
     shuttingDown: boolean;
+    reconnectTimer: ReturnType<typeof setTimeout> | null;
 }
 
 const state: BrokerState = {
@@ -30,7 +31,8 @@ const state: BrokerState = {
     subscriptions: new Map(),
     reconnectDelay: AMQP_RECONNECT_INTERVAL,
     reconnecting: false,
-    shuttingDown: false
+    shuttingDown: false,
+    reconnectTimer: null
 };
 
 /**
@@ -44,6 +46,10 @@ function buildAmqpUrl(): string {
     const user = encodeURIComponent(AMQP_USER);
     const password = encodeURIComponent(SECRETS.AMQP_PASSWORD || '');
     return `${AMQP_SCHEMA}://${user}:${password}@${AMQP_HOST}:${AMQP_PORT}`;
+}
+
+function isAuthFailure(err: unknown): boolean {
+    return err instanceof Error && /ACCESS.REFUSED|403|authentication/i.test(err.message);
 }
 
 /**
@@ -71,99 +77,202 @@ function wrapHandler(queue: string, ch: Channel, handler: MessageHandler) {
     };
 }
 
-async function teardown() {
-    const { channel, connection } = state;
-    state.channel = null;
-    state.connection = null;
+const onConnectionError = (err: Error) => logger.error('AMQP: connection error', { err });
+const onChannelError = (err: Error) => logger.error('AMQP: channel error', { err });
+const onConnectionClose = () => {
+    logger.warn('AMQP: connection close event');
+    scheduleReconnect('connection');
+};
+const onChannelClose = () => {
+    logger.warn('AMQP: channel close event');
+    scheduleReconnect('channel');
+};
 
-    if (channel) {
-        channel.removeAllListeners('error');
-        channel.removeAllListeners('close');
-        try {
-            logger.debug('AMQP: teardown — closing channel');
-            await channel.close();
-        } catch (err) {
-            logger.debug('AMQP: teardown — channel close failed', { err });
-        }
-    }
-
-    if (connection) {
-        connection.removeAllListeners('error');
-        connection.removeAllListeners('close');
-        try {
-            logger.debug('AMQP: teardown — closing connection');
-            await connection.close();
-        } catch (err) {
-            logger.debug('AMQP: teardown — connection close failed', { err });
-        }
+function clearReconnectTimer(): void {
+    if (state.reconnectTimer) {
+        logger.info('AMQP: clearing pending reconnect timer');
+        clearTimeout(state.reconnectTimer);
+        state.reconnectTimer = null;
     }
 }
 
 /**
- * Guards against concurrent reconnect attempts and no-ops if the broker is
- * shutting down. On each attempt: opens a connection, creates a channel with
- * prefetch, and re-registers all known subscriptions. Connection and channel
- * close events call `connectLoop` directly, eliminating the mutual dependency
- * between a separate `establishConnection` and `scheduleReconnect`. Resets
- * `state.reconnecting` on exit.
+ * Captures local refs before clearing state so listeners can be detached even
+ * if a close handler raced us. Close handlers must not null `state` themselves.
  */
-async function connectLoop(): Promise<void> {
-    if (state.reconnecting || state.shuttingDown) {
-        logger.debug('AMQP: connectLoop — skipped', {
-            reconnecting: state.reconnecting,
-            shuttingDown: state.shuttingDown
-        });
+async function teardown(reason = 'unspecified'): Promise<void> {
+    const { channel, connection } = state;
+    if (!channel && !connection) {
+        return;
+    }
+    logger.info('AMQP: teardown start', {
+        reason,
+        hasChannel: Boolean(channel),
+        hasConnection: Boolean(connection)
+    });
+    state.channel = null;
+    state.connection = null;
+
+    if (channel) {
+        channel.removeListener('error', onChannelError);
+        channel.removeListener('close', onChannelClose);
+        try {
+            logger.info('AMQP: teardown — closing channel', { reason });
+            await channel.close();
+            logger.info('AMQP: teardown — channel closed', { reason });
+        } catch (err) {
+            // Already-dead channels reject with IllegalOperationError; nothing left to close.
+            logger.info('AMQP: teardown — channel close skipped', {
+                reason,
+                err: err instanceof Error ? err.message : err
+            });
+        }
+    }
+
+    if (connection) {
+        connection.removeListener('error', onConnectionError);
+        connection.removeListener('close', onConnectionClose);
+        try {
+            logger.info('AMQP: teardown — closing connection', { reason });
+            await connection.close();
+            logger.info('AMQP: teardown — connection closed', { reason });
+        } catch (err) {
+            logger.info('AMQP: teardown — connection close skipped', {
+                reason,
+                err: err instanceof Error ? err.message : err
+            });
+        }
+    }
+
+    logger.info('AMQP: teardown done', { reason });
+}
+
+/**
+ * One connect attempt: teardown leftovers, open a connection and channel, then
+ * re-register consumers. Connection `close` is attached only after success so
+ * a failed `createChannel` does not start a second reconnect chain.
+ */
+async function establishConnection(): Promise<void> {
+    let stage = 'teardown';
+    try {
+        await teardown('establishConnection');
+
+        stage = 'amqpConnect';
+        logger.info('AMQP: connecting', { host: AMQP_HOST, port: AMQP_PORT });
+        const conn = await amqpConnect(buildAmqpUrl(), { clientProperties: { connection_name: 'wlm-db' } });
+        conn.on('error', onConnectionError);
+        state.connection = conn;
+        logger.info('AMQP: connection opened', { host: AMQP_HOST, port: AMQP_PORT });
+
+        stage = 'createChannel';
+        const ch = await conn.createChannel();
+        ch.prefetch(AMQP_PREFETCH);
+        ch.on('error', onChannelError);
+        ch.on('close', onChannelClose);
+        state.channel = ch;
+        logger.info('AMQP: channel ready', { prefetch: AMQP_PREFETCH });
+
+        stage = 'resubscribe';
+        for (const [queue, handler] of [...state.subscriptions]) {
+            try {
+                // eslint-disable-next-line no-await-in-loop
+                await ch.consume(queue, wrapHandler(queue, ch, handler));
+                logger.info('AMQP: resubscribed', { queue });
+            } catch (err) {
+                state.subscriptions.delete(queue);
+                logger.error('AMQP: resubscribe failed, dropping subscription', { queue, err });
+            }
+        }
+
+        stage = 'ready';
+        state.reconnectDelay = AMQP_RECONNECT_INTERVAL;
+        conn.on('close', onConnectionClose);
+        state.reconnecting = false;
+        logger.info('AMQP: connected', { host: AMQP_HOST, subscriptionCount: state.subscriptions.size });
+    } catch (err) {
+        logger.error('AMQP: establishConnection failed', { stage, err });
+        throw err;
+    }
+}
+
+/**
+ * Dedupes connection+channel close events, tears down the old sockets, then
+ * schedules a delayed reconnect. Logs only when this call actually owns the
+ * reconnect (skipped closes are warn-level so they show at the default log
+ * level).
+ */
+function scheduleReconnect(reason: string): void {
+    if (state.shuttingDown) {
+        logger.warn('AMQP: close ignored, shutting down', { reason });
+        return;
+    }
+    if (state.reconnecting) {
+        logger.warn('AMQP: reconnect already in progress, ignoring close', { reason });
         return;
     }
     state.reconnecting = true;
+    logger.warn('AMQP: closed — scheduling reconnect', { reason, delayMs: state.reconnectDelay });
+
+    teardown('scheduleReconnect')
+        .then(() => {
+            if (state.shuttingDown) {
+                logger.warn('AMQP: abort reconnect, shutting down after teardown', { reason });
+                state.reconnecting = false;
+                return;
+            }
+
+            clearReconnectTimer();
+            const delayMs = state.reconnectDelay;
+            logger.info('AMQP: reconnect timer armed', { reason, delayMs });
+            state.reconnectTimer = setTimeout(() => {
+                state.reconnectTimer = null;
+                logger.info('AMQP: reconnect timer fired', { reason });
+                establishConnection()
+                    .then(() => {
+                        logger.info('AMQP: reconnect succeeded', { reason });
+                    })
+                    .catch(err => {
+                        state.reconnecting = false;
+                        if (isAuthFailure(err)) {
+                            logger.error('AMQP: auth failure — not retrying', { err });
+                            return;
+                        }
+                        logger.error('AMQP: reconnect attempt failed, will retry', {
+                            err,
+                            delayMs: state.reconnectDelay
+                        });
+                        state.reconnectDelay = Math.min(
+                            state.reconnectDelay * AMQP_RECONNECT_BACKOFF,
+                            AMQP_RECONNECT_MAX_DELAY
+                        );
+                        scheduleReconnect('retry');
+                    });
+            }, delayMs);
+        })
+        .catch(err => {
+            logger.error('AMQP: teardown before reconnect failed', { err, reason });
+            state.reconnecting = false;
+            scheduleReconnect('teardown-failed');
+        });
+}
+
+/**
+ * Starts the broker: clears the shutdown flag and retries until the first
+ * successful connection and channel are established. Call `close()` to stop.
+ */
+async function connect(): Promise<void> {
+    state.shuttingDown = false;
+    state.reconnecting = true;
+    logger.info('AMQP: initial connect starting', { host: AMQP_HOST, port: AMQP_PORT });
     try {
         while (!state.shuttingDown) {
             try {
                 // eslint-disable-next-line no-await-in-loop
-                await teardown();
-
-                logger.info('AMQP: connecting', { host: AMQP_HOST, port: AMQP_PORT });
-                // eslint-disable-next-line no-await-in-loop
-                const conn = await amqpConnect(buildAmqpUrl(), { clientProperties: { connection_name: 'wlm-db' } });
-                conn.on('error', err => logger.error('AMQP: connection error', { err }));
-                conn.on('close', () => {
-                    logger.warn('AMQP: connection closed — scheduling reconnect');
-                    state.connection = null;
-                    state.channel = null;
-                    connectLoop();
-                });
-                state.connection = conn;
-
-                // eslint-disable-next-line no-await-in-loop
-                const ch = await conn.createChannel();
-                ch.prefetch(AMQP_PREFETCH);
-                logger.debug('AMQP: channel prefetch set', { prefetch: AMQP_PREFETCH });
-                ch.on('error', err => logger.error('AMQP: channel error', { err }));
-                ch.on('close', () => {
-                    logger.warn('AMQP: channel closed — scheduling reconnect');
-                    state.channel = null;
-                    connectLoop();
-                });
-                state.channel = ch;
-                logger.debug('AMQP: channel ready', { prefetch: AMQP_PREFETCH });
-
-                state.reconnectDelay = AMQP_RECONNECT_INTERVAL;
-                logger.info('AMQP: connected', { host: AMQP_HOST });
-
-                if (state.subscriptions.size > 0) {
-                    logger.debug('AMQP: resubscribing', { count: state.subscriptions.size });
-                    // eslint-disable-next-line no-await-in-loop
-                    await Promise.all(
-                        Array.from(state.subscriptions.entries()).map(async ([queue, handler]) => {
-                            await ch.consume(queue, wrapHandler(queue, ch, handler));
-                            logger.info('AMQP: resubscribed', { queue });
-                        })
-                    );
-                }
-
+                await establishConnection();
+                logger.info('AMQP: initial connect succeeded');
                 return;
             } catch (err) {
-                if (err instanceof Error && /ACCESS.REFUSED|403|authentication/i.test(err.message)) {
+                if (isAuthFailure(err)) {
                     logger.error('AMQP: auth failure — not retrying', { err });
                     throw err;
                 }
@@ -176,39 +285,24 @@ async function connectLoop(): Promise<void> {
                 );
             }
         }
-        logger.info('AMQP: shutting down, giving up on reconnect');
+        logger.warn('AMQP: shutting down, giving up on reconnect');
     } finally {
-        state.reconnecting = false;
+        if (!state.channel) {
+            state.reconnecting = false;
+            logger.warn('AMQP: initial connect exiting without a channel');
+        }
     }
-}
-
-/**
- * Starts the broker: clears the shutdown flag and begins the connection loop.
- * Resolves once the first successful connection and channel are established.
- * Call `close()` to stop.
- */
-async function connect(): Promise<void> {
-    state.shuttingDown = false;
-    await connectLoop();
 }
 
 async function close(): Promise<void> {
     logger.info('AMQP: closing');
     state.shuttingDown = true;
+    clearReconnectTimer();
     try {
-        logger.debug('AMQP: close — closing channel');
-        await state.channel?.close();
+        await teardown('close');
     } catch (err) {
-        logger.error('AMQP: error closing channel', { err });
+        logger.error('AMQP: error during close', { err });
     }
-    try {
-        logger.debug('AMQP: close — closing connection');
-        await state.connection?.close();
-    } catch (err) {
-        logger.error('AMQP: error closing connection', { err });
-    }
-    state.channel = null;
-    state.connection = null;
     logger.info('AMQP: closed');
 }
 
@@ -219,23 +313,35 @@ async function close(): Promise<void> {
  * on reconnect without any action from the caller.
  */
 async function subscribeExternalQueue(queueName: string, handler: MessageHandler): Promise<void> {
-    logger.debug('AMQP: subscribeExternalQueue', { queue: queueName });
+    logger.info('AMQP: subscribeExternalQueue', { queue: queueName });
     if (state.subscriptions.has(queueName)) {
         logger.warn('AMQP: already subscribed, ignoring duplicate subscribe', { queue: queueName });
         return;
     }
     if (!state.channel) {
-        throw new Error('AMQP: no open channel');
+        logger.error('AMQP: subscribe failed, no open channel', { queue: queueName });
+        throw new Error(`AMQP: no open channel for queue ${queueName}`);
     }
     state.subscriptions.set(queueName, handler);
-    await state.channel.consume(queueName, wrapHandler(queueName, state.channel, handler));
+    try {
+        await state.channel.consume(queueName, wrapHandler(queueName, state.channel, handler));
+    } catch (err) {
+        state.subscriptions.delete(queueName);
+        logger.error('AMQP: consume failed', { queue: queueName, err });
+        throw err;
+    }
     logger.info('AMQP: subscribed', { queue: queueName });
 }
 
 function publishDirect(queueName: string, content: Buffer): void {
     const { channel } = state;
     if (!channel) {
-        logger.error('AMQP: publishDirect called with no open channel', { queue: queueName });
+        logger.warn('AMQP: publishDirect skipped, no channel', {
+            queue: queueName,
+            bytes: content.byteLength,
+            reconnecting: state.reconnecting,
+            shuttingDown: state.shuttingDown
+        });
         return;
     }
     channel.sendToQueue(queueName, content, { persistent: true });
