@@ -71,6 +71,25 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Probe LLM proxy connectivity
+        if: steps.check-pr.outputs.pr_exists == 'false'
+        run: |
+          HOST="llm-proxy-api.ai.eng.netapp.com"
+          URL="https://$HOST"
+
+          echo "Runner: $(hostname)"
+          echo "Resolving $HOST..."
+          getent hosts "$HOST" || nslookup "$HOST" || echo "::warning::DNS lookup for $HOST returned no result (informational - continuing to curl check)"
+
+          echo "Checking HTTPS reachability to $URL..."
+          if curl -sS --max-time 10 -o /dev/null -w "HTTP status: %{http_code}\n" "$URL"; then
+            echo "LLM proxy is reachable from this runner ($(hostname))."
+          else
+            CURL_EXIT=$?
+            echo "::error::Cannot reach $URL from runner $(hostname) (curl exit code $CURL_EXIT). The agent step will fail with a connection error. Check that this job is running on a runner with access to NetApp's internal network (e.g. wlmdb-runner)."
+            exit 1
+          fi
+
       - name: Checkout repository
         if: steps.check-pr.outputs.pr_exists == 'false'
         uses: actions/checkout@v4
