@@ -328,11 +328,8 @@ const OptimizeStorageApiData = {
     }),
 
     COMPRESSION: (value?: string) => ({
-        api: value === 'none' ? '/storage/volumes' : '/private/cli/volume/efficiency',
-        body:
-            value === 'none'
-                ? { efficiency: { state: 'disabled' } }
-                : { inline_compression: 'true', compression: 'true' }, // using storage/volumes causes an error while setting compression_type to 'adaptive'
+        api: '/storage/volumes',
+        body: value === 'none' ? { efficiency: { state: 'disabled' } } : { efficiency: { compression: 'inline' } },
         type: VOLUME
     }),
     DEDUPLICATION: (value?: string) => ({

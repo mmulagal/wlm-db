@@ -36,7 +36,9 @@ const REST_FIX_VOLUME_UUID_CONFIG_KEYS = new Set([
     'SNAPSHOT_POLICY',
     'TIERING_MINIMUM_COOLING_DAYS',
     'TIERING_POLICY',
-    'COMPRESSION'
+    'COMPRESSION',
+    'DEDUPLICATION',
+    'COMPACTION'
 ]);
 
 const REST_FIX_CONFIG_KEYS = new Set([...REST_FIX_VOLUME_UUID_CONFIG_KEYS, 'SPACE_RESERVATION', 'SPACE_ALLOCATION']);
@@ -149,7 +151,7 @@ function buildOntapFixSearchParams(
     svmName: string,
     resourceIds: string[],
     configKey: string,
-    value: string,
+    _value: string,
     usesRestFix: boolean
 ): Record<string, string | number | boolean> {
     if (usesRestFix) {
@@ -158,10 +160,7 @@ function buildOntapFixSearchParams(
         }
         return { name: resourceIds.join('|') };
     }
-    if (
-        ['DEDUPLICATION', 'COMPACTION', 'EXPORT_POLICY'].includes(configKey) ||
-        (value === 'none' && configKey === 'COMPRESSION')
-    ) {
+    if (['COMPRESSION', 'DEDUPLICATION', 'COMPACTION', 'EXPORT_POLICY'].includes(configKey)) {
         return { svm: svmName, name: resourceIds.join('|') };
     }
     if (configKey === 'NFS_ROOTONLY') {
